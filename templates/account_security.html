@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block title %}Account Security - Order PipLine{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">
+                    <i class="bi bi-shield-lock me-2"></i>Account Security
+                </h1>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-0">
+                        <li class="breadcrumb-item"><a href="{{ url_for('analytics.dashboard') }}">Dashboard</a></li>
+                        <li class="breadcrumb-item active">Account Security</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Active Sessions -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-display me-2"></i>Active Sessions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if active_sessions %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Device</th>
+                                        <th>IP Address</th>
+                                        <th>Last Active</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for session in active_sessions %}
+                                    <tr>
+                                        <td>
+                                            <small class="text-muted">
+                                                {% if session.user_agent %}
+                                                    {% if 'Mobile' in session.user_agent %}
+                                                        <i class="bi bi-phone me-1"></i>Mobile
+                                                    {% elif 'Tablet' in session.user_agent %}
+                                                        <i class="bi bi-tablet me-1"></i>Tablet
+                                                    {% else %}
+                                                        <i class="bi bi-laptop me-1"></i>Desktop
+                                                    {% endif %}
+                                                {% else %}
+                                                    <i class="bi bi-question-circle me-1"></i>Unknown
+                                                {% endif %}
+                                            </small>
+                                        </td>
+                                        <td>
+                                            <code class="small">{{ session.ip_address }}</code>
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">
+                                                {{ session.last_active.strftime('%Y-%m-%d %H:%M') }}
+                                            </small>
+                                        </td>
+                                        <td>
+                                            {% if session.session_token == session_token %}
+                                                <span class="badge bg-success">Current</span>
+                                            {% else %}
+                                                <span class="badge bg-info">Active</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        {% if active_sessions|length > 1 %}
+                            <form method="POST" action="{{ url_for('auth.force_logout_all') }}" class="mt-3">
+                                <button type="submit" class="btn btn-warning btn-sm" 
+                                        onclick="return confirm('Are you sure you want to log out from all other devices?')">
+                                    <i class="bi bi-box-arrow-right me-1"></i>Logout All Other Sessions
+                                </button>
+                            </form>
+                        {% endif %}
+                    {% else %}
+                        <p class="text-muted mb-0">No active sessions found.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Login Attempts -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-clock-history me-2"></i>Recent Login Attempts
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_attempts %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Time</th>
+                                        <th>IP Address</th>
+                                        <th>Status</th>
+                                        <th>Reason</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for attempt in recent_attempts %}
+                                    <tr>
+                                        <td>
+                                            <small class="text-muted">
+                                                {{ attempt.timestamp.strftime('%m-%d %H:%M') }}
+                                            </small>
+                                        </td>
+                                        <td>
+                                            <code class="small">{{ attempt.ip_address }}</code>
+                                        </td>
+                                        <td>
+                                            {% if attempt.success %}
+                                                <span class="badge bg-success">Success</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">Failed</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">
+                                                {% if attempt.failure_reason %}
+                                                    {{ attempt.failure_reason.replace('_', ' ').title() }}
+                                                {% else %}
+                                                    -
+                                                {% endif %}
+                                            </small>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted mb-0">No recent login attempts found.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Security Recommendations -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-lightbulb me-2"></i>Security Recommendations
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-primary">Password Security</h6>
+                            <ul class="list-unstyled small">
+                                <li><i class="bi bi-check-circle text-success me-2"></i>Use a strong, unique password</li>
+                                <li><i class="bi bi-check-circle text-success me-2"></i>Change password regularly</li>
+                                <li><i class="bi bi-check-circle text-success me-2"></i>Never share your credentials</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-primary">Session Security</h6>
+                            <ul class="list-unstyled small">
+                                <li><i class="bi bi-check-circle text-success me-2"></i>Logout from shared devices</li>
+                                <li><i class="bi bi-check-circle text-success me-2"></i>Monitor active sessions</li>
+                                <li><i class="bi bi-check-circle text-success me-2"></i>Report suspicious activity</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

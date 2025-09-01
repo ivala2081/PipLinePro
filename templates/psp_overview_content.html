@@ -1,0 +1,454 @@
+{% block content %}
+<div id="psp-overview-tab-content">
+  {% if overview_data and overview_data.psps %}
+    <!-- Enhanced Overview Header -->
+    <div class="overview-header mb-4">
+      <div class="row align-items-center">
+        <div class="col-md-6">
+          <h5 class="overview-title mb-2">
+            <i class="bi bi-grid-3x3-gap-fill text-primary me-2"></i>
+            {{ _('PSP Performance Overview') }}
+          </h5>
+          <p class="overview-subtitle mb-0">
+            {{ overview_data.total_active_psps }} {{ _('active PSPs') }} • {{ '{:,.0f}'.format(overview_data.total_allocation|safe_float) }} {{ _('total allocated') }}
+          </p>
+        </div>
+        <div class="col-md-6 text-md-end">
+          {% if overview_data.overall_metrics %}
+          <div class="system-health-indicator">
+            <span class="health-label">{{ _('System Health') }}:</span>
+            {% set health_score = overview_data.overall_metrics.system_health_score|safe_float %}
+            <span class="health-score {{ 'excellent' if health_score >= 80 else 'good' if health_score >= 60 else 'average' if health_score >= 40 else 'poor' }}">
+              {{ '{:.1f}'.format(health_score) }}%
+            </span>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- PSP Cards Grid -->
+    <div class="row g-4">
+      {% for psp_name, psp_data in overview_data.psps.items() %}
+      <div class="col-xl-4 col-lg-6 col-md-6">
+        <div class="psp-card {{ psp_data.performance_tier }}">
+          <!-- Card Header -->
+          <div class="psp-card-header">
+            <div class="psp-info">
+              <div class="psp-avatar">
+                <i class="bi bi-bank2"></i>
+              </div>
+              <div class="psp-details">
+                <h6 class="psp-name">{{ psp_name }}</h6>
+                <div class="psp-meta">
+                  <span class="status-indicator {{ 'active' if psp_data.is_active else 'inactive' }}">
+                    <i class="bi bi-circle-fill"></i>
+                    {{ _('Active') if psp_data.is_active else _('Inactive') }}
+                  </span>
+                  <span class="performance-tier">
+                    <i class="bi bi-star-fill"></i>
+                    {{ _(psp_data.performance_tier|title) }}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div class="psp-actions">
+              <button class="btn btn-sm btn-outline-primary view-details-btn" 
+                      title="{{ _('View Details') }}" 
+                      data-psp-name="{{ psp_name }}">
+                <i class="bi bi-eye"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Key Metrics -->
+          <div class="psp-metrics">
+            <div class="row g-3">
+              <div class="col-6">
+                <div class="metric-item">
+                  <div class="metric-label">{{ _('Total Amount') }}</div>
+                  <div class="metric-value text-primary">₺{{ '{:,.0f}'.format(psp_data.total_amount|safe_float) }}</div>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="metric-item">
+                  <div class="metric-label">{{ _('Allocated') }}</div>
+                  <div class="metric-value text-success">₺{{ '{:,.0f}'.format(psp_data.total_allocation|safe_float) }}</div>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="metric-item">
+                  <div class="metric-label">{{ _('Net Amount') }}</div>
+                  <div class="metric-value text-info">₺{{ '{:,.0f}'.format(psp_data.net_amount|safe_float) }}</div>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="metric-item">
+                  <div class="metric-label">{{ _('ROI') }}</div>
+                  {% set roi_percentage = psp_data.roi_percentage|safe_float %}
+                  {% set total_allocation = psp_data.total_allocation|safe_float %}
+                  {% if total_allocation > 0 %}
+                    <div class="metric-value {{ 'text-success' if roi_percentage >= 0 else 'text-danger' }}">
+                      {{ '{:+.1f}'.format(roi_percentage) }}%
+                    </div>
+                  {% else %}
+                    <div class="metric-value text-muted">
+                      {{ _('N/A') }}
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="metric-item">
+                  <div class="metric-label">{{ _('Commission Rate') }}</div>
+                  <div class="metric-value text-warning">{{ '{:.2f}'.format(psp_data.avg_commission_rate) }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Performance Indicators -->
+          <div class="psp-performance">
+            <div class="performance-row">
+              <div class="performance-item">
+                <div class="performance-label">{{ _('Efficiency') }}</div>
+                <div class="performance-bar">
+                  <div class="progress" style="height: 6px;">
+                    {% set efficiency_score = psp_data.efficiency_score|safe_float %}
+                    <div class="progress-bar {{ 'bg-success' if efficiency_score >= 80 else 'bg-warning' if efficiency_score >= 60 else 'bg-danger' }}" 
+                         style="width: {{ efficiency_score }}%"></div>
+                  </div>
+                                      <span class="performance-value">{{ '{:.0f}'.format(efficiency_score) }}%</span>
+                </div>
+              </div>
+              <div class="performance-item">
+                <div class="performance-label">{{ _('Consistency') }}</div>
+                <div class="performance-bar">
+                  <div class="progress" style="height: 6px;">
+                    {% set consistency_score = psp_data.consistency_score|safe_float %}
+                    <div class="progress-bar {{ 'bg-success' if consistency_score >= 80 else 'bg-warning' if consistency_score >= 60 else 'bg-danger' }}" 
+                                                  style="width: {{ consistency_score }}%"></div>
+                    </div>
+                    <span class="performance-value">{{ '{:.0f}'.format(consistency_score) }}%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Activity Stats -->
+          <div class="psp-activity">
+            <div class="row g-2">
+              <div class="col-4">
+                <div class="activity-stat">
+                  <div class="stat-value">{{ psp_data.transaction_count }}</div>
+                  <div class="stat-label">{{ _('Transactions') }}</div>
+                </div>
+              </div>
+              <div class="col-4">
+                <div class="activity-stat">
+                  <div class="stat-value">{{ psp_data.active_days }}</div>
+                  <div class="stat-label">{{ _('Active Days') }}</div>
+                </div>
+              </div>
+              <div class="col-4">
+                <div class="activity-stat">
+                  <div class="stat-value">{{ '{:.1f}'.format(psp_data.avg_daily_transactions) }}</div>
+                  <div class="stat-label">{{ _('Daily Avg') }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Growth Indicator -->
+          {% if psp_data.growth_rate != 0 %}
+          <div class="psp-growth">
+            <div class="growth-indicator {{ 'positive' if psp_data.growth_rate > 0 else 'negative' }}">
+              <i class="bi {{ 'bi-arrow-up' if psp_data.growth_rate > 0 else 'bi-arrow-down' }}"></i>
+              <span class="growth-text">
+                {{ '{:+.1f}'.format(psp_data.growth_rate) }}% {{ _('vs previous period') }}
+              </span>
+            </div>
+          </div>
+          {% endif %}
+
+          <!-- Risk Indicators -->
+          <div class="psp-risk">
+            <div class="risk-indicators">
+              <div class="risk-item {{ 'low' if psp_data.volatility < 1000 else 'medium' if psp_data.volatility < 5000 else 'high' }}">
+                <i class="bi bi-shield"></i>
+                                    <span>{{ _('Volatility') }}: {{ '{:,.0f}'.format(psp_data.volatility|safe_float) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-icon">
+        <i class="bi bi-inbox"></i>
+      </div>
+      <h5 class="empty-title">{{ _('No PSP Data Available') }}</h5>
+      <p class="empty-text">{{ _('No PSP tracking data found for the selected period.') }}</p>
+      <a href="{{ url_for('analytics.add_psp_track') }}" class="btn btn-primary">
+        <i class="bi bi-plus-circle me-2"></i>{{ _('Add PSP Record') }}
+      </a>
+    </div>
+  {% endif %}
+</div>
+
+<!-- PSP Details Modal -->
+<div id="pspDetailsModal" class="psp-details-modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h5 class="modal-title">
+        <i class="bi bi-bank2 text-primary"></i>
+        <span id="modalPspName">{{ _('PSP Details') }}</span>
+      </h5>
+      <button type="button" class="modal-close" onclick="closePspModal()">
+        <i class="bi bi-x"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+              <div id="modalLoading" class="loading-spinner">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">{{ _('Loading...') }}</span>
+          </div>
+        </div>
+      
+      <div id="modalContent" style="display: none;">
+        <!-- Active Details Section -->
+        <div class="modal-section">
+                  <h6 class="section-title">
+          <i class="bi bi-graph-up text-primary me-2"></i>
+          {{ _('Active Details') }}
+        </h6>
+          <div class="metrics-grid" id="activeMetrics">
+            <!-- Metrics will be populated here -->
+          </div>
+        </div>
+        
+        <!-- Trend Chart Section -->
+        <div class="modal-section">
+                  <h6 class="section-title">
+          <i class="bi bi-graph-up-arrow text-primary me-2"></i>
+          {{ _('Performance Trend (Last 60 Days)') }}
+        </h6>
+          <div class="trend-chart">
+            <div class="chart-container" id="trendChart">
+              <!-- Chart will be rendered here -->
+            </div>
+          </div>
+        </div>
+        
+        <!-- History Section -->
+        <div class="modal-section">
+                  <h6 class="section-title">
+          <i class="bi bi-clock-history text-primary me-2"></i>
+          {{ _('Allocation History') }}
+        </h6>
+          <div class="history-table">
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>{{ _('Date') }}</th>
+                    <th class="text-end">{{ _('Allocation') }}</th>
+                    <th class="text-end">{{ _('Withdraw') }}</th>
+                    <th class="text-end">{{ _('Commission') }}</th>
+                    <th class="text-end">{{ _('Net Amount') }}</th>
+                    <th class="text-end">{{ _('Rollover') }}</th>
+                  </tr>
+                </thead>
+                <tbody id="historyTableBody">
+                  <!-- History will be populated here -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// PSP Details Modal JavaScript
+let currentPspData = null;
+
+// Open modal and load PSP details
+function openPspModal(pspName) {
+  const modal = document.getElementById('pspDetailsModal');
+  const modalPspName = document.getElementById('modalPspName');
+  const modalLoading = document.getElementById('modalLoading');
+  const modalContent = document.getElementById('modalContent');
+  
+  // Show modal and loading
+  modal.style.display = 'block';
+  modalPspName.textContent = pspName;
+  modalLoading.style.display = 'flex';
+  modalContent.style.display = 'none';
+  
+  // Fetch PSP details
+  fetch(`/analytics/api/psp_details/${encodeURIComponent(pspName)}`)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Failed to fetch PSP details');
+      }
+      return response.json();
+    })
+    .then(data => {
+      currentPspData = data;
+      populateModal(data);
+      modalLoading.style.display = 'none';
+      modalContent.style.display = 'block';
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      modalLoading.innerHTML = `
+        <div class="text-center text-danger">
+          <i class="bi bi-exclamation-triangle fs-1"></i>
+          <p class="mt-2">{{ _('Failed to load PSP details') }}</p>
+        </div>
+      `;
+    });
+}
+
+// Close modal
+function closePspModal() {
+  const modal = document.getElementById('pspDetailsModal');
+  modal.style.display = 'none';
+  currentPspData = null;
+}
+
+// Populate modal with data
+function populateModal(data) {
+  const metrics = data.metrics;
+  const history = data.history;
+  
+  // Populate active metrics
+  const activeMetrics = document.getElementById('activeMetrics');
+  activeMetrics.innerHTML = `
+    <div class="metric-card">
+      <div class="metric-value text-success">₺${metrics.total_allocation.toLocaleString()}</div>
+      <div class="metric-label">{{ _('Total Allocation') }}</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-value text-primary">₺${metrics.net_amount.toLocaleString()}</div>
+      <div class="metric-label">{{ _('Net Amount') }}</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-value ${metrics.roi_percentage >= 0 ? 'text-success' : 'text-danger'}">
+        ${metrics.roi_percentage >= 0 ? '+' : ''}${metrics.roi_percentage.toFixed(1)}%
+      </div>
+      <div class="metric-label">{{ _('ROI') }}</div>
+    </div>
+    <div class="metric-card">
+              <div class="metric-value text-warning">${metrics.avg_commission_rate.toFixed(2)}</div>
+      <div class="metric-label">{{ _('Commission Rate') }}</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-value text-info">${metrics.efficiency_score.toFixed(0)}%</div>
+      <div class="metric-label">{{ _('Efficiency') }}</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-value text-secondary">${metrics.consistency_score.toFixed(0)}%</div>
+      <div class="metric-label">{{ _('Consistency') }}</div>
+    </div>
+  `;
+  
+  // Populate history table
+  const historyTableBody = document.getElementById('historyTableBody');
+  historyTableBody.innerHTML = history.map(record => `
+    <tr>
+      <td>${new Date(record.date).toLocaleDateString()}</td>
+      <td class="text-end">₺${record.amount.toLocaleString()}</td>
+      <td class="text-end">₺${record.withdraw.toLocaleString()}</td>
+      <td class="text-end">₺${record.commission_amount.toLocaleString()}</td>
+      <td class="text-end">₺${record.net_amount.toLocaleString()}</td>
+      <td class="text-end">₺${record.difference.toLocaleString()}</td>
+    </tr>
+  `).join('');
+  
+  // Create simple trend chart
+  createTrendChart(data.trend_data);
+}
+
+// Create simple trend chart using SVG
+function createTrendChart(trendData) {
+  const chartContainer = document.getElementById('trendChart');
+  
+  if (!trendData.dates || trendData.dates.length === 0) {
+    chartContainer.innerHTML = '<p class="text-muted text-center">{{ _("No trend data available") }}</p>';
+    return;
+  }
+  
+  const amounts = trendData.amounts;
+  const width = chartContainer.offsetWidth;
+  const height = 180;
+  const padding = 20;
+  
+  const maxAmount = Math.max(...amounts);
+  const minAmount = Math.min(...amounts);
+  const range = maxAmount - minAmount || 1;
+  
+  const points = amounts.map((amount, index) => {
+    const x = padding + (index / (amounts.length - 1)) * (width - 2 * padding);
+    const y = height - padding - ((amount - minAmount) / range) * (height - 2 * padding);
+    return `${x},${y}`;
+  }).join(' ');
+  
+  const svg = `
+    <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+      <defs>
+        <linearGradient id="trendGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" style="stop-color:#0d6efd;stop-opacity:0.3" />
+          <stop offset="100%" style="stop-color:#0d6efd;stop-opacity:0.1" />
+        </linearGradient>
+      </defs>
+      <polyline 
+        points="${points}" 
+        fill="none" 
+        stroke="#0d6efd" 
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+      <polygon 
+        points="${points} ${width - padding},${height - padding} ${padding},${height - padding}" 
+        fill="url(#trendGradient)"
+      />
+    </svg>
+  `;
+  
+  chartContainer.innerHTML = svg;
+}
+
+// Event listeners
+document.addEventListener('DOMContentLoaded', function() {
+  // Add click listeners to view details buttons
+  document.querySelectorAll('.view-details-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const pspName = this.getAttribute('data-psp-name');
+      openPspModal(pspName);
+    });
+  });
+  
+  // Close modal when clicking outside
+  document.getElementById('pspDetailsModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+      closePspModal();
+    }
+  });
+  
+  // Close modal with Escape key
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      closePspModal();
+    }
+  });
+});
+</script>
+{% endblock %}

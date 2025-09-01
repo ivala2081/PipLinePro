@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Transaction Details - {{ transaction.client_name }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+<body>
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <!-- Breadcrumb -->
+      <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a href="{{ url_for('transactions.clients') }}">Transactions</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Transaction Details</li>
+        </ol>
+      </nav>
+
+      <!-- Transaction Details Card -->
+      <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+          <div class="d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">
+              <i class="bi bi-receipt me-2"></i>
+              Transaction Details
+            </h4>
+            <div class="btn-group">
+              <a href="{{ url_for('transactions.edit_transaction', id=transaction.id) }}" 
+                 class="btn btn-light btn-sm">
+                <i class="bi bi-pencil me-1"></i>Edit
+              </a>
+              <button type="button" class="btn btn-danger btn-sm" onclick="deleteTransaction();">
+                <i class="bi bi-trash me-1"></i>Delete
+              </button>
+              <a href="{{ url_for('transactions.clients') }}" 
+                 class="btn btn-outline-light btn-sm">
+                <i class="bi bi-arrow-left me-1"></i>Back
+              </a>
+            </div>
+          </div>
+        </div>
+        
+        <div class="card-body">
+          <div class="row">
+            <!-- Main Transaction Info -->
+            <div class="col-lg-8">
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <div class="detail-group">
+                    <label class="detail-label">Client Name</label>
+                    <div class="detail-value">{{ transaction.client_name }}</div>
+                  </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <div class="detail-group">
+                    <label class="detail-label">Transaction ID</label>
+                    <div class="detail-value">#{{ transaction.id }}</div>
+                  </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <div class="detail-group">
+                    <label class="detail-label">Amount</label>
+                    <div class="detail-value text-success fw-bold fs-5">
+                      ₺{{ transaction.amount }}
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <div class="detail-group">
+                    <label class="detail-label">Net Amount</label>
+                    <div class="detail-value text-info fw-bold">
+                      ₺{{ transaction.net_amount }}
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <div class="detail-group">
+                    <label class="detail-label">Commission</label>
+                    <div class="detail-value text-warning">
+                      ₺{{ transaction.commission }}
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <div class="detail-group">
+                    <label class="detail-label">Currency</label>
+                    <div class="detail-value">
+                      <span class="badge bg-secondary">{{ transaction.currency }}</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <div class="detail-group">
+                    <label class="detail-label">Date</label>
+                    <div class="detail-value">{{ transaction.date }}</div>
+                  </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <div class="detail-group">
+                    <label class="detail-label">Payment Method</label>
+                    <div class="detail-value">{{ transaction.payment_method or 'N/A' }}</div>
+                  </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <div class="detail-group">
+                    <label class="detail-label">PSP</label>
+                    <div class="detail-value">
+                      <span class="badge bg-primary">{{ transaction.psp or 'N/A' }}</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <div class="detail-group">
+                    <label class="detail-label">Category</label>
+                    <div class="detail-value">
+                      <span class="badge bg-info">{{ transaction.category or 'N/A' }}</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <div class="detail-group">
+                    <label class="detail-label">IBAN</label>
+                    <div class="detail-value font-monospace">{{ transaction.iban or 'N/A' }}</div>
+                  </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <div class="detail-group">
+                    <label class="detail-label">Company Order</label>
+                    <div class="detail-value">{{ transaction.company_order or 'N/A' }}</div>
+                  </div>
+                </div>
+                {% if transaction.notes %}
+                <div class="col-12 mb-3">
+                  <div class="detail-group">
+                    <label class="detail-label">Notes</label>
+                    <div class="detail-value">{{ transaction.notes }}</div>
+                  </div>
+                </div>
+                {% endif %}
+              </div>
+            </div>
+
+            <!-- Transaction Summary -->
+            <div class="col-lg-4">
+              <div class="card bg-light">
+                <div class="card-header">
+                  <h6 class="mb-0">
+                    <i class="bi bi-calculator me-2"></i>
+                    Transaction Summary
+                  </h6>
+                </div>
+                <div class="card-body">
+                  <div class="summary-item">
+                    <span class="summary-label">Gross Amount:</span>
+                    <span class="summary-value text-success">₺{{ "{:.2f}".format(transaction.amount) }}</span>
+                  </div>
+                  <div class="summary-item">
+                    <span class="summary-label">Commission:</span>
+                    <span class="summary-value text-warning">-₺{{ "{:.2f}".format(transaction.commission) }}</span>
+                  </div>
+                  <hr>
+                  <div class="summary-item fw-bold">
+                    <span class="summary-label">Net Amount:</span>
+                    <span class="summary-value text-primary">₺{{ "{:.2f}".format(transaction.net_amount) }}</span>
+                  </div>
+                  
+                  <div class="mt-3">
+                    <div class="summary-item">
+                      <span class="summary-label">Created:</span>
+                      <span class="summary-value">{{ transaction.created_at.strftime('%m/%d/%Y %H:%M') if transaction.created_at else 'N/A' }}</span>
+                    </div>
+                    {% if transaction.updated_at and transaction.updated_at != transaction.created_at %}
+                    <div class="summary-item">
+                      <span class="summary-label">Updated:</span>
+                      <span class="summary-value">{{ transaction.updated_at.strftime('%m/%d/%Y %H:%M') }}</span>
+                    </div>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Related Transactions -->
+      {% if related_transactions %}
+      <div class="card mt-4 shadow-sm">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="bi bi-link-45deg me-2"></i>
+            Related Transactions for {{ transaction.client_name }}
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead class="table-light">
+                <tr>
+                  <th>Date</th>
+                  <th>Amount</th>
+                  <th>PSP</th>
+                  <th>Category</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for related in related_transactions %}
+                <tr>
+                  <td>{{ related.date.strftime('%m/%d/%Y') }}</td>
+                  <td class="text-success fw-bold">₺{{ "{:.2f}".format(related.amount) }}</td>
+                  <td><span class="badge bg-primary">{{ related.psp or 'N/A' }}</span></td>
+                  <td><span class="badge bg-info">{{ related.category or 'N/A' }}</span></td>
+                  <td>
+                    <div class="btn-group btn-group-sm">
+                      <a href="{{ url_for('transactions.view_transaction', transaction_id=related.id) }}" 
+                         class="btn btn-outline-primary">
+                        <i class="bi bi-eye"></i>
+                      </a>
+                      <a href="{{ url_for('transactions.edit_transaction', id=related.id) }}" 
+                         class="btn btn-outline-warning">
+                        <i class="bi bi-pencil"></i>
+                      </a>
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Delete form (hidden) -->
+<form id="deleteForm" method="POST" action="{{ url_for('transactions.delete_transaction', id=transaction.id) }}" style="display: none;">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+</form>
+
+<script>
+function deleteTransaction() {
+    const confirmed = confirm('Are you sure you want to delete this transaction? This action cannot be undone.');
+    if (confirmed) {
+        // Try the CSRF form first
+        const deleteForm = document.getElementById('deleteForm');
+        if (deleteForm) {
+            deleteForm.submit();
+        } else {
+            // Fallback: use API route
+            fetch('{{ url_for("transactions.api_delete_transaction", id=transaction.id) }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    window.location.href = data.redirect_url;
+                } else {
+                    alert(data.message || 'Error deleting transaction. Please try again.');
+                }
+            })
+            .catch(error => {
+                console.error('Delete error:', error);
+                alert('Error deleting transaction. Please try again.');
+            });
+        }
+    }
+}
+</script>
+
+<style>
+.detail-group {
+  margin-bottom: 1rem;
+}
+
+.detail-label {
+  font-weight: 600;
+  color: #6c757d;
+  font-size: 0.875rem;
+  margin-bottom: 0.25rem;
+  display: block;
+}
+
+.detail-value {
+  font-size: 1rem;
+  color: #212529;
+  word-break: break-word;
+}
+
+.summary-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.summary-label {
+  font-weight: 500;
+  color: #6c757d;
+}
+
+.summary-value {
+  font-weight: 600;
+}
+
+.font-monospace {
+  font-family: 'Courier New', monospace;
+  font-size: 0.875rem;
+}
+
+.breadcrumb {
+  background: transparent;
+  padding: 0;
+  margin: 0;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+  content: ">";
+  color: #6c757d;
+}
+
+.card {
+  border: none;
+  border-radius: 12px;
+}
+
+.card-header {
+  border-bottom: 1px solid rgba(0,0,0,.125);
+  border-radius: 12px 12px 0 0 !important;
+}
+
+.btn-group .btn {
+  border-radius: 6px;
+  margin: 0 2px;
+}
+
+.table {
+  margin-bottom: 0;
+}
+
+.table th {
+  border-top: none;
+  font-weight: 600;
+  color: #495057;
+}
+
+.badge {
+  font-size: 0.75rem;
+  padding: 0.375rem 0.75rem;
+}
+</style>
+</body>
+</html> 

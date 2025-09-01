@@ -1,0 +1,401 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Add Transaction') }}{% endblock %}
+{% block content %}
+
+<div class="page-container">
+  <div class="content-card">
+    <div class="card">
+    <div class="card-header">
+      <div class="d-flex align-items-center">
+        <div class="me-3">
+          <i class="bi bi-plus-circle text-primary fs-1"></i>
+        </div>
+        <div>
+          <h1 class="h3 mb-1 text-dark fw-bold">Add New Transaction</h1>
+          <p class="text-muted mb-0 small">Enter the transaction details below to add a new record to your pipeline</p>
+        </div>
+    </div>
+  </div>
+</div>
+    
+    <form method="POST" autocomplete="off" id="transactionForm">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      
+      <!-- Dummy fields to prevent browser autofill -->
+      <input type="text" name="fakeusernameremembered" style="display: none;" autocomplete="off">
+      <input type="password" name="fakepasswordremembered" style="display: none;" autocomplete="off">
+      
+      <div class="card-body">
+      <div class="row g-3">
+        <!-- Client Name -->
+        <div class="col-md-6">
+          <label class="form-label" for="client_name">
+            <span class="label-icon"><i class="bi bi-person"></i></span>
+            {{ _('Client Name') }}
+          </label>
+          <div class="form-input-wrapper">
+            <input type="text" name="client_name" id="client_name" class="form-input" 
+                   value="{{ request.form.client_name or '' }}" required placeholder="Enter client name">
+          </div>
+        </div>
+        
+        <!-- Date -->
+        <div class="col-md-6">
+          <label class="form-label" for="date">
+            <span class="label-icon"><i class="bi bi-calendar"></i></span>
+            {{ _('Date') }}
+          </label>
+          <div class="form-input-wrapper">
+            <input type="date" name="date" id="date" class="form-input" 
+                   value="{{ request.form.date or '' }}" required>
+          </div>
+        </div>
+        
+        <!-- Amount -->
+        <div class="col-md-6">
+          <label class="form-label" for="amount">
+            <span class="label-icon"><i class="bi bi-currency-exchange"></i></span>
+            {{ _('Amount') }}
+          </label>
+          <div class="form-input-wrapper">
+            <input type="number" step="0.01" name="amount" id="amount" class="form-input" 
+                   value="{{ request.form.amount or '' }}" required placeholder="0.00">
+          </div>
+        </div>
+        
+        <!-- IBAN -->
+        <div class="col-md-6">
+          <label class="form-label" for="iban">
+            <span class="label-icon"><i class="bi bi-bank"></i></span>
+            IBAN
+          </label>
+          <div class="form-input-wrapper">
+            <select name="iban" id="iban" class="form-select" required>
+              <option value="">Select IBAN</option>
+              {% for iban in ibans %}
+              <option value="{{ iban }}" {% if request.form.iban == iban %}selected{% endif %}>{{ iban }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        
+        <!-- Payment Method -->
+        <div class="col-md-6">
+          <label class="form-label" for="payment_method">
+            <span class="label-icon"><i class="bi bi-credit-card"></i></span>
+            {{ _('Payment Method') }}
+          </label>
+          <div class="form-input-wrapper">
+            <select name="payment_method" id="payment_method" class="form-select" required>
+              <option value="">Select Payment Method</option>
+              {% for method in payment_methods %}
+              <option value="{{ method }}" {% if request.form.payment_method == method %}selected{% endif %}>{{ method }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        
+        <!-- Company -->
+        <div class="col-md-6">
+          <label class="form-label" for="company_order">
+            <span class="label-icon"><i class="bi bi-building"></i></span>
+            Company
+          </label>
+          <div class="form-input-wrapper">
+            <select name="company_order" id="company_order" class="form-select" required>
+              <option value="">Select Company</option>
+              {% for company in companies %}
+              <option value="{{ company }}" {% if request.form.company_order == company %}selected{% endif %}>{{ company }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        
+        <!-- Currency -->
+        <div class="col-md-6">
+          <label class="form-label" for="currency">
+            <span class="label-icon"><i class="bi bi-currency-dollar"></i></span>
+            {{ _('Currency') }}
+          </label>
+          <div class="form-input-wrapper">
+            <select name="currency" id="currency" class="form-select" required onchange="checkExchangeRates()">
+              <option value="">Select Currency</option>
+              {% for curr in currencies %}
+              <option value="{{ curr }}" {% if request.form.currency == curr %}selected{% endif %}>{{ curr }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        
+        <!-- Category -->
+        <div class="col-md-6">
+          <label class="form-label" for="category">
+            <span class="label-icon"><i class="bi bi-tags"></i></span>
+            Category
+          </label>
+          <div class="form-input-wrapper">
+            <select name="category" id="category" class="form-select" required>
+              <option value="">Select Category</option>
+              <option value="WD" {% if request.form.category == 'WD' %}selected{% endif %}>WD (Withdraw)</option>
+              <option value="DEP" {% if request.form.category == 'DEP' %}selected{% endif %}>DEP</option>
+            </select>
+          </div>
+          <div class="form-text">WD = Withdraw (no commission), DEP = Deposit (with commission)</div>
+        </div>
+        
+        <!-- PSP/KASA -->
+        <div class="col-md-6">
+          <label class="form-label" for="psp">
+            <span class="label-icon"><i class="bi bi-building-check"></i></span>
+            PSP/KASA (Optional)
+          </label>
+          <div class="form-input-wrapper">
+            <select name="psp" id="psp" class="form-select">
+              <option value="">Select PSP/KASA</option>
+              {% for psp in psps %}
+              <option value="{{ psp }}" {% if request.form.psp == psp %}selected{% endif %}>{{ psp }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        
+        <!-- Notes -->
+        <div class="form-group full-width">
+          <label class="form-label" for="notes">
+            <span class="label-icon"><i class="bi bi-chat-text"></i></span>
+            Notes (Optional)
+          </label>
+          <div class="form-input-wrapper">
+            <textarea name="notes" id="notes" class="form-textarea" 
+                      placeholder="Enter any additional notes or comments about this transaction">{{ request.form.notes or '' }}</textarea>
+          </div>
+          <div class="form-text">Optional notes to help track transaction details</div>
+    </div>
+  </div>
+</div>
+      
+      <!-- Exchange Rate Section (Dynamic) -->
+      <div id="exchangeRateSection" style="display: none;">
+        <div class="exchange-rate-section">
+          <div class="exchange-rate-header">
+            <i class="bi bi-currency-exchange"></i>
+            <strong>Exchange Rates Required</strong>
+          </div>
+          
+          <div class="exchange-rate-alert">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            <strong>Exchange rates are required for foreign currency transactions.</strong><br>
+            Please enter the exchange rates for the selected date to ensure accurate conversions.
+          </div>
+          
+          <div class="card-body">
+      <div class="row g-3">
+            <div id="eurRateGroup" style="display: none;">
+              <div class="col-md-6">
+                <label class="form-label" for="eur_rate">
+                  <span class="label-icon"><i class="bi bi-currency-euro"></i></span>
+                  EUR to TL Rate
+                </label>
+                <div class="form-input-wrapper">
+                  <input type="number" step="0.0001" min="0" name="eur_rate" id="eur_rate" 
+                         class="form-input" placeholder="Enter EUR rate">
+                </div>
+                <div class="form-text">Required for EUR transactions and accurate reporting</div>
+    </div>
+  </div>
+</div>
+          </div>
+          
+          <!-- Rate Validation Status -->
+          <div id="rateValidationStatus" style="display: none;">
+            <div class="rate-validation">
+              <i class="bi bi-info-circle me-2"></i>
+              <strong>Rate Validation:</strong>
+              <span id="validationMessage">Checking existing rates...</span>
+            </div>
+    </div>
+  </div>
+</div>
+      </div>
+      
+      <div class="form-actions">
+        <button type="submit" class="btn-primary" id="submitBtn">
+          <i class="bi bi-plus-circle"></i>
+          {{ _('Add Transaction') }}
+        </button>
+        <a href="{{ url_for('transactions.clients', tab='transactions') }}" class="btn-secondary">
+          <i class="bi bi-x-circle"></i>
+          {{ _('Cancel') }}
+        </a>
+      </div>
+      
+      <div class="settings-link">
+        <a href="{{ url_for('settings.settings_dropdowns') }}" class="btn-success">
+          <i class="bi bi-sliders"></i>
+          Manage Dropdown Options
+        </a>
+        <div class="settings-info">
+          <i class="bi bi-info-circle me-2"></i>
+          <strong>Need to customize dropdown options?</strong><br>
+          If you want to add your own IBANs, payment methods, companies, or PSPs, 
+          click the "Manage Dropdown Options" button above. This will take you to the settings page 
+          where you can add, edit, or remove options from the dropdown menus.
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function checkExchangeRates() {
+    const currency = document.getElementById('currency').value;
+    const date = document.getElementById('date').value;
+    const exchangeRateSection = document.getElementById('exchangeRateSection');
+    const eurRateGroup = document.getElementById('eurRateGroup');
+    const rateValidationStatus = document.getElementById('rateValidationStatus');
+    const validationMessage = document.getElementById('validationMessage');
+    const submitBtn = document.getElementById('submitBtn');
+    
+    // Hide section initially
+    exchangeRateSection.style.display = 'none';
+    eurRateGroup.style.display = 'none';
+    rateValidationStatus.style.display = 'none';
+    
+    // Show section for foreign currencies
+    if (currency === 'EUR') {
+        exchangeRateSection.style.display = 'block';
+        eurRateGroup.style.display = 'block';
+        document.getElementById('eur_rate').required = true;
+        
+        // Check if we have a date to validate existing rates and check for other currencies
+        if (date) {
+            validateExistingRates(date, currency);
+            checkOtherCurrenciesOnSameDate(date, currency);
+        }
+    } else {
+        // Reset required fields for TL
+        document.getElementById('eur_rate').required = false;
+    }
+}
+
+function checkOtherCurrenciesOnSameDate(date, selectedCurrency) {
+    // Check if there are other foreign currency transactions on the same date
+    fetch(`/api/check_currencies_on_date?date=${date}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const hasEUR = data.currencies.includes('EUR');
+                
+                // Show EUR input if there are EUR transactions
+                if (hasEUR) {
+                    document.getElementById('eurRateGroup').style.display = 'block';
+                    document.getElementById('eur_rate').required = true;
+                    
+                    // Update validation message
+                    const validationMessage = document.getElementById('validationMessage');
+                    if (validationMessage.innerHTML.includes('Rates found')) {
+                        validationMessage.innerHTML = `<span class="text-success">✓ EUR rate is required for this date (EUR transactions detected).</span>`;
+                    }
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error checking currencies on date:', error);
+        });
+}
+
+function validateExistingRates(date, currency) {
+    const rateValidationStatus = document.getElementById('rateValidationStatus');
+    const validationMessage = document.getElementById('validationMessage');
+    
+    rateValidationStatus.style.display = 'block';
+    validationMessage.innerHTML = 'Checking existing rates...';
+    
+    // Make AJAX call to check existing rates
+    fetch(`/api/check_exchange_rates?date=${date}&currency=${currency}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                if (data.has_rates) {
+                    validationMessage.innerHTML = `<span class="text-success">✓ Rates found for ${date}. You can update them if needed.</span>`;
+                    // Pre-fill existing rates
+                    if (data.eur_rate) {
+                        document.getElementById('eur_rate').value = data.eur_rate;
+                    }
+                } else {
+                    validationMessage.innerHTML = `<span class="text-warning">⚠ No rates found for ${date}. Please enter the rates above.</span>`;
+                }
+            } else {
+                validationMessage.innerHTML = `<span class="text-danger">✗ Error checking rates: ${data.error}</span>`;
+            }
+        })
+        .catch(error => {
+            validationMessage.innerHTML = `<span class="text-danger">✗ Error: ${error.message}</span>`;
+        });
+}
+
+// Add event listener for date changes
+document.getElementById('date').addEventListener('change', function() {
+    const currency = document.getElementById('currency').value;
+    if (currency === 'EUR') {
+        validateExistingRates(this.value, currency);
+    }
+});
+
+// Form validation before submit
+document.getElementById('transactionForm').addEventListener('submit', function(e) {
+    const currency = document.getElementById('currency').value;
+    const date = document.getElementById('date').value;
+    
+    if (currency === 'EUR') {
+        if (!date) {
+            e.preventDefault();
+            showError('Please select a date for the transaction.');
+            return;
+        }
+        
+        if (currency === 'EUR' && !document.getElementById('eur_rate').value) {
+            e.preventDefault();
+            showError('Please enter the EUR exchange rate.');
+            return;
+        }
+    }
+});
+
+// Show user-friendly error messages
+function showError(message) {
+    // Create a custom error alert
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'alert alert-danger alert-dismissible fade show';
+    errorDiv.style.cssText = `
+        background: rgba(220, 38, 38, 0.1);
+        border: 1px solid rgba(220, 38, 38, 0.2);
+        border-radius: 12px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        color: #dc2626;
+    `;
+    errorDiv.innerHTML = `
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        <strong>Validation Error:</strong> ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" style="float: right; background: none; border: none; font-size: 1.2rem; cursor: pointer;">×</button>
+    `;
+    
+    // Insert at the top of the form
+    const form = document.getElementById('transactionForm');
+    form.insertBefore(errorDiv, form.firstChild);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        if (errorDiv.parentNode) {
+            errorDiv.remove();
+        }
+    }, 5000);
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    checkExchangeRates();
+});
+</script>
+{% endblock %}

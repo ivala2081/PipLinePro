@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+{% block title %}{{ _('PSP Details') }} - {{ entry.psp_name }}{% endblock %}
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <!-- Header -->
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h1 class="h3 mb-1">
+            <i class="bi bi-eye text-primary me-2"></i>{{ _('PSP Details') }}
+          </h1>
+          <p class="text-muted mb-0">{{ _('View detailed information for this PSP daily record') }}</p>
+        </div>
+        <div class="d-flex gap-2">
+          <a href="{{ url_for('analytics.psp_track') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-2"></i>{{ _('Back to Ledger') }}
+          </a>
+        </div>
+      </div>
+
+      <!-- Main Content -->
+      <div class="row">
+        <!-- PSP Information Card -->
+        <div class="col-lg-8">
+          <div class="card shadow-sm border-0">
+            <div class="card-header bg-primary text-white">
+              <h5 class="card-title mb-0">
+                <i class="bi bi-credit-card me-2"></i>{{ entry.psp_name }}
+              </h5>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label fw-semibold text-muted">{{ _('Date') }}</label>
+                    <div class="form-control-plaintext">{{ entry.date|format_date('%B %d, %Y') }}</div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label fw-semibold text-muted">{{ _('PSP Name') }}</label>
+                    <div class="form-control-plaintext">{{ entry.psp_name }}</div>
+                  </div>
+                </div>
+              </div>
+              
+              <hr class="my-4">
+              
+              <!-- Financial Details -->
+              <h6 class="fw-semibold mb-3">{{ _('Financial Details') }}</h6>
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label fw-semibold text-muted">{{ _('Deposit (Investment)') }}</label>
+                    <div class="form-control-plaintext fw-bold text-success">₺{{ entry.amount|format_number }}</div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label fw-semibold text-muted">{{ _('Withdraw (Withdrawal)') }}</label>
+                    <div class="form-control-plaintext fw-bold text-danger">₺{{ entry.withdraw|format_number }}</div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label fw-semibold text-muted">{{ _('Commission Rate') }}</label>
+                    <div class="form-control-plaintext">{{ (entry.commission_rate * 100)|round(2) }}</div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label fw-semibold text-muted">{{ _('Commission Amount') }}</label>
+                    <div class="form-control-plaintext fw-bold text-warning">₺{{ entry.commission_amount|format_number }}</div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label fw-semibold text-muted">{{ _('Net Amount') }}</label>
+                    <div class="form-control-plaintext fw-bold text-primary">₺{{ (entry.amount - entry.withdraw - entry.commission_amount)|format_number }}</div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label fw-semibold text-muted">{{ _('Allocation') }}</label>
+                    <div class="form-control-plaintext fw-bold text-info">₺{{ entry.allocation|format_number if entry.allocation else '0.00' }}</div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label fw-semibold text-muted">{{ _('Rollover (Devir)') }}</label>
+                    {% set rollover = (entry.amount - entry.withdraw - entry.commission_amount - (entry.allocation or 0)) %}
+                    <div class="form-control-plaintext fw-bold {% if rollover <= 0 %}text-success{% elif rollover < ((entry.amount - entry.withdraw - entry.commission_amount) * 0.1) %}text-warning{% else %}text-danger{% endif %}">
+                      ₺{{ rollover|format_number }}
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label fw-semibold text-muted">{{ _('Status') }}</label>
+                    <div class="form-control-plaintext">
+                      {% if rollover <= 0 %}
+                        <span class="badge bg-success">{{ _('Paid') }}</span>
+                      {% elif rollover < ((entry.amount - entry.withdraw - entry.commission_amount) * 0.1) %}
+                        <span class="badge bg-warning text-dark">{{ _('Almost Paid') }}</span>
+                      {% else %}
+                        <span class="badge bg-danger">{{ _('Unpaid') }}</span>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Summary Card -->
+        <div class="col-lg-4">
+          <div class="card shadow-sm border-0">
+            <div class="card-header bg-light">
+              <h6 class="card-title mb-0">
+                <i class="bi bi-calculator me-2"></i>{{ _('Summary') }}
+              </h6>
+            </div>
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <span class="text-muted">{{ _('Total Volume') }}</span>
+                <span class="fw-bold">₺{{ (entry.amount + entry.withdraw)|format_number }}</span>
+              </div>
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <span class="text-muted">{{ _('Net Position') }}</span>
+                <span class="fw-bold text-primary">₺{{ (entry.amount - entry.withdraw - entry.commission_amount)|format_number }}</span>
+              </div>
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <span class="text-muted">{{ _('Commission') }}</span>
+                <span class="fw-bold text-warning">₺{{ entry.commission_amount|format_number }}</span>
+              </div>
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <span class="text-muted">{{ _('Payment Rate') }}</span>
+                {% set amount = entry.amount|safe_float %}
+                {% set withdraw = entry.withdraw|safe_float %}
+                {% set commission_amount = entry.commission_amount|safe_float %}
+                {% set allocation = entry.allocation|safe_float %}
+                {% set net_position = amount - withdraw - commission_amount %}
+                {% set payment_rate = (allocation / net_position * 100) if net_position > 0 else 0 %}
+                <span class="fw-bold {% if payment_rate >= 100 %}text-success{% elif payment_rate >= 90 %}text-warning{% else %}text-danger{% endif %}">
+                  {{ payment_rate|round(1) }}%
+                </span>
+              </div>
+              
+              <hr class="my-3">
+              
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="text-muted">{{ _('Created') }}</span>
+                                        <span class="small text-muted">{{ entry.created_at|format_date('%Y-%m-%d %H:%M') if entry.created_at else 'N/A' }}</span>
+              </div>
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="text-muted">{{ _('Updated') }}</span>
+                                        <span class="small text-muted">{{ entry.updated_at|format_date('%Y-%m-%d %H:%M') if entry.updated_at else 'N/A' }}</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Quick Actions -->
+          <div class="card shadow-sm border-0 mt-3">
+            <div class="card-header bg-light">
+              <h6 class="card-title mb-0">
+                <i class="bi bi-lightning me-2"></i>{{ _('Quick Actions') }}
+              </h6>
+            </div>
+            <div class="card-body">
+              <div class="d-grid gap-2">
+                <a href="{{ url_for('analytics.psp_track') }}" class="btn btn-outline-secondary btn-sm">
+                  <i class="bi bi-list me-2"></i>{{ _('View All Records') }}
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.form-control-plaintext {
+  padding: 0.5rem 0;
+  border: none;
+  background: transparent;
+  font-size: 1rem;
+}
+
+.card {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.card-header {
+  border-bottom: none;
+  padding: 1rem 1.5rem;
+}
+
+.card-body {
+  padding: 1.5rem;
+}
+
+.badge {
+  font-size: 0.75rem;
+  padding: 0.5rem 0.75rem;
+}
+
+.btn {
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .d-flex.justify-content-between.align-items-center {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 0.25rem;
+  }
+}
+</style>
+{% endblock %} 

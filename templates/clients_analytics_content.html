@@ -1,0 +1,281 @@
+<div class="p-4">
+  <div class="row">
+    <!-- {{ _("Client") }} Performance Metrics -->
+    <div class="col-12 mb-4">
+      <div class="business-card">
+        <div class="business-card-header">
+          <h5 class="business-heading mb-0">
+            <i class="bi bi-graph-up text-primary me-2"></i>
+            {{ _("Client Analytics") }}
+          </h5>
+        </div>
+        <div class="business-card-body">
+          <div class="row">
+            <div class="col-md-3 mb-3">
+              <div class="text-center">
+                <div class="business-text-sm text-muted">{{ _("Total Clients") }}</div>
+                <div class="business-heading-2 text-primary">{{ analytics.total_clients if analytics and analytics.total_clients is not none else '0' }}</div>
+              </div>
+            </div>
+            <div class="col-md-3 mb-3">
+              <div class="text-center">
+                <div class="business-text-sm text-muted">{{ _("Active Clients") }}</div>
+                <div class="business-heading-2 text-success">{{ analytics.active_clients if analytics and analytics.active_clients is not none else '0' }}</div>
+              </div>
+            </div>
+            <div class="col-md-3 mb-3">
+              <div class="text-center">
+                <div class="business-text-sm text-muted">{{ _("Avg Transaction") }}</div>
+                <div class="business-heading-2 text-warning">₺{{ '{:,.0f}'.format(analytics.avg_transaction_value|safe_float) if analytics and analytics.avg_transaction_value is not none else '0' }}</div>
+              </div>
+            </div>
+            <div class="col-md-3 mb-3">
+              <div class="text-center">
+                <div class="business-text-sm text-muted">{{ _("Top Client Volume") }}</div>
+                <div class="business-heading-2 text-danger">₺{{ '{:,.0f}'.format(analytics.top_client_volume|safe_float) if analytics and analytics.top_client_volume is not none else '0' }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- {{ _("Client Volume") }} Chart -->
+    <div class="col-md-8 mb-4">
+      <div class="business-card">
+        <div class="business-card-header">
+          <h5 class="business-heading mb-0">
+            <i class="bi bi-bar-chart text-primary me-2"></i>
+            {{ _("Client Transaction Volume") }}
+          </h5>
+        </div>
+        <div class="business-card-body">
+          <div class="chart-container" class="inline-style-7202" >
+            <canvas id="clientVolumeChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- {{ _("Client Distribution") }} -->
+    <div class="col-md-4 mb-4">
+      <div class="business-card">
+        <div class="business-card-header">
+          <h5 class="business-heading mb-0">
+            <i class="bi bi-pie-chart text-primary me-2"></i>
+            {{ _("Client Distribution") }}
+          </h5>
+        </div>
+        <div class="business-card-body">
+          <div class="chart-container" class="inline-style-7202" >
+            <canvas id="clientDistributionChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Top Clients Table -->
+    <div class="col-md-6 mb-4">
+      <div class="business-card">
+        <div class="business-card-header">
+          <h5 class="business-heading mb-0">
+            <i class="bi bi-trophy text-primary me-2"></i>
+            {{ _("Top Performing Clients") }}
+          </h5>
+        </div>
+        <div class="business-card-body p-0">
+          {% if top_clients %}
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>{{ _("Rank") }}</th>
+                  <th>{{ _("Client") }}</th>
+                  <th>{{ _("Volume") }}</th>
+                  <th>{{ _("Transactions") }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for client in top_clients %}
+                <tr>
+                  <td>
+                    <span class="badge bg-primary">{{ loop.index }}</span>
+                  </td>
+                  <td>
+                    <div class="d-flex align-items-center">
+                      <div class="business-status online me-2">
+                        <i class="bi bi-circle-fill"></i>
+                      </div>
+                      {{ client.name }}
+                    </div>
+                  </td>
+                                      <td class="text-end fw-semibold">₺{{ '{:,.0f}'.format(client.volume|safe_float) if client.volume is not none else '0' }}</td>
+                  <td class="text-end">{{ client.transaction_count if client.transaction_count is not none else '0' }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <div class="text-center py-4">
+            <i class="bi bi-trophy text-muted" class="inline-style-9930" ></i>
+            <p class="business-text-sm text-muted mt-2">No client data available</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Client Activity Timeline -->
+    <div class="col-md-6 mb-4">
+      <div class="business-card">
+        <div class="business-card-header">
+          <h5 class="business-heading mb-0">
+            <i class="bi bi-calendar-event text-primary me-2"></i>
+            Recent Client Activity
+          </h5>
+        </div>
+        <div class="business-card-body">
+          {% if recent_activity %}
+          <div class="timeline">
+            {% for activity in recent_activity %}
+            <div class="timeline-item">
+              <div class="timeline-marker"></div>
+              <div class="timeline-content">
+                <div class="d-flex justify-content-between align-items-start">
+                  <div>
+                    <h6 class="business-heading mb-1">{{ activity.client_name }}</h6>
+                    <p class="business-text-sm text-muted mb-0">{{ activity.description }}</p>
+                  </div>
+                  <div class="text-end">
+                    <div class="business-text-sm fw-semibold">₺{{ '{:,.0f}'.format(activity.amount|safe_float) if activity.amount is not none else '0' }}</div>
+                    <div class="business-text-sm text-muted">{{ activity.date|format_date('%m-%d') }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          {% else %}
+          <div class="text-center py-4">
+            <i class="bi bi-calendar-event text-muted" class="inline-style-9930" ></i>
+            <p class="business-text-sm text-muted mt-2">No recent activity</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+    .inline-style-9930 { font-size: 2rem; }
+    .inline-style-7202 { position: relative; height: 300px; }
+.timeline {
+  position: relative;
+  padding-left: 30px;
+}
+
+.timeline-item {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.timeline-marker {
+  position: absolute;
+  left: -25px;
+  top: 5px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: #0d6efd;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 2px #0d6efd;
+}
+
+.timeline-content {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+  border-left: 3px solid #0d6efd;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // {{ _("Client Volume") }} Chart
+  const volumeCtx = document.getElementById('clientVolumeChart').getContext('2d');
+  
+  {% if volume_chart_data %}
+  const volumeChartData = {{ volume_chart_data|tojson|safe }};
+  
+  new Chart(volumeCtx, {
+    type: 'bar',
+    data: {
+      labels: volumeChartData.labels,
+      datasets: [{
+        label: 'Transaction Volume',
+        data: volumeChartData.volumes,
+        backgroundColor: 'rgba(13, 110, 253, 0.8)',
+        borderColor: 'rgba(13, 110, 253, 1)',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: function(value) {
+              return '₺' + value.toLocaleString();
+            }
+          }
+        }
+      }
+    }
+  });
+  {% endif %}
+
+  // {{ _("Client Distribution") }} Chart
+  const distributionCtx = document.getElementById('clientDistributionChart').getContext('2d');
+  
+  {% if distribution_chart_data %}
+  const distributionChartData = {{ distribution_chart_data|tojson|safe }};
+  
+  new Chart(distributionCtx, {
+    type: 'doughnut',
+    data: {
+      labels: distributionChartData.labels,
+      datasets: [{
+        data: distributionChartData.values,
+        backgroundColor: [
+          'rgba(13, 110, 253, 0.8)',
+          'rgba(25, 135, 84, 0.8)',
+          'rgba(255, 193, 7, 0.8)',
+          'rgba(220, 53, 69, 0.8)',
+          'rgba(108, 117, 125, 0.8)'
+        ],
+        borderWidth: 2,
+        borderColor: '#fff'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom'
+        }
+      }
+    }
+  });
+  {% endif %}
+});
+</script> 

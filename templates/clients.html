@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+{% block title %}Clients - Order PipLine{% endblock %}
+
+{% block content %}
+<div class="page-container">
+  <!-- Enhanced Header -->
+  <div class="page-header">
+    <div class="d-flex">
+      <div>
+        <h1 class="h2 mb-1 text-dark fw-bold">
+          <i class="bi bi-people text-primary me-2"></i>
+          Clients Management
+        </h1>
+        <p class="text-muted mb-0 small">
+          Manage client relationships, track transactions, and analyze client performance
+        </p>
+      </div>
+      <div class="d-flex align-items-center gap-3">
+        <div class="status-indicator">
+          <span class="status-dot bg-success"></span>
+          <span class="status-text small text-muted">Live</span>
+        </div>
+        <div class="text-end">
+          <div class="small text-muted">Updated</div>
+          <div class="small fw-semibold">{{ now.strftime('%H:%M') }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Streamlined Metrics -->
+  <div class="metrics-row mb-4">
+    <div class="row g-3">
+      <div class="col-md-3 col-6">
+        <div class="metric-card">
+          <div class="metric-icon bg-primary bg-opacity-10">
+            <i class="bi bi-people text-primary"></i>
+          </div>
+          <div class="metric-content">
+            <div class="metric-value">{{ client_stats.total_clients if client_stats else 0 }}</div>
+            <div class="metric-label">Total Clients</div>
+            <div class="metric-trend">
+              <i class="bi bi-arrow-up text-success"></i>
+              <span class="text-success">Active clients</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 col-6">
+        <div class="metric-card">
+          <div class="metric-icon bg-success bg-opacity-10">
+            <i class="bi bi-currency-dollar text-success"></i>
+          </div>
+          <div class="metric-content">
+                            <div class="metric-value">₺{{ '{:,.0f}'.format(client_stats.total_volume|safe_float) if client_stats and client_stats.total_volume is not none else '0' }}</div>
+            <div class="metric-label">Total Volume</div>
+            <div class="metric-trend">
+              <i class="bi bi-graph-up text-success"></i>
+              <span class="text-success">Total volume</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 col-6">
+        <div class="metric-card">
+          <div class="metric-icon bg-warning bg-opacity-10">
+            <i class="bi bi-calculator text-warning"></i>
+          </div>
+          <div class="metric-content">
+                            <div class="metric-value">₺{{ '{:,.0f}'.format(client_stats.avg_transaction|safe_float) if client_stats and client_stats.avg_transaction is not none else '0' }}</div>
+            <div class="metric-label">Avg Transaction</div>
+            <div class="metric-trend">
+              <i class="bi bi-arrow-up text-success"></i>
+              <span class="text-success">Average per client</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 col-6">
+        <div class="metric-card">
+          <div class="metric-icon bg-info bg-opacity-10">
+            <i class="bi bi-trophy text-info"></i>
+          </div>
+          <div class="metric-content">
+            <div class="metric-value">{{ client_stats.top_client if client_stats and client_stats.top_client else 'N/A' }}</div>
+            <div class="metric-label">Top Client</div>
+            <div class="metric-trend">
+              <i class="bi bi-star text-warning"></i>
+              <span class="text-muted">Top performer</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Clean Tab Navigation -->
+  <div class="tab-container">
+    <ul class="nav nav-tabs border-0" id="clientsTab" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link {% if active_tab == 'overview' %}active{% endif %} border-0"
+                id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview"
+                type="button" role="tab">
+          <i class="bi bi-grid-3x3-gap me-2"></i> Overview
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link {% if active_tab == 'transactions' %}active{% endif %} border-0"
+                id="transactions-tab" data-bs-toggle="tab" data-bs-target="#transactions"
+                type="button" role="tab">
+          <i class="bi bi-table me-2"></i> Transactions
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link {% if active_tab == 'analytics' %}active{% endif %} border-0"
+                id="analytics-tab" data-bs-toggle="tab" data-bs-target="#analytics"
+                type="button" role="tab">
+          <i class="bi bi-bar-chart-line me-2"></i> Analytics
+        </button>
+      </li>
+    </ul>
+    
+    <div class="tab-content bg-white rounded-bottom border-start border-end border-bottom" id="clientsTabContent">
+      <div class="tab-pane fade {% if active_tab == 'overview' %}show active{% endif %}"
+           id="overview" role="tabpanel">
+        {% include 'clients_overview_content.html' %}
+      </div>
+      <div class="tab-pane fade {% if active_tab == 'transactions' %}show active{% endif %}"
+           id="transactions" role="tabpanel">
+        {% include 'clients_transactions_content.html' %}
+      </div>
+      <div class="tab-pane fade {% if active_tab == 'analytics' %}show active{% endif %}"
+           id="analytics" role="tabpanel">
+        {% include 'clients_analytics_content.html' %}
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+
+{% endblock %}

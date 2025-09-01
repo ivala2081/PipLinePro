@@ -1,0 +1,279 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Add PSP Daily Record') }}{% endblock %}
+
+{% block content %}
+<div class="page-container">
+  <!-- Header Section -->
+  <div class="page-header">
+    <div class="d-flex align-items-center justify-content-between">
+      <div>
+        <h1 class="h2 mb-1 text-dark fw-bold">
+          <i class="bi bi-plus-circle text-primary me-3"></i>
+          {{ _('Add PSP Daily Record') }}
+        </h1>
+        <p class="text-muted mb-0 small">
+          {{ _('Create a new payment service provider daily transaction record') }}
+        </p>
+          </div>
+      <div>
+        <a href="{{ url_for('analytics.psp_track') }}" class="btn btn-outline-secondary">
+          <i class="bi bi-arrow-left me-2"></i>
+          {{ _('Back to PSP Track') }}
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Form Container -->
+  <div class="content-card">
+    <div class="card">
+      <form method="POST" action="{{ url_for('analytics.add_psp_track') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        
+        <!-- Basic Information Section -->
+        <div class="card-body">
+          <div class="mb-4">
+            <h3 class="h5 mb-1 text-dark fw-bold">
+              <i class="bi bi-info-circle text-info me-2"></i>
+              {{ _('Basic Information') }}
+            </h3>
+            <p class="text-muted mb-0 small">{{ _('Enter the PSP and date information') }}</p>
+          </div>
+          
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label for="psp_name" class="form-label fw-semibold">
+                <i class="bi bi-bank me-1"></i>
+                {{ _('PSP Name') }}
+              </label>
+              <div class="input-wrapper">
+                <input list="psp_list" id="psp_name" name="psp_name" class="form-control" required
+                       placeholder="{{ _('Select or enter PSP name') }}">
+                <i class="bi bi-chevron-down input-icon"></i>
+              </div>
+              <datalist id="psp_list">
+                {% for option in psps %}
+                <option value="{{ option.value }}"></option>
+                {% endfor %}
+              </datalist>
+            </div>
+            
+            <div class="col-md-6">
+              <label for="date" class="form-label fw-semibold">
+                <i class="bi bi-calendar me-1"></i>
+                {{ _('Date') }}
+              </label>
+              <div class="input-wrapper">
+                <input type="date" id="date" name="date" class="form-control" required>
+                <i class="bi bi-calendar-event input-icon"></i>
+              </div>
+        </div>
+
+        <!-- Transaction Details Section -->
+        <div class="card-body">
+          <div class="mb-4">
+            <h3 class="h5 mb-1 text-dark fw-bold">
+              <i class="bi bi-cash-stack text-success me-2"></i>
+              {{ _('Transaction Details') }}
+            </h3>
+            <p class="text-muted mb-0 small">{{ _('Enter deposit and withdrawal amounts') }}</p>
+          </div>
+          
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label for="deposit" class="form-label fw-semibold">
+                <i class="bi bi-arrow-up-circle text-success me-1"></i>
+                {{ _('Deposit (Investment)') }}
+              </label>
+              <div class="input-wrapper">
+                <input type="number" step="0.01" id="deposit" name="deposit" class="form-control" required
+                       value="0.00" placeholder="0.00">
+                <span class="currency-symbol">₺</span>
+              </div>
+            </div>
+            
+            <div class="col-md-6">
+              <label for="withdraw" class="form-label fw-semibold">
+                <i class="bi bi-arrow-down-circle text-danger me-1"></i>
+                {{ _('Withdraw (Withdrawal)') }}
+              </label>
+              <div class="input-wrapper">
+                <input type="number" step="0.01" id="withdraw" name="withdraw" class="form-control" required
+                       value="0.00" placeholder="0.00">
+                <span class="currency-symbol">₺</span>
+              </div>
+        </div>
+
+        <!-- Commission Section -->
+        <div class="card-body">
+          <div class="mb-4">
+            <h3 class="h5 mb-1 text-dark fw-bold">
+              <i class="bi bi-percent text-warning me-2"></i>
+              {{ _('Commission Details') }}
+            </h3>
+            <p class="text-muted mb-0 small">{{ _('Commission and payment information') }}</p>
+          </div>
+          
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label for="komisyon" class="form-label fw-semibold">
+                <i class="bi bi-percent text-warning me-1"></i>
+                {{ _('Commission Amount') }}
+              </label>
+              <div class="input-wrapper">
+                <input type="number" step="0.01" id="komisyon" name="komisyon" class="form-control" required
+                       value="0.00" placeholder="0.00">
+                <span class="currency-symbol">₺</span>
+              </div>
+            </div>
+            
+            <div class="col-md-6">
+              <label for="tahs_tutari" class="form-label fw-semibold">
+                <i class="bi bi-receipt text-primary me-1"></i>
+                {{ _('Amount PSP Should Pay') }}
+              </label>
+              <div class="input-wrapper">
+                <input type="number" step="0.01" id="tahs_tutari" name="tahs_tutari" class="form-control" required
+                       value="0.00" placeholder="0.00">
+                <span class="currency-symbol">₺</span>
+              </div>
+        </div>
+
+        <!-- Payment Status Section -->
+        <div class="card-body">
+          <div class="mb-4">
+            <h3 class="h5 mb-1 text-dark fw-bold">
+              <i class="bi bi-check-circle text-info me-2"></i>
+              {{ _('Payment Status') }}
+            </h3>
+            <p class="text-muted mb-0 small">{{ _('Payment tracking and balance calculation') }}</p>
+          </div>
+          
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label for="payed" class="form-label fw-semibold">
+                <i class="bi bi-cash-coin text-success me-1"></i>
+                {{ _('Amount Actually Paid') }}
+              </label>
+              <div class="input-wrapper">
+                <input type="number" step="0.01" id="payed" name="payed" class="form-control" required
+                       value="0.00" placeholder="0.00">
+                <span class="currency-symbol">₺</span>
+              </div>
+            </div>
+            
+            <div class="col-md-6">
+              <label for="difference" class="form-label fw-semibold">
+                <i class="bi bi-calculator text-secondary me-1"></i>
+                {{ _('Balance (Remaining)') }}
+              </label>
+              <div class="input-wrapper">
+                <input type="number" step="0.01" id="difference" name="difference" class="form-control enhanced readonly" readonly
+                       value="0.00" placeholder="0.00">
+                <span class="currency-symbol">₺</span>
+              </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="form-actions">
+          <div class="action-buttons">
+            <button type="submit" class="btn btn-primary btn-lg">
+              <i class="bi bi-plus-circle me-2"></i>
+              {{ _('Add Record') }}
+            </button>
+            <a href="{{ url_for('analytics.psp_track') }}" class="btn btn-outline-secondary btn-lg">
+              <i class="bi bi-x-circle me-2"></i>
+              {{ _('Cancel') }}
+            </a>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+// PSP Add Form JavaScript
+document.addEventListener('DOMContentLoaded', function() {
+  // PSP Commission Rates
+  const pspCommissionRates = {
+    {% for option in psps %}
+      "{{ option.value }}": {{ option.commission_rate or 0 }}{% if not loop.last %},{% endif %}
+    {% endfor %}
+  };
+
+  // Auto-fill commission based on PSP selection
+  const pspInput = document.getElementById('psp_name');
+  const komisyonInput = document.getElementById('komisyon');
+  
+  if (pspInput && komisyonInput) {
+    pspInput.addEventListener('change', function() {
+      const selectedPSP = this.value.trim();
+      if (selectedPSP in pspCommissionRates) {
+        komisyonInput.value = pspCommissionRates[selectedPSP].toFixed(2);
+        komisyonInput.classList.add('is-valid');
+        setTimeout(() => komisyonInput.classList.remove('is-valid'), 2000);
+      }
+    });
+  }
+
+  // Real-time balance calculation
+  const tahsInput = document.getElementById('tahs_tutari');
+  const payedInput = document.getElementById('payed');
+  const differenceInput = document.getElementById('difference');
+  
+  function updateDifference() {
+    const tahs = parseFloat(tahsInput.value) || 0;
+    const payed = parseFloat(payedInput.value) || 0;
+    const difference = tahs - payed;
+    
+    differenceInput.value = difference.toFixed(2);
+    
+    // Visual feedback based on balance
+    if (difference > 0) {
+      differenceInput.classList.add('is-invalid');
+      differenceInput.classList.remove('is-valid');
+    } else if (difference === 0) {
+      differenceInput.classList.add('is-valid');
+      differenceInput.classList.remove('is-invalid');
+    } else {
+      differenceInput.classList.remove('is-valid', 'is-invalid');
+    }
+  }
+  
+  if (tahsInput && payedInput && differenceInput) {
+    tahsInput.addEventListener('input', updateDifference);
+    payedInput.addEventListener('input', updateDifference);
+    updateDifference(); // Initial calculation
+  }
+
+  // Form validation and submission
+  const form = document.querySelector('.psp-add-form');
+  const submitBtn = form.querySelector('button[type="submit"]');
+  
+  form.addEventListener('submit', function(e) {
+    // Add loading state
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Processing...';
+    
+    // Re-enable after a delay (in case of validation errors)
+    setTimeout(() => {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<i class="bi bi-plus-circle me-2"></i>Add Record';
+    }, 3000);
+  });
+
+  // Enhanced input focus effects
+  const inputs = document.querySelectorAll('.form-control.enhanced');
+  inputs.forEach(input => {
+    input.addEventListener('focus', function() {
+      this.parentElement.style.transform = 'scale(1.02)';
+    });
+    
+    input.addEventListener('blur', function() {
+      this.parentElement.style.transform = 'scale(1)';
+    });
+  });
+});
+</script>
+{% endblock %} 

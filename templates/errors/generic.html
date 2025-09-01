@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Error {{ status_code }}{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Error {{ status_code }}
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-exclamation-circle text-danger" style="font-size: 4rem;"></i>
+                    </div>
+                    
+                    <h5 class="text-center mb-3">{{ error.user_message if error.user_message else 'An error occurred' }}</h5>
+                    
+                    {% if error.details and error.details.field %}
+                    <div class="alert alert-info">
+                        <strong>Field:</strong> {{ error.details.field }}
+                        {% if error.details.value %}
+                        <br><strong>Value:</strong> {{ error.details.value }}
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="text-center mt-4">
+                        <a href="{{ url_for('analytics.dashboard') }}" class="btn btn-primary me-2">
+                            <i class="fas fa-home me-1"></i> Go to Dashboard
+                        </a>
+                        <button onclick="history.back()" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i> Go Back
+                        </button>
+                    </div>
+                    
+                    {% if config.DEBUG and error.message %}
+                    <div class="mt-4">
+                        <details>
+                            <summary class="text-muted">Technical Details (Debug Mode)</summary>
+                            <div class="mt-2 p-3 bg-light rounded">
+                                <small class="text-muted">
+                                    <strong>Error Code:</strong> {{ error.error_code }}<br>
+                                    <strong>Message:</strong> {{ error.message }}<br>
+                                    <strong>Timestamp:</strong> {{ error.timestamp if error.timestamp else 'N/A' }}
+                                </small>
+                            </div>
+                        </details>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

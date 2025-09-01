@@ -1,0 +1,2065 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Order PipLine{% endblock %}</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='plogo.png') }}" />
+    <!-- Google Fonts: Inter & Montserrat -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@800&display=swap" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+    <!-- Optimized CSS - Consolidated from 20+ files -->
+    <!-- Optimized CSS Bundle - Consolidated from 6+ files -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bundle.min.css') }}" />
+
+    <!-- Color Contrast Improvements - Automated Professional Enhancement -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/color_improvements.css') }}" />
+    <!-- Typography System - Professional Font Hierarchy and Optimization -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base/typography-system.css') }}" />
+    <!-- Unified Design System - Based on Clients Page -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/unified-design-system.css') }}" />
+    
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <!-- JSON Error Handler - Prevents JSON parsing crashes -->
+    <script src="{{ url_for('static', filename='js/json_error_handler.js') }}"></script>
+    <!-- Unified Tab System - Based on Clients Page -->
+    <script src="{{ url_for('static', filename='js/unified-tab-system.js') }}"></script>
+    <style>
+    .inline-style-6898 { width: 100%; }
+    .inline-style-4215 { display: flex; align-items: center; }
+    .inline-style-6425 { font-family: 'Inter', sans-serif; }
+    .inline-style-1194 { width:32px;height:32px;object-fit:contain; }
+    .inline-style-9866 { display:flex;align-items:center;justify-content:center;gap:0.5rem; }
+    .inline-style-9294 { width:40px;height:40px; }
+    .inline-style-6977 { width:40px;height:40px;object-fit:cover; }
+    .inline-style-3066 { width:32px;height:32px; }
+    .inline-style-9266 { width:32px;height:32px;object-fit:cover; }
+    .inline-style-8564 { color: white; }
+    .inline-style-6687 { background: rgba(255,255,255,0.2); border: none; color: white; border-radius: 6px; padding: 8px; }
+    .inline-style-6049 { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; box-shadow: 0 2px 10px rgba(0,0,0,0.1); position: fixed; top: 0; z-index: 1060; }
+      :root {
+        --color-bg: #f4f7fa;
+        --color-surface: rgba(255,255,255,0.85);
+        --color-primary: #2e3a8c;
+        --color-primary-gradient: linear-gradient(90deg, #2e3a8c 0%, #6a82fb 100%);
+        --color-accent: #0077b6;
+        --color-accent2: #6a82fb;
+        --color-dark: #181c2f;
+        --color-light: #fff;
+        --color-glass: rgba(255,255,255,0.7);
+        --color-glass-dark: rgba(24,28,47,0.85);
+        --color-border: #e3e8f0;
+        --color-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.10);
+        --color-shadow-strong: 0 8px 32px 0 rgba(31, 38, 135, 0.18);
+        --color-sidebar: #2e3a8c;
+        --color-sidebar-link: #fff;
+        --color-sidebar-link-active: #ffd200;
+        --color-sidebar-hover: #6a82fb;
+      }
+      /* Color scheme overrides */
+      .color-scheme-default {
+        --color-primary: #2e3a8c;
+        --color-accent: #0077b6;
+        --color-bg: #f4f7fa;
+        --color-sidebar: #0000BF !important;
+      }
+      .color-scheme-blue {
+        --color-primary: #1565c0;
+        --color-accent: #00bcd4;
+        --color-bg: #e3f2fd;
+        --color-sidebar: linear-gradient(135deg, #1565c0 0%, #00bcd4 60%, #64b5f6 100%);
+      }
+      .color-scheme-green {
+        --color-primary: #388e3c;
+        --color-accent: #00b894;
+        --color-bg: #e8f5e9;
+        --color-sidebar: linear-gradient(135deg, #388e3c 0%, #00b894 60%, #b2ff59 100%);
+      }
+      .color-scheme-red {
+        --color-primary: #c62828;
+        --color-accent: #ff5252;
+        --color-bg: #ffebee;
+        --color-sidebar: linear-gradient(135deg, #c62828 0%, #ff5252 60%, #ffd6d6 100%);
+      }
+      .color-scheme-purple {
+        --color-primary: #7c3aed;
+        --color-accent: #a78bfa;
+        --color-bg: #f3e8ff;
+        --color-sidebar: linear-gradient(135deg, #7c3aed 0%, #a78bfa 60%, #f3e8ff 100%);
+        /* Soft purple shadows and gradient borders */
+        .card, .glass-card {
+          /* border: 2px solid; */
+          /* border-image: linear-gradient(90deg, #a78bfa, #7c3aed) 1; */
+          box-shadow: 0 4px 24px rgba(124,58,237,0.13);
+        }
+        a, .nav-link {
+          text-decoration: underline wavy #a78bfa;
+        }
+      }
+      .color-scheme-orange {
+        --color-primary: #ff9800;
+        --color-accent: #ffb74d;
+        --color-bg: #fff3e0;
+        --color-sidebar: linear-gradient(135deg, #ff9800 0%, #ffb74d 60%, #fff3e0 100%);
+        /* Extra rounded corners and sunburst bg */
+        .card, .glass-card, .btn, .pill-btn, .form-control {
+          border-radius: 2.2em !important;
+        }
+        body {
+          background: radial-gradient(circle at 60% 40%, #fff3e0 0%, #ffe0b2 100%) !important;
+        }
+        .btn-primary, .pill-btn {
+          animation: orange-bounce 1s infinite alternate;
+        }
+        @keyframes orange-bounce {
+          0% { transform: translateY(0); }
+          100% { transform: translateY(-2px) scale(1.03); }
+        }
+      }
+      .color-scheme-teal {
+        --color-primary: #00897b;
+        --color-accent: #4dd0e1;
+        --color-bg: #e0f7fa;
+        --color-sidebar: linear-gradient(135deg, #00897b 0%, #4dd0e1 60%, #e0f7fa 100%);
+        /* Minimalist, floating cards, teal icons */
+        .card, .glass-card {
+          box-shadow: 0 8px 32px 0 rgba(0,137,123,0.13);
+          /* border: 1px solid #4dd0e1; */
+        }
+        .sidebar-nav .nav-link i, .page-title i {
+          color: #00897b !important;
+        }
+      }
+      .color-scheme-pink {
+        --color-primary: #d81b60;
+        --color-accent: #ff80ab;
+        --color-bg: #fce4ec;
+        --color-sidebar: linear-gradient(135deg, #d81b60 0%, #ff80ab 60%, #fce4ec 100%);
+        /* Pink glow and playful font */
+        .btn-primary, .pill-btn, .form-control:focus {
+          box-shadow: 0 0 8px #ff80ab, 0 2px 8px #d81b6099;
+        }
+        h1, h2, h3, .page-title {
+          font-family: 'Pacifico', 'Inter', cursive;
+        }
+        .badge, .alert-success {
+          background: #ff80ab !important;
+          color: #fff !important;
+        }
+      }
+      .color-scheme-brown {
+        --color-primary: #6d4c41;
+        --color-accent: #bcaaa4;
+        --color-bg: #efebe9;
+        --color-sidebar: linear-gradient(135deg, #6d4c41 0%, #bcaaa4 60%, #efebe9 100%);
+        /* Paper texture, serif font, vintage borders */
+        body {
+          background: url('https://www.transparenttextures.com/patterns/paper-fibers.png') repeat #efebe9 !important;
+        }
+        h1, h2, h3, .page-title {
+          font-family: 'Merriweather', 'Georgia', serif;
+        }
+        .card, .glass-card {
+          /* border: 2px double #6d4c41; */
+          box-shadow: 0 4px 24px rgba(109,76,65,0.13);
+        }
+      }
+      .color-scheme-business {
+        --color-primary: #2563eb;
+        --color-accent: #0ea5e9;
+        --color-bg: #ffffff;
+        --color-surface: #ffffff;
+        --color-surface-secondary: #f8fafc;
+        --color-sidebar: #2563eb;
+        --color-sidebar-text: #ffffff;
+        --color-sidebar-hover: #3b82f6;
+        --color-border: #e2e8f0;
+        --color-text: #1e293b;
+        --color-text-muted: #64748b;
+        --color-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        --color-shadow-strong: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        /* Clean Professional business styling */
+        .card, .glass-card {
+          border-radius: 12px !important;
+          box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+          background: #ffffff;
+        }
+        .btn {
+          border-radius: 8px !important;
+          font-weight: 500;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .form-control, .form-select {
+          border-radius: 8px !important;
+          border: 1px solid #e2e8f0;
+          transition: all 0.3s ease;
+        }
+        .form-control:focus, .form-select:focus {
+          border-color: #2563eb !important;
+          box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
+        }
+        .table {
+          border-radius: 12px;
+          overflow: hidden;
+          box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+        }
+        .table thead {
+          background: #2563eb;
+          color: white;
+        }
+        .badge {
+          border-radius: 6px;
+          font-weight: 500;
+          text-transform: uppercase;
+          letter-spacing: 0.025em;
+        }
+      }
+      .color-scheme-default .card, .color-scheme-default .glass-card,
+      .color-scheme-blue .card, .color-scheme-blue .glass-card,
+      .color-scheme-green .card, .color-scheme-green .glass-card,
+      .color-scheme-red .card, .color-scheme-red .glass-card,
+      .color-scheme-purple .card, .color-scheme-purple .glass-card,
+      .color-scheme-orange .card, .color-scheme-orange .glass-card,
+      .color-scheme-teal .card, .color-scheme-teal .glass-card,
+      .color-scheme-pink .card, .color-scheme-pink .glass-card,
+      .color-scheme-brown .card, .color-scheme-brown .glass-card {
+        border-radius: 1.5em !important;
+      }
+      html, body {
+        font-family: 'Inter', Arial, sans-serif;
+        background: var(--color-bg);
+        min-height: 100vh;
+        color: var(--color-dark);
+      }
+      /* Font size classes for user customization */
+      .font-size-small {
+        font-size: 13px;
+      }
+      .font-size-medium {
+        font-size: 16px;
+      }
+      .font-size-large {
+        font-size: 19px;
+      }
+      .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        width: 220px;
+        background: #0000BF !important;
+        color: #f8fafc;
+        display: flex;
+        flex-direction: column;
+        z-index: 1040;
+        box-shadow: 2px 0 16px 0 rgba(0,0,191,0.3);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border-right: 1px solid #0000BF;
+        backdrop-filter: blur(10px);
+        overflow: hidden;
+        /* DEBUG: Ensure sidebar is always visible */
+        opacity: 1 !important;
+        visibility: visible !important;
+        /* Fix: Ensure proper sizing and positioning */
+        max-height: 100vh;
+        min-height: 100vh;
+      }
+      
+      .sidebar-brand {
+        padding: 0.5rem 1rem 0.5rem 1rem;
+        position: relative;
+        overflow: hidden;
+        flex-shrink: 0;
+        /* Fix: Make sidebar brand much more compact */
+        min-height: auto;
+        max-height: 60px;
+      }
+      
+      .sidebar-brand::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #0000BF, #000080);
+        animation: brand-glow 3s ease-in-out infinite alternate;
+      }
+      
+      @keyframes brand-glow {
+        0% { opacity: 0.7; }
+        100% { opacity: 1; }
+      }
+      
+      .sidebar-brand .brand-title {
+        font-size: 0.9rem;
+        font-weight: 700;
+        transition: all 0.3s ease;
+        /* Fix: Make brand title much more compact */
+        line-height: 1.1;
+        color: #fff;
+        font-family: 'Montserrat', sans-serif;
+        letter-spacing: 0.05em;
+      }
+      
+      .sidebar-content {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-y: scroll !important;
+        overflow-x: hidden !important;
+        display: flex;
+        flex-direction: column;
+        max-height: calc(100vh - 100px);
+        scrollbar-width: thin !important;
+        scrollbar-color: rgba(255, 255, 255, 0.4) rgba(255, 255, 255, 0.1) !important;
+        /* Force scrollbar to always show */
+        scrollbar-gutter: stable !important;
+        width: 100% !important;
+        /* Ensure scrollbar is always visible */
+        -webkit-overflow-scrolling: touch !important;
+        /* Fix: Ensure proper sizing */
+        padding-top: 0.25rem;
+      }
+      
+      .sidebar-content::-webkit-scrollbar {
+        width: 8px !important;
+        display: block !important;
+      }
+      
+      .sidebar-content::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.15) !important;
+        border-radius: 4px !important;
+        margin: 2px !important;
+        min-height: 40px !important;
+      }
+      
+      .sidebar-content::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.5) !important;
+        border-radius: 4px !important;
+        transition: background 0.3s ease !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        min-height: 40px !important;
+      }
+      
+      .sidebar-content::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.7) !important;
+      }
+      
+      .sidebar-content::-webkit-scrollbar-corner {
+        background: rgba(255, 255, 255, 0.1) !important;
+      }
+      
+      /* Force scrollbar to always be visible */
+      .sidebar-content {
+        scrollbar-width: thin !important;
+        scrollbar-color: rgba(255, 255, 255, 0.4) rgba(255, 255, 255, 0.1) !important;
+      }
+      
+      /* Additional scrollbar visibility for Firefox */
+      .sidebar-content {
+        scrollbar-width: thin !important;
+        scrollbar-color: rgba(255, 255, 255, 0.4) rgba(255, 255, 255, 0.1) !important;
+      }
+      
+      /* Override all other scrollbar styles with highest specificity */
+      #sidebar .sidebar-content::-webkit-scrollbar {
+        width: 8px !important;
+        display: block !important;
+        background: transparent !important;
+      }
+      
+      #sidebar .sidebar-content::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.15) !important;
+        border-radius: 4px !important;
+        margin: 2px !important;
+        min-height: 40px !important;
+      }
+      
+      #sidebar .sidebar-content::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.5) !important;
+        border-radius: 4px !important;
+        transition: background 0.3s ease !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        min-height: 40px !important;
+      }
+      
+      #sidebar .sidebar-content::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.7) !important;
+      }
+      
+      #sidebar .sidebar-content::-webkit-scrollbar-corner {
+        background: rgba(255, 255, 255, 0.1) !important;
+      }
+      
+      /* Force scrollbar to always be visible */
+      #sidebar .sidebar-content {
+        overflow-y: scroll !important;
+        scrollbar-width: thin !important;
+        scrollbar-color: rgba(255, 255, 255, 0.4) rgba(255, 255, 255, 0.1) !important;
+        scrollbar-gutter: stable !important;
+        /* Ensure content is tall enough to show scrollbar */
+        min-height: 600px !important;
+        /* DEBUG: Ensure sidebar content is visible */
+        opacity: 1 !important;
+        visibility: visible !important;
+        display: flex !important;
+        flex-direction: column !important;
+      }
+      
+      /* Additional test styles to ensure scrollbar visibility */
+      #sidebar .sidebar-content::after {
+        content: '';
+        display: block;
+        height: 1000px;
+        width: 1px;
+        opacity: 0;
+      }
+      
+      .sidebar-nav {
+        flex: 1 1 auto;
+        padding: 0.5rem 0.75rem;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 0.125rem;
+        min-height: 0;
+        width: 100% !important;
+        list-style: none !important;
+        margin: 0 !important;
+      }
+      
+      /* Force vertical stacking for all nav elements */
+      .sidebar-nav.nav.flex-column {
+        display: flex !important;
+        flex-direction: column !important;
+        width: 100% !important;
+        gap: 0.25rem !important;
+        list-style: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        /* DEBUG: Ensure navigation container is visible */
+        opacity: 1 !important;
+        visibility: visible !important;
+        height: auto !important;
+        max-height: none !important;
+      }
+      
+      /* Ensure each nav link is a block element */
+      .sidebar-nav .nav-link,
+      .sidebar-nav.nav.flex-column .nav-link {
+        display: block !important;
+        width: 100% !important;
+        margin-bottom: 0.25rem !important;
+        flex-shrink: 0 !important;
+        box-sizing: border-box !important;
+        float: none !important;
+        clear: both !important;
+      }
+      
+      /* Additional spacing for better visual separation */
+      .sidebar-nav .nav-link + .nav-link {
+        margin-top: 0.25rem !important;
+      }
+      
+      .sidebar-nav .nav-link {
+        color: #ffffff !important;
+        font-weight: 500;
+        font-size: 0.8rem;
+        border-radius: 6px;
+        margin: 0 0 0.0625rem 0;
+        padding: 0.5rem 0.75rem;
+        display: block !important;
+        width: 100% !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+        text-decoration: none;
+        border: 1px solid transparent;
+        min-height: 32px;
+        white-space: nowrap;
+        flex-shrink: 0 !important;
+        box-sizing: border-box !important;
+        float: none !important;
+        clear: both !important;
+        /* DEBUG: Ensure visibility */
+        opacity: 1 !important;
+        visibility: visible !important;
+        height: auto !important;
+        max-height: none !important;
+      }
+      
+      .sidebar-nav .nav-link::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 100%;
+        width: 0;
+        background: #ffffff;
+        transition: width 0.3s ease;
+        z-index: 0;
+      }
+      
+      .sidebar-nav .nav-link i {
+        position: relative;
+        z-index: 1;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        width: 1rem;
+        text-align: center;
+        display: inline-block;
+        margin-right: 0.5rem;
+        vertical-align: middle;
+      }
+      
+      .sidebar-nav .nav-link span {
+        position: relative;
+        z-index: 1;
+        transition: all 0.3s ease;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 180px;
+        white-space: nowrap;
+        display: inline-block;
+        vertical-align: middle;
+      }
+      
+      .sidebar-nav .nav-link:hover {
+        color: #ffffff !important;
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.1);
+        transform: translateX(4px);
+      }
+      
+      .sidebar-nav .nav-link:hover::before {
+        width: 4px;
+      }
+      
+      .sidebar-nav .nav-link.active {
+        color: #ffffff !important;
+        background: rgba(255, 255, 255, 0.15);
+        border-color: rgba(255, 255, 255, 0.3);
+        box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2);
+      }
+      
+      .sidebar-nav .nav-link.active::before {
+        width: 4px;
+      }
+      
+      .sidebar-nav .nav-link.disabled {
+        color: #64748b !important;
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      
+      .sidebar-nav .nav-link.disabled:hover {
+        transform: none;
+        background: transparent;
+        border-color: transparent;
+      }
+      
+      /* COMPREHENSIVE FIX: Ensure all navigation items are always visible */
+      .sidebar-nav,
+      .sidebar-nav .nav-link,
+      .sidebar-nav .nav-link span,
+      .sidebar-nav .nav-link i {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        height: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
+        clip: auto !important;
+        position: static !important;
+        transform: none !important;
+      }
+      
+      /* Override any responsive hiding */
+      @media (max-width: 1200px) {
+        .sidebar-nav,
+        .sidebar-nav .nav-link,
+        .sidebar-nav .nav-link span,
+        .sidebar-nav .nav-link i {
+          display: block !important;
+          visibility: visible !important;
+          opacity: 1 !important;
+        }
+      }
+      
+      @media (max-width: 991px) {
+        .sidebar-nav,
+        .sidebar-nav .nav-link,
+        .sidebar-nav .nav-link span,
+        .sidebar-nav .nav-link i {
+          display: block !important;
+          visibility: visible !important;
+          opacity: 1 !important;
+        }
+      }
+      
+      @media (max-width: 767px) {
+        .sidebar-nav,
+        .sidebar-nav .nav-link,
+        .sidebar-nav .nav-link span,
+        .sidebar-nav .nav-link i {
+          display: block !important;
+          visibility: visible !important;
+          opacity: 1 !important;
+        }
+      }
+      
+      /* FINAL COMPREHENSIVE FIX: Override any CSS that might hide navigation */
+      .sidebar-nav,
+      .sidebar-nav .nav-link,
+      .sidebar-nav .nav-link span,
+      .sidebar-nav .nav-link i,
+      .sidebar-content,
+      .sidebar {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        height: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
+        clip: auto !important;
+        position: static !important;
+        transform: none !important;
+        width: auto !important;
+        min-width: auto !important;
+        max-width: none !important;
+      }
+      
+      /* CRITICAL FIX: Ensure sidebar is always visible and properly positioned */
+      #sidebar {
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 220px !important;
+        height: 100vh !important;
+        z-index: 1040 !important;
+        background: #0000BF !important;
+        color: #ffffff !important;
+        overflow: visible !important;
+        transform: none !important;
+        box-shadow: 2px 0 16px 0 rgba(0,0,191,0.3) !important;
+      }
+      
+      /* Ensure sidebar content is always visible */
+      #sidebar .sidebar-content {
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        flex: 1 !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+      }
+      
+      /* Ensure navigation is always visible */
+      #sidebar .sidebar-nav {
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        flex-direction: column !important;
+        width: 100% !important;
+        padding: 0.5rem 0.75rem !important;
+      }
+      
+      /* Ensure all navigation links are visible */
+      #sidebar .sidebar-nav .nav-link {
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        align-items: center !important;
+        padding: 0.5rem 0.75rem !important;
+        color: #ffffff !important;
+        text-decoration: none !important;
+        border-radius: 6px !important;
+        margin-bottom: 0.0625rem !important;
+        min-height: 32px !important;
+        font-size: 0.8rem !important;
+        font-weight: 500 !important;
+      }
+      
+      /* Ensure navigation text and icons are visible */
+      #sidebar .sidebar-nav .nav-link span,
+      #sidebar .sidebar-nav .nav-link i {
+        display: inline-block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        color: #ffffff !important;
+      }
+      
+      /* Ensure navigation links are properly styled */
+      .sidebar-nav .nav-link {
+        display: flex !important;
+        align-items: center !important;
+        gap: 0.75rem !important;
+        padding: 0.75rem 1rem !important;
+        color: #ffffff !important;
+        text-decoration: none !important;
+        border-radius: 12px !important;
+        transition: all 0.3s ease !important;
+        font-weight: 500 !important;
+        white-space: nowrap !important;
+        margin-bottom: 0.25rem !important;
+        min-height: 44px !important;
+      }
+      
+      .sidebar-nav .nav-link span {
+        display: inline-block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        overflow: visible !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+      }
+      
+      .sidebar-nav .nav-link i {
+        display: inline-block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        width: 1.25rem !important;
+        text-align: center !important;
+        font-size: 1.1rem !important;
+        flex-shrink: 0 !important;
+      }
+      
+      .sidebar-footer {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-end;
+        padding: 1.5rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.02);
+        position: relative;
+        flex-shrink: 0;
+      }
+      
+      .sidebar-footer .sidebar-profile-pic {
+        margin-bottom: 0.3em;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        position: relative;
+      }
+      
+      .sidebar-footer .sidebar-profile-pic:hover {
+        box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3) !important;
+        z-index: 2;
+      }
+      
+      .sidebar-footer .sidebar-profile-pic img,
+      .sidebar-footer .sidebar-profile-pic div {
+        transition: all 0.3s ease;
+      }
+      
+      .sidebar-footer .sidebar-profile-pic:hover img,
+      .sidebar-footer .sidebar-profile-pic:hover div {
+        transform: scale(1.02);
+      }
+      
+      .sidebar-footer span {
+        font-size: 0.95em;
+        transition: all 0.3s ease;
+      }
+      
+      .sidebar-toggle {
+        display: none;
+        position: fixed;
+        top: 1rem;
+        right: 1rem;
+        background: var(--color-sidebar);
+        border: none;
+        color: #fff;
+        border-radius: 50%;
+        width: 3rem;
+        height: 3rem;
+        box-shadow: 0 4px 12px rgba(44,62,80,0.15);
+        z-index: 1050;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        font-size: 1.1rem;
+      }
+      
+      .sidebar-toggle:hover {
+        transform: scale(1.1);
+        box-shadow: 0 6px 20px rgba(44,62,80,0.25);
+      }
+      
+      .sidebar-toggle:active {
+        transform: scale(0.95);
+      }
+      @media (max-width: 991.98px) {
+        .sidebar {
+          width: 0;
+          min-width: 0;
+          overflow-x: hidden;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          transform: translateX(-100%);
+        }
+        .sidebar.open {
+          width: 200px;
+          min-width: 200px;
+          transform: translateX(0);
+        }
+        .sidebar-toggle {
+          display: block;
+        }
+        .main-content {
+          margin-left: 0 !important;
+        }
+      }
+      
+      /* Tablet breakpoint - compact sidebar */
+      @media (max-width: 1200px) and (min-width: 992px) {
+        .sidebar {
+          width: auto;
+          min-width: 160px;
+          max-width: 220px;
+        }
+        .sidebar-brand .brand-title {
+          font-size: 1.1rem;
+        }
+        .sidebar-nav .nav-link {
+          padding: 0.875rem 1rem;
+          font-size: 0.9rem;
+        }
+        .sidebar-nav .nav-link i {
+          font-size: 1rem;
+        }
+        .main-content {
+          margin-left: 220px;
+          width: calc(100vw - 220px);
+          padding-left: 2.5rem;
+          padding-right: 1.5rem;
+        }
+      }
+      
+      /* Large desktop - full sidebar */
+      @media (min-width: 1201px) {
+        .sidebar {
+          width: auto;
+          min-width: 200px;
+          max-width: 240px;
+        }
+        .sidebar-brand .brand-title {
+          font-size: 1.4rem;
+        }
+        .sidebar-nav .nav-link {
+          padding: 1.125rem 1.5rem;
+          font-size: 1rem;
+        }
+        .sidebar-nav .nav-link i {
+          font-size: 1.2rem;
+        }
+        .main-content {
+          margin-left: 240px;
+          width: calc(100vw - 240px);
+          padding-left: 2.5rem;
+          padding-right: 2rem;
+        }
+      }
+      
+      /* Extra large desktop - enhanced sidebar */
+      @media (min-width: 1400px) {
+        .sidebar {
+          width: auto;
+          min-width: 220px;
+          max-width: 280px;
+        }
+        .sidebar-brand .brand-title {
+          font-size: 1.5rem;
+        }
+        .sidebar-nav .nav-link {
+          padding: 1.25rem 1.75rem;
+          font-size: 1.05rem;
+        }
+        .sidebar-nav .nav-link i {
+          font-size: 1.3rem;
+        }
+        .main-content {
+          margin-left: 280px;
+          width: calc(100vw - 280px);
+          padding-left: 3rem;
+          padding-right: 2.5rem;
+        }
+      }
+      
+      .main-content {
+        margin-left: 220px;
+        padding: 0 1.5rem 1.5rem 1.5rem;
+        transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        min-height: 100vh;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        /* Add subtle spacing from sidebar */
+        border-left: 1px solid rgba(0, 0, 0, 0.05);
+        background: linear-gradient(90deg, rgba(0, 0, 0, 0.02) 0%, transparent 20px);
+        /* Systematic layout with proper spacing */
+        width: calc(100vw - 220px);
+        max-width: none;
+        /* Remove centering, use full available space */
+        justify-content: flex-start;
+        align-items: stretch;
+        /* Add comfortable spacing from sidebar */
+        padding-left: 2rem;
+        padding-right: 1.5rem;
+      }
+      
+      /* Container for systematic content layout */
+      .main-content-container {
+        width: 100%;
+        max-width: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        justify-content: flex-start;
+        min-height: auto;
+      }
+      
+      /* Ensure glass-card uses full width efficiently */
+      .main-content-container .glass-card {
+        width: 100%;
+        max-width: 100%;
+        margin: 0;
+      }
+      
+      /* Responsive adjustments for different screen sizes */
+      @media (min-width: 1201px) {
+        .main-content {
+          margin-left: 240px;
+          width: calc(100vw - 240px);
+          padding-left: 2.5rem;
+          padding-right: 2rem;
+        }
+      }
+      
+      @media (min-width: 1400px) {
+        .main-content {
+          margin-left: 280px;
+          width: calc(100vw - 280px);
+          padding-left: 3rem;
+          padding-right: 2.5rem;
+        }
+      }
+      
+      @media (max-width: 1200px) and (min-width: 992px) {
+        .main-content {
+          margin-left: 180px;
+          width: calc(100vw - 180px);
+          padding-left: 2rem;
+          padding-right: 1.5rem;
+        }
+      }
+      
+      /* Remove top padding for hero sections to be flush with the top */
+      .clients-hero-header, .psp-hero-header {
+        margin-top: 0 !important;
+      }
+      
+      @media (max-width: 991.98px) {
+        .main-content {
+          margin-left: 0;
+          width: 100vw;
+          padding: 1rem 1rem 1rem 1rem;
+          justify-content: flex-start;
+          align-items: stretch;
+        }
+        .main-content-container {
+          padding: 0;
+          align-items: stretch;
+          justify-content: flex-start;
+        }
+      }
+      
+      @media (max-width: 768px) {
+        .main-content {
+          padding: 0.75rem 0.75rem 1rem 0.75rem;
+          justify-content: flex-start;
+          align-items: stretch;
+        }
+        .main-content-container {
+          padding: 0;
+        }
+        .sidebar-toggle {
+          top: 0.75rem;
+          right: 0.75rem;
+          width: 2.75rem;
+          height: 2.75rem;
+          font-size: 1rem;
+        }
+      }
+      
+      @media (max-width: 576px) {
+        .main-content {
+          padding: 0.5rem 0.5rem 1rem 0.5rem;
+          justify-content: flex-start;
+          align-items: stretch;
+        }
+        .main-content-container {
+          padding: 0;
+        }
+        .sidebar-toggle {
+          top: 0.5rem;
+          right: 0.5rem;
+          width: 2.5rem;
+          height: 2.5rem;
+          font-size: 0.9rem;
+        }
+      }
+      .main-content > .glass-card:first-child {
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+      }
+      .brand-title {
+        font-family: inherit;
+        font-size: inherit;
+        font-weight: inherit;
+        letter-spacing: inherit;
+        text-transform: inherit;
+        background: inherit;
+        -webkit-background-clip: inherit;
+        -webkit-text-fill-color: inherit;
+        background-clip: inherit;
+        text-fill-color: inherit;
+        text-shadow: inherit;
+        border: none;
+        padding: 0;
+      }
+      .color-scheme-default .sidebar {
+        box-shadow: 0 0 24px 2px #6a82fb55, 2px 0 16px 0 rgba(44,62,80,0.08);
+      }
+      .color-scheme-blue .sidebar {
+        box-shadow: 0 0 24px 2px #00bcd455, 2px 0 16px 0 rgba(44,62,80,0.08);
+      }
+      .color-scheme-green .sidebar {
+        box-shadow: 0 0 24px 2px #00b89455, 2px 0 16px 0 rgba(44,62,80,0.08);
+      }
+      .color-scheme-red .sidebar {
+        box-shadow: 0 0 24px 2px #ff525255, 2px 0 16px 0 rgba(44,62,80,0.08);
+      }
+      .color-scheme-purple .sidebar {
+        box-shadow: 0 0 24px 2px #a78bfa55, 2px 0 16px 0 rgba(44,62,80,0.08);
+      }
+      .color-scheme-orange .sidebar {
+        box-shadow: 0 0 24px 2px #ffb74d55, 2px 0 16px 0 rgba(44,62,80,0.08);
+      }
+      .color-scheme-teal .sidebar {
+        box-shadow: 0 0 24px 2px #4dd0e155, 2px 0 16px 0 rgba(44,62,80,0.08);
+      }
+      .color-scheme-pink .sidebar {
+        box-shadow: 0 0 24px 2px #ff80ab55, 2px 0 16px 0 rgba(44,62,80,0.08);
+      }
+      .color-scheme-brown .sidebar {
+        box-shadow: 0 0 24px 2px #bcaaa455, 2px 0 16px 0 rgba(44,62,80,0.08);
+      }
+      
+      /* Professional Business Theme */
+      .color-scheme-business {
+        --color-primary: #1e3a8a;
+        --color-accent: #0ea5e9;
+        --color-bg: #f8fafc;
+        --color-sidebar: #0000BF !important;
+        --color-surface: rgba(255, 255, 255, 0.95);
+        --color-border: #e2e8f0;
+        --color-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        --color-shadow-strong: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      }
+      
+      .color-scheme-business .sidebar {
+        background: #0000BF !important;
+        box-shadow: 0 0 24px 2px rgba(0, 0, 191, 0.3), 2px 0 16px 0 rgba(44,62,80,0.08);
+      }
+      
+      /* Override all color schemes to use dark blue sidebar */
+      .sidebar {
+        background: #0000BF !important;
+      }
+      
+      /* Enhanced responsive behavior for sidebar */
+      @media (max-width: 1200px) and (min-width: 992px) {
+        .sidebar-nav .nav-link span {
+          font-size: 0.85rem;
+        }
+        .sidebar-nav .nav-link i {
+          font-size: 1.1rem;
+        }
+      }
+      
+      @media (max-width: 991.98px) {
+        .sidebar-nav .nav-link span {
+          display: block;
+          font-size: 0.9rem;
+        }
+        .sidebar-nav .nav-link i {
+          font-size: 1.1rem;
+        }
+      }
+      
+      /* Hide username in sidebar footer, only show on tooltip */
+      .sidebar-footer-username {
+        display: none !important;
+      }
+      
+      /* Sidebar footer always at the bottom, profile pic always centered horizontally */
+      .sidebar-footer {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-end;
+        padding-bottom: 0.8em;
+        padding-top: 0.5em;
+        position: relative;
+        left: 0;
+        bottom: 0;
+        /* Fix: Make footer more compact */
+        min-height: auto;
+        max-height: 60px;
+      }
+      
+      .sidebar-footer .sidebar-profile-pic {
+        margin-bottom: 0.3em;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      /* Sidebar Section Styling */
+      .sidebar-section {
+        margin-bottom: 1.5rem;
+      }
+      
+      .sidebar-section-header {
+        padding: 0.5rem 1.25rem 0.25rem 1.25rem;
+        margin-bottom: 0.5rem;
+      }
+      
+      .sidebar-section-title {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.6);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        display: block;
+        position: relative;
+      }
+      
+      .sidebar-section-title::after {
+        content: '';
+        position: absolute;
+        bottom: -0.25rem;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, rgba(255, 255, 255, 0.2), transparent);
+      }
+      
+      /* Enhanced nav-link spacing within sections */
+      .sidebar-section .nav-link {
+        margin-bottom: 0.25rem;
+      }
+      
+      .sidebar-section .nav-link:last-child {
+        margin-bottom: 0;
+      }
+      
+      /* Improved hover effects for sectioned navigation */
+      .sidebar-section .nav-link:hover {
+        transform: translateX(6px);
+      }
+      
+      .sidebar-section .nav-link.active {
+        transform: translateX(4px);
+      }
+
+      /* Responsive adjustments for sidebar sections */
+      @media (max-width: 1200px) and (min-width: 992px) {
+        .sidebar-section-title {
+          font-size: 0.7rem;
+        }
+        .sidebar-section {
+          margin-bottom: 1.25rem;
+        }
+      }
+      
+      @media (max-width: 991.98px) {
+        .sidebar-section-title {
+          font-size: 0.8rem;
+        }
+        .sidebar-section {
+          margin-bottom: 1.75rem;
+        }
+        .sidebar-section-header {
+          padding: 0.75rem 1.25rem 0.5rem 1.25rem;
+        }
+      }
+      
+      /* Enhanced visual feedback for active states */
+      .sidebar-section .nav-link.active .sidebar-link-text {
+        font-weight: 600;
+      }
+      
+      .sidebar-section .nav-link.active i {
+        transform: scale(1.1);
+      }
+      
+      /* Smooth transitions for all interactive elements */
+      .sidebar-section .nav-link,
+      .sidebar-section .nav-link i,
+      .sidebar-section .nav-link span {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      /* Professional Sidebar Footer Styling */
+      .sidebar-footer {
+        padding: 1.5rem 1rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.02) 0%, rgba(255, 255, 255, 0.05) 100%);
+      }
+      
+      .sidebar-profile-section {
+        display: flex;
+        align-items: center;
+        gap: 0.875rem;
+        padding: 0.75rem;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+      }
+      
+      .sidebar-profile-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, #3b82f6, #1e40af);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+      
+      .sidebar-profile-section:hover {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(255, 255, 255, 0.15);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+      }
+      
+      .sidebar-profile-section:hover::before {
+        opacity: 1;
+      }
+      
+      .sidebar-profile-pic {
+        position: relative;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: transparent;
+        border-radius: 50%;
+        overflow: hidden;
+      }
+      
+      .profile-image {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        background: transparent;
+      }
+      
+      .profile-placeholder {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: #3b82f6;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      }
+      
+      .profile-placeholder i {
+        font-size: 1.5rem;
+        color: white;
+      }
+      
+      .sidebar-profile-section:hover .profile-image,
+      .sidebar-profile-section:hover .profile-placeholder {
+        border-color: rgba(255, 255, 255, 0.4);
+        transform: scale(1.05);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+      }
+      
+      .profile-status-indicator {
+        position: absolute;
+        bottom: 2px;
+        right: 2px;
+        width: 12px;
+        height: 12px;
+        background: #10b981;
+        border-radius: 50%;
+        border: 2px solid #1e293b;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        animation: status-pulse 2s infinite;
+      }
+      
+      @keyframes status-pulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.7; transform: scale(1.1); }
+      }
+      
+      .sidebar-profile-info {
+        flex: 1;
+        min-width: 0;
+      }
+      
+      .profile-name {
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: #ffffff;
+        margin-bottom: 0.125rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        line-height: 1.2;
+      }
+      
+      .profile-role {
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.7);
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        line-height: 1.2;
+      }
+      
+      /* Responsive adjustments for profile section */
+      @media (max-width: 1200px) and (min-width: 992px) {
+        .sidebar-profile-section {
+          padding: 0.625rem;
+          gap: 0.75rem;
+        }
+        
+        .profile-image,
+        .profile-placeholder {
+          width: 42px;
+          height: 42px;
+        }
+        
+        .profile-name {
+          font-size: 0.85rem;
+        }
+        
+        .profile-role {
+          font-size: 0.7rem;
+        }
+      }
+      
+      @media (max-width: 991.98px) {
+        .sidebar-profile-section {
+          padding: 1rem;
+          gap: 1rem;
+        }
+        
+        .profile-image,
+        .profile-placeholder {
+          width: 52px;
+          height: 52px;
+        }
+        
+        .profile-name {
+          font-size: 0.95rem;
+        }
+        
+        .profile-role {
+          font-size: 0.8rem;
+        }
+      }
+      /* Modal z-index fix to ensure modals and backdrops are always on top */
+      .modal,
+      .modal-backdrop {
+        z-index: 2000 !important;
+      }
+      
+      /* Additional modal fixes to prevent backdrop issues */
+      .modal-backdrop {
+        z-index: 1999 !important;
+      }
+      
+      /* Ensure body doesn't get stuck with modal-open class */
+      body.modal-open {
+        overflow: auto !important;
+        padding-right: 0 !important;
+      }
+      
+      /* Force remove any stuck modal backdrops */
+      .modal-backdrop.show {
+        opacity: 0.5 !important;
+      }
+      
+      /* Ensure interactive elements are never blocked by backdrop */
+      body:not(.modal-open) .modal-backdrop {
+        display: none !important;
+        pointer-events: none !important;
+      }
+      
+      /* Force enable all interactive elements when modal is closed */
+      body:not(.modal-open) button,
+      body:not(.modal-open) a,
+      body:not(.modal-open) input,
+      body:not(.modal-open) select,
+      body:not(.modal-open) textarea {
+        pointer-events: auto !important;
+        opacity: 1 !important;
+      }
+      
+      /* Remove any focus trap when modal is not open */
+      body:not(.modal-open) * {
+        pointer-events: auto !important;
+      }
+    </style>
+    {% block head %}{% endblock %}
+</head>
+<body class="font-size-{{ user_settings.font_size if user_settings and user_settings.font_size else 'medium' }} color-scheme-{{ user_settings.color_scheme if user_settings and user_settings.color_scheme else 'default' }}">
+
+<div class="sidebar d-flex flex-column" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-content">
+        <img src="{{ url_for('static', filename='plogo.png') }}" alt="PipLine Logo" class="brand-logo" onerror="this.style.display='none'; document.getElementById('brand-fallback').style.display='flex';" onload="document.getElementById('brand-fallback').style.display='none';">
+        <div id="brand-fallback" class="brand-fallback">
+          P
+        </div>
+        <span class="brand-title">
+          PipLine
+        </span>
+      </div>
+    </div>
+    <div class="sidebar-content">
+      <nav class="sidebar-nav nav flex-column">
+        <a class="nav-link {% if request.endpoint == 'analytics.dashboard' %}active{% endif %}" href="{{ url_for('analytics.dashboard') }}" title="Dashboard - Overview and key metrics">
+          <i class="bi bi-speedometer2"></i> 
+          <span class="sidebar-link-text">{{ _('Dashboard') }}</span>
+        </a>
+        <a class="nav-link {% if request.endpoint == 'transactions.clients' %}active{% endif %}" href="{{ url_for('transactions.clients') }}" title="Transactions - Manage all transactions">
+          <i class="bi bi-credit-card"></i> 
+          <span class="sidebar-link-text">{{ _('Transactions') }}</span>
+        </a>
+        <a class="nav-link {% if request.endpoint == 'analytics.agent_management' %}active{% endif %}" href="{{ url_for('analytics.agent_management') }}" title="Accounting - Salary, bonuses and commission calculations">
+          <i class="bi bi-calculator"></i> 
+          <span class="sidebar-link-text">{{ _('Accounting') }}</span>
+        </a>
+        <a class="nav-link {% if request.endpoint == 'analytics.analytics' %}active{% endif %}" href="{{ url_for('analytics.analytics') }}" title="Analytics - Detailed reports and insights">
+          <i class="bi bi-graph-up"></i> 
+          <span class="sidebar-link-text">{{ _('Analytics') }}</span>
+        </a>
+        <a class="nav-link {% if request.endpoint == 'analytics.business_analytics' %}active{% endif %}" href="{{ url_for('analytics.business_analytics') }}" title="Business Analytics - Advanced business insights">
+          <i class="bi bi-bar-chart-line"></i> 
+          <span class="sidebar-link-text">{{ _('Business') }}</span>
+        </a>
+        <a class="nav-link {% if request.endpoint == 'settings.settings' %}active{% endif %}" href="{{ url_for('settings.settings') }}" title="Settings - Configure system preferences">
+          <i class="bi bi-gear-fill"></i> 
+          <span class="sidebar-link-text">{{ _('Settings') }}</span>
+        </a>
+      </nav>
+    </div>
+    {% if current_user.is_authenticated %}
+    <div class="sidebar-footer">
+      <div class="profile-picture-container" onclick="window.location.href='{{ url_for('settings.settings') }}'" title="Click to go to Profile Settings">
+        {% if current_user.profile_picture %}
+          <img src="{{ url_for('static', filename='uploads/' + current_user.profile_picture) }}" 
+               alt="{{ current_user.username }}" class="profile-picture">
+        {% else %}
+          <div class="profile-picture-placeholder">
+            <i class="bi bi-person-circle"></i>
+          </div>
+        {% endif %}
+        <div class="profile-status-indicator"></div>
+      </div>
+      <div class="profile-info">
+        <div class="profile-name">{{ current_user.username }}</div>
+        <div class="profile-role">Administrator</div>
+        <div class="profile-status">Online</div>
+      </div>
+      <div class="profile-actions">
+        <button class="profile-action-btn" onclick="window.location.href='{{ url_for('settings.settings') }}'" title="Settings">
+          <i class="bi bi-gear"></i>
+        </button>
+        <button class="profile-action-btn" onclick="window.location.href='{{ url_for('auth.logout') }}'" title="{{ _('Logout') }}">
+          <i class="bi bi-box-arrow-right"></i>
+        </button>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+  
+  <!-- Mobile Header with Toggle Button -->
+  <div class="mobile-header d-lg-none">
+    <button class="sidebar-toggle" id="sidebarToggle" type="button" aria-label="Toggle Sidebar">
+      <i class="bi bi-list"></i>
+    </button>
+    <div class="mobile-brand">
+      <img src="{{ url_for('static', filename='plogo.png') }}" alt="PipLine" class="mobile-logo">
+      <span class="mobile-title">PipLine</span>
+    </div>
+  </div>
+  
+  <!-- Sidebar Overlay for Mobile -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+  
+  <!-- Navigation Order Fix Script -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Ensure navigation items are properly ordered
+      const sidebarNav = document.querySelector('.sidebar-nav');
+      if (sidebarNav) {
+        const navLinks = sidebarNav.querySelectorAll('.nav-link');
+        console.log('Navigation items found:', navLinks.length);
+        
+        // Ensure proper order and visibility
+        navLinks.forEach((link, index) => {
+          link.style.order = (index + 1);
+          link.style.display = 'flex';
+          link.style.visibility = 'visible';
+          link.style.opacity = '1';
+          link.style.position = 'relative';
+          link.style.zIndex = '1';
+        });
+        
+        // Force layout recalculation
+        sidebarNav.style.display = 'flex';
+        sidebarNav.style.flexDirection = 'column';
+        sidebarNav.style.gap = '0.25rem';
+      }
+    });
+  </script>
+  
+<div class="main-content">
+  <!-- Professional Toast Notification Container -->
+  <div class="toast-container toast-top-right" id="toastContainer"></div>
+  
+  <!-- Enhanced Layout Styles -->
+  <style>
+    /* Mobile sidebar toggle button styling */
+    .sidebar-toggle {
+      transition: all 0.3s ease;
+    }
+    
+    .sidebar-toggle:hover {
+      transform: scale(1.1);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    
+    /* Main content area styling */
+    .main-content {
+      transition: all 0.3s ease;
+    }
+    
+    /* Sidebar dropdown menu styling */
+    .sidebar-footer .dropdown-menu {
+      border: none;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      border-radius: 12px;
+      padding: 0.5rem 0;
+      margin-bottom: 10px;
+    }
+    
+    .sidebar-footer .dropdown-item {
+      padding: 0.75rem 1rem;
+      transition: all 0.2s ease;
+    }
+    
+    .sidebar-footer .dropdown-item:hover {
+      background: rgba(46, 58, 140, 0.1);
+      color: #2e3a8c;
+    }
+    
+    .sidebar-footer .dropdown-header {
+      padding: 1rem;
+      background: rgba(46, 58, 140, 0.05);
+      border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    }
+  </style>
+  
+  <!-- Flash Messages to Toast Conversion -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <script>
+        // Wait for notification manager to be available
+        function showFlashMessages() {
+          if (window.notificationManager) {
+            // Clear any existing notifications first
+            window.notificationManager.clearAll();
+            
+            // Show new messages with delay to prevent conflicts
+            {% for category, msg in messages %}
+              setTimeout(() => {
+                if (window.notificationManager) {
+                  window.notificationManager.showNotification({{ msg|tojson }}, {{ category|tojson }});
+                }
+              }, {{ loop.index * 200 }});
+            {% endfor %}
+          } else {
+            // Retry after a short delay if notification manager is not available
+            setTimeout(showFlashMessages, 100);
+          }
+        }
+        
+        // Start showing flash messages when DOM is ready
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', showFlashMessages);
+        } else {
+          showFlashMessages();
+        }
+      </script>
+    {% endif %}
+  {% endwith %}
+  
+  <!-- Centered Content Container -->
+  <div class="main-content-container">
+    <div class="glass-card">
+      {% block content %}{% endblock %}
+    </div>
+  </div>
+</div>
+<!-- jQuery (required for DataTables) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        <!-- Bundle Fix - Fixes wrong API URLs in bundle -->
+        <script src="{{ url_for('static', filename='js/bundle_fix.js') }}"></script>
+        <!-- Optimized JavaScript Bundle - Consolidated from 5+ files -->
+        <script src="{{ url_for('static', filename='js/bundle.min.js') }}"></script>
+        
+        <!-- CSRF Token Handling -->
+        <script>
+        // CSRF Token Management
+        document.addEventListener('DOMContentLoaded', function() {
+            // Function to get CSRF token from meta tag or generate one
+            function getCSRFToken() {
+                const metaToken = document.querySelector('meta[name="csrf-token"]');
+                if (metaToken && metaToken.content && metaToken.content !== '__CSRF_TOKEN_PLACEHOLDER__') {
+                    return metaToken.content;
+                }
+                
+                // If no valid token in meta tag, try to fetch one
+                return fetch('/api/csrf-token', {
+                    method: 'GET',
+                    credentials: 'same-origin'
+                })
+                .then(response => response.json())
+                .then(data => data.csrf_token)
+                .catch(error => {
+                    console.warn('Could not fetch CSRF token:', error);
+                    return null;
+                });
+            }
+            
+            // Function to update all CSRF token inputs
+            async function updateCSRFTokens() {
+                const token = await getCSRFToken();
+                if (token) {
+                    // Update meta tag
+                    const metaToken = document.querySelector('meta[name="csrf-token"]');
+                    if (metaToken) {
+                        metaToken.content = token;
+                    }
+                    
+                    // Update all hidden CSRF token inputs
+                    const csrfInputs = document.querySelectorAll('input[name="csrf_token"]');
+                    csrfInputs.forEach(input => {
+                        input.value = token;
+                    });
+                }
+            }
+            
+            // Update CSRF tokens on page load
+            updateCSRFTokens();
+            
+            // Update CSRF tokens before form submissions
+            document.addEventListener('submit', function(e) {
+                const form = e.target;
+                const csrfInput = form.querySelector('input[name="csrf_token"]');
+                if (csrfInput && csrfInput.value === '__CSRF_TOKEN_PLACEHOLDER__') {
+                    e.preventDefault();
+                    updateCSRFTokens().then(() => {
+                        form.submit();
+                    });
+                }
+            });
+        });
+        </script>
+<script>
+  // Initialize sidebar functionality when DOM is ready
+  document.addEventListener('DOMContentLoaded', function() {
+    if (typeof initSidebar === 'function') {
+      initSidebar();
+    }
+  });
+</script>
+<script>
+// Pure JS resizable columns for .transactions-table
+document.addEventListener('DOMContentLoaded', function() {
+  const table = document.querySelector('.transactions-table');
+  if (!table) return;
+  
+  // Enhanced horizontal scroll functionality for table-responsive-enhanced
+  const tableContainers = document.querySelectorAll('.table-responsive-enhanced');
+  tableContainers.forEach(container => {
+    const table = container.querySelector('table');
+    if (!table) return;
+    
+    // Add scroll indicators
+    function updateScrollIndicators() {
+      const scrollLeft = container.scrollLeft;
+      const maxScrollLeft = container.scrollWidth - container.clientWidth;
+      
+      if (scrollLeft > 0) {
+        container.classList.add('scroll-left');
+      } else {
+        container.classList.remove('scroll-left');
+      }
+      
+      if (scrollLeft < maxScrollLeft) {
+        container.classList.add('scroll-right');
+      } else {
+        container.classList.remove('scroll-right');
+      }
+    }
+    
+    // Initialize scroll indicators
+    updateScrollIndicators();
+    
+    // Update on scroll
+    container.addEventListener('scroll', updateScrollIndicators);
+    
+    // Update on resize
+    window.addEventListener('resize', updateScrollIndicators);
+    
+    // Add smooth scroll behavior
+    container.style.scrollBehavior = 'smooth';
+  });
+  const ths = table.querySelectorAll('th');
+  ths.forEach((th, i) => {
+    if (i === ths.length - 1) return; // Skip last column (actions)
+    th.style.position = 'relative';
+    const resizer = document.createElement('div');
+    resizer.style.position = 'absolute';
+    resizer.style.right = '0';
+    resizer.style.top = '0';
+    resizer.style.width = '6px';
+    resizer.style.height = '100%';
+    resizer.style.cursor = 'col-resize';
+    resizer.style.userSelect = 'none';
+    resizer.style.zIndex = '10';
+    resizer.classList.add('col-resizer');
+    th.appendChild(resizer);
+    let startX, startWidth;
+    resizer.addEventListener('mousedown', function(e) {
+      startX = e.pageX;
+      startWidth = th.offsetWidth;
+      document.body.style.cursor = 'col-resize';
+      function onMouseMove(e2) {
+        let newWidth = startWidth + (e2.pageX - startX);
+        // Set min/max width
+        newWidth = Math.max(70, Math.min(newWidth, 500));
+        th.style.width = newWidth + 'px';
+        th.style.minWidth = newWidth + 'px';
+        th.style.maxWidth = newWidth + 'px';
+        // Set all tds in this column
+        table.querySelectorAll('tr').forEach(row => {
+          if (row.children[i]) {
+            row.children[i].style.width = newWidth + 'px';
+            row.children[i].style.minWidth = newWidth + 'px';
+            row.children[i].style.maxWidth = newWidth + 'px';
+          }
+        });
+      }
+      function onMouseUp() {
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+        document.body.style.cursor = '';
+      }
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
+    });
+  });
+});
+
+// Fallback mechanism for external resources
+window.addEventListener('error', function(e) {
+    if (e.target.tagName === 'LINK' || e.target.tagName === 'SCRIPT') {
+        console.warn('Failed to load external resource:', e.target.src || e.target.href);
+    }
+}, true);
+
+// Check if Bootstrap is loaded
+window.addEventListener('load', function() {
+    if (typeof bootstrap === 'undefined') {
+        console.warn('Bootstrap not loaded - some features may not work properly');
+    }
+    if (typeof Chart === 'undefined') {
+        console.warn('Chart.js not loaded - charts may not display properly');
+    }
+});
+</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+            <!-- Additional optimized scripts loaded above -->
+{% block scripts %}{% endblock %}
+
+<script>
+// Professional Toast Notification System
+function closeToast(button) {
+  const toast = button.closest('.toast-notification');
+  if (toast) {
+    toast.classList.add('hide');
+    setTimeout(() => {
+      if (toast.parentNode) {
+        toast.remove();
+      }
+    }, 400);
+  }
+}
+
+// Use the professional notification system
+function showToast(message, type = 'info', duration = 5000) {
+  // Check if the professional notification system is available
+  if (window.notificationManager) {
+    window.notificationManager.showNotification(message, type, duration);
+  } else {
+    // Fallback to basic notification if professional system is not available
+    const container = document.getElementById('toastContainer');
+    if (!container) return;
+
+    // Check for duplicate messages to prevent conflicts
+    const existingToasts = container.querySelectorAll('.toast-notification');
+    for (let toast of existingToasts) {
+      const toastBody = toast.querySelector('.toast-body');
+      if (toastBody && toastBody.textContent === message) {
+        // Don't show duplicate messages
+        return;
+      }
+    }
+
+    const toast = document.createElement('div');
+    toast.className = `toast-notification ${type}`;
+    
+    // Get appropriate icon and title based on type
+    let icon, title;
+    switch(type) {
+      case 'success':
+        icon = 'fas fa-check';
+        title = 'Success';
+        break;
+      case 'error':
+        icon = 'fas fa-exclamation-triangle';
+        title = 'Error';
+        break;
+      case 'warning':
+        icon = 'fas fa-exclamation-circle';
+        title = 'Warning';
+        break;
+      case 'info':
+      default:
+        icon = 'fas fa-info-circle';
+        title = 'Information';
+        break;
+    }
+
+    toast.innerHTML = `
+      <div class="toast-header">
+        <div class="inline-style-4215" >
+          <div class="toast-icon">
+            <i class="${icon}"></i>
+          </div>
+          <h6 class="toast-title">${title}</h6>
+        </div>
+        <button type="button" class="toast-close" onclick="closeToast(this)">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="toast-body">${message}</div>
+      <div class="toast-progress" class="inline-style-6898" ></div>
+    `;
+
+    container.appendChild(toast);
+    
+    // Trigger entrance animation
+    setTimeout(() => {
+      toast.classList.add('show');
+    }, 10);
+
+    // Start progress bar animation
+    const progress = toast.querySelector('.toast-progress');
+    if (progress) {
+      const startTime = Date.now();
+      const animateProgress = () => {
+        const elapsed = Date.now() - startTime;
+        const progressPercent = Math.max(0, 100 - (elapsed / duration) * 100);
+        progress.style.width = progressPercent + '%';
+        
+        if (progressPercent > 0) {
+          requestAnimationFrame(animateProgress);
+        }
+      };
+      requestAnimationFrame(animateProgress);
+    }
+
+    // Auto remove after duration
+    setTimeout(() => {
+      toast.classList.add('hide');
+      setTimeout(() => {
+        if (toast.parentNode) {
+          toast.remove();
+        }
+      }, 400);
+    }, duration);
+  }
+}
+
+// Enable Bootstrap tooltips for profile picture
+document.addEventListener('DOMContentLoaded', function() {
+  var tooltipTriggerList = [].slice.call(document.querySelectorAll('.sidebar-profile-pic'));
+  tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+    new bootstrap.Tooltip(tooltipTriggerEl);
+  });
+  
+  // DEBUG: Check navigation items
+  console.log('Checking navigation items...');
+  const navLinks = document.querySelectorAll('.sidebar-nav .nav-link');
+  console.log('Found navigation links:', navLinks.length);
+  navLinks.forEach((link, index) => {
+    console.log(`Nav link ${index + 1}:`, link.textContent.trim(), link.href);
+    // Ensure visibility
+    link.style.display = 'block';
+    link.style.visibility = 'visible';
+    link.style.opacity = '1';
+  });
+  
+  // Force scrollbar visibility for sidebar
+  const sidebarContent = document.querySelector('#sidebar .sidebar-content');
+  if (sidebarContent) {
+    console.log('Sidebar content found:', sidebarContent);
+    // Force scrollbar to be visible
+    sidebarContent.style.overflowY = 'scroll';
+    sidebarContent.style.scrollbarWidth = 'thin';
+    sidebarContent.style.scrollbarColor = 'rgba(255, 255, 255, 0.4) rgba(255, 255, 255, 0.1)';
+    
+    // Ensure sidebar content is visible
+    sidebarContent.style.display = 'flex';
+    sidebarContent.style.visibility = 'visible';
+    sidebarContent.style.opacity = '1';
+    
+    // Add some content to ensure scrollbar appears
+    const navLinks = sidebarContent.querySelectorAll('.nav-link');
+    if (navLinks.length > 10) {
+      // If there are many nav links, ensure scrollbar is visible
+      sidebarContent.style.maxHeight = 'calc(100vh - 200px)';
+      sidebarContent.style.overflowY = 'scroll';
+    }
+    
+    // Force scrollbar to always show
+    sidebarContent.style.scrollbarGutter = 'stable';
+  } else {
+    console.log('Sidebar content not found!');
+  }
+  
+  // COMPREHENSIVE FIX: Force all navigation items to be visible
+  setTimeout(() => {
+    const allNavLinks = document.querySelectorAll('.sidebar-nav .nav-link');
+    console.log('Comprehensive fix: Found', allNavLinks.length, 'navigation links');
+    
+    allNavLinks.forEach((link, index) => {
+      // Force visibility
+      link.style.display = 'flex';
+      link.style.visibility = 'visible';
+      link.style.opacity = '1';
+      link.style.height = 'auto';
+      link.style.maxHeight = 'none';
+      link.style.overflow = 'visible';
+      link.style.clip = 'auto';
+      link.style.position = 'static';
+      link.style.transform = 'none';
+      link.style.alignItems = 'center';
+      link.style.color = '#ffffff';
+      
+      // Ensure text and icons are visible
+      const text = link.querySelector('.sidebar-link-text');
+      const icon = link.querySelector('i');
+      
+      if (text) {
+        text.style.display = 'inline-block';
+        text.style.visibility = 'visible';
+        text.style.opacity = '1';
+        text.style.color = '#ffffff';
+      }
+      
+      if (icon) {
+        icon.style.display = 'inline-block';
+        icon.style.visibility = 'visible';
+        icon.style.opacity = '1';
+        icon.style.color = '#ffffff';
+        icon.style.marginRight = '0.5rem';
+      }
+      
+      console.log(`Fixed nav link ${index + 1}:`, link.textContent.trim());
+    });
+    
+    // Also fix the navigation container
+    const navContainer = document.querySelector('.sidebar-nav');
+    if (navContainer) {
+      navContainer.style.display = 'flex';
+      navContainer.style.visibility = 'visible';
+      navContainer.style.opacity = '1';
+      navContainer.style.height = 'auto';
+      navContainer.style.maxHeight = 'none';
+      navContainer.style.flexDirection = 'column';
+      navContainer.style.width = '100%';
+      console.log('Fixed navigation container');
+    }
+    
+    // Fix the sidebar itself
+    const sidebar = document.querySelector('#sidebar');
+    if (sidebar) {
+      sidebar.style.display = 'flex';
+      sidebar.style.visibility = 'visible';
+      sidebar.style.opacity = '1';
+      sidebar.style.position = 'fixed';
+      sidebar.style.top = '0';
+      sidebar.style.left = '0';
+      sidebar.style.width = '220px';
+      sidebar.style.height = '100vh';
+      sidebar.style.backgroundColor = '#0000BF';
+      sidebar.style.color = '#ffffff';
+      sidebar.style.zIndex = '1040';
+      console.log('Fixed sidebar');
+    }
+  }, 100);
+});
+</script>
+
+
+</body>
+</html>

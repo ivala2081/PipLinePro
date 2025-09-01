@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Font Analytics Dashboard - PipLine Pro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+</head>
+<body>
+    <div class="dashboard-header">
+        <div class="page-container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="display-4 mb-2">
+                        <i class="bi bi-type-h1 me-3"></i>
+                        Font Analytics Dashboard
+                    </h1>
+                    <p class="lead mb-0">Monitor font performance, accessibility, and optimization recommendations</p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <div class="d-flex align-items-center justify-content-md-end">
+                        <div class="me-3">
+                            <small class="text-white-50">Service Status</small>
+                            <div class="text-success">
+                                <i class="bi bi-check-circle-fill"></i> Healthy
+                            </div>
+                        </div>
+                        <div>
+                            <small class="text-white-50">Version</small>
+                            <div class="text-white">{{ service_stats.version }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="page-container">
+        <!-- Performance Metrics -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2 class="h4 mb-3">
+                    <i class="bi bi-speedometer2 me-2"></i>
+                    Performance Metrics
+                </h2>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="metric-card text-center">
+                    <div class="metric-value">{{ stats.total_fonts if stats.total_fonts else 0 }}</div>
+                    <div class="metric-label">Total Fonts</div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="metric-card text-center">
+                    <div class="metric-value">{{ stats.total_usage if stats.total_usage else 0 }}</div>
+                    <div class="metric-label">Total Usage</div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="metric-card text-center">
+                    <div class="metric-value">{{ stats.average_load_time if stats.average_load_time else 0 }}s</div>
+                    <div class="metric-label">Avg Load Time</div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="metric-card text-center">
+                    <div class="metric-value">{{ stats.recent_usage if stats.recent_usage else 0 }}</div>
+                    <div class="metric-label">Recent Usage (24h)</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Font Recommendations -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2 class="h4 mb-3">
+                    <i class="bi bi-lightbulb me-2"></i>
+                    Font Recommendations
+                </h2>
+            </div>
+            {% for use_case, recommendation in recommendations.recommendations.items() %}
+            <div class="col-md-6 mb-3">
+                <div class="recommendation-card">
+                    <div class="recommendation-title">
+                        <i class="bi bi-check-circle-fill text-success me-2"></i>
+                        {{ recommendation.use_case }}
+                    </div>
+                    <div class="recommendation-desc">{{ recommendation.reasoning }}</div>
+                    <div class="row">
+                        <div class="col-6">
+                            <small class="text-muted">Primary Font</small>
+                            <div class="fw-semibold">{{ recommendation.primary_font }}</div>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">Weights</small>
+                            <div class="fw-semibold">{{ recommendation.font_weights|join(', ') }}</div>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <small class="text-muted">Performance Impact:</small>
+                        <div class="text-success small">{{ recommendation.performance_impact }}</div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Font Preview -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2 class="h4 mb-3">
+                    <i class="bi bi-eye me-2"></i>
+                    Font Preview & Testing
+                </h2>
+            </div>
+            <div class="col-md-6 mb-3">
+                <div class="font-preview">
+                    <h5 class="mb-3">Inter Font Family</h5>
+                    <div class="font-sample" style="font-family: 'Inter', sans-serif; font-weight: 300;">
+                        Light 300 - The quick brown fox jumps over the lazy dog
+                    </div>
+                    <div class="font-sample" style="font-family: 'Inter', sans-serif; font-weight: 400;">
+                        Regular 400 - The quick brown fox jumps over the lazy dog
+                    </div>
+                    <div class="font-sample" style="font-family: 'Inter', sans-serif; font-weight: 500;">
+                        Medium 500 - The quick brown fox jumps over the lazy dog
+                    </div>
+                    <div class="font-sample" style="font-family: 'Inter', sans-serif; font-weight: 600;">
+                        Semibold 600 - The quick brown fox jumps over the lazy dog
+                    </div>
+                    <div class="font-sample" style="font-family: 'Inter', sans-serif; font-weight: 700;">
+                        Bold 700 - The quick brown fox jumps over the lazy dog
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-3">
+                <div class="font-preview">
+                    <h5 class="mb-3">Monospace Font Family</h5>
+                    <div class="font-sample" style="font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace;">
+                        Monospace - The quick brown fox jumps over the lazy dog
+                    </div>
+                    <div class="font-sample" style="font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace; font-size: 0.875rem;">
+                        <code>console.log('Hello, World!');</code>
+                    </div>
+                    <div class="font-sample" style="font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace; font-size: 0.875rem;">
+                        <code>SELECT * FROM transactions WHERE amount > 1000;</code>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Strategy -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2 class="h4 mb-3">
+                    <i class="bi bi-lightning me-2"></i>
+                    Font Loading Strategy
+                </h2>
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ loading_strategy.strategy }}</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Implementation Details</h6>
+                                <ul class="list-unstyled">
+                                    <li><strong>Preload Critical:</strong> {{ loading_strategy.implementation.preload_critical|join(', ') }}</li>
+                                    <li><strong>Font Display:</strong> {{ loading_strategy.implementation.font_display }}</li>
+                                    <li><strong>Format:</strong> {{ loading_strategy.implementation.format }}</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Performance Benefits</h6>
+                                <ul class="list-unstyled">
+                                    {% for benefit in loading_strategy.performance_benefits %}
+                                    <li><i class="bi bi-check text-success me-2"></i>{{ benefit }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Generated CSS -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2 class="h4 mb-3">
+                    <i class="bi bi-code-slash me-2"></i>
+                    Optimized Font CSS
+                </h2>
+                <div class="card">
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>Generated CSS for Font Optimization</span>
+                            <button class="btn btn-sm btn-outline-primary" onclick="copyCSS()">
+                                <i class="bi bi-clipboard me-1"></i>Copy CSS
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <pre class="code-block mb-0" id="generatedCSS">/* Font Optimization CSS will be loaded here */</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Service Information -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2 class="h4 mb-3">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Service Information
+                </h2>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="card">
+                            <div class="card-body">
+                                <h6 class="card-title">Service Stats</h6>
+                                <ul class="list-unstyled">
+                                    <li><strong>Service:</strong> {{ service_stats.service }}</li>
+                                    <li><strong>Version:</strong> {{ service_stats.version }}</li>
+                                    <li><strong>Metrics Count:</strong> {{ service_stats.metrics_count }}</li>
+                                    <li><strong>Recommendations:</strong> {{ service_stats.recommendations_count }}</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="card">
+                            <div class="card-body">
+                                <h6 class="card-title">Features</h6>
+                                <ul class="list-unstyled">
+                                    {% for feature in service_stats.features %}
+                                    <li><i class="bi bi-check text-success me-2"></i>{{ feature }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Load generated CSS
+        async function loadGeneratedCSS() {
+            try {
+                const response = await fetch('/font-analytics/api/generate-css');
+                const data = await response.json();
+                if (data.css) {
+                    document.getElementById('generatedCSS').textContent = data.css;
+                }
+            } catch (error) {
+                console.error('Error loading CSS:', error);
+            }
+        }
+
+        // Copy CSS to clipboard
+        function copyCSS() {
+            const cssElement = document.getElementById('generatedCSS');
+            const text = cssElement.textContent;
+            
+            navigator.clipboard.writeText(text).then(() => {
+                // Show success message
+                const button = event.target.closest('button');
+                const originalText = button.innerHTML;
+                button.innerHTML = '<i class="bi bi-check me-1"></i>Copied!';
+                button.classList.remove('btn-outline-primary');
+                button.classList.add('btn-success');
+                
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                    button.classList.remove('btn-success');
+                    button.classList.add('btn-outline-primary');
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy CSS:', err);
+            });
+        }
+
+        // Record font usage for analytics
+        function recordFontUsage(fontFamily, fontWeight) {
+            fetch('/font-analytics/api/record-usage', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    font_family: fontFamily,
+                    font_weight: fontWeight,
+                    load_time: performance.now() / 1000
+                })
+            }).catch(error => {
+                console.error('Error recording font usage:', error);
+            });
+        }
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            loadGeneratedCSS();
+            
+            // Record usage of Inter font family
+            recordFontUsage('Inter', 400);
+            recordFontUsage('Inter', 500);
+            recordFontUsage('Inter', 600);
+            recordFontUsage('Inter', 700);
+        });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,751 @@
+<div class="p-4">
+  <div class="row">
+    <!-- Professional Client Insights -->
+    <div class="col-12 mb-4">
+      <div class="business-card">
+        <div class="business-card-header">
+          <div class="d-flex align-items-center justify-content-between">
+            <h5 class="business-heading mb-0">
+              <i class="bi bi-graph-up-arrow text-primary me-2"></i>
+              Client Performance Insights
+            </h5>
+            <div class="d-flex gap-2">
+              <button class="btn btn-sm btn-outline-primary" onclick="refreshClientData()">
+                <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+              </button>
+              <button class="btn btn-sm btn-outline-secondary" onclick="exportClientReport()">
+                <i class="bi bi-download me-1"></i>Export
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="business-card-body">
+          <div class="row">
+            <!-- Top Performing Clients -->
+            <div class="col-lg-6 mb-4">
+              <div class="insight-card">
+                <div class="insight-header">
+                  <h6 class="insight-title">
+                    <i class="bi bi-trophy text-warning me-2"></i>
+                    Top Performing Clients
+                  </h6>
+                  <span class="insight-badge">Top 5</span>
+                </div>
+                <div class="insight-content">
+                  {% if top_clients %}
+                    {% for client in top_clients[:5] %}
+                    <div class="client-performance-item">
+                      <div class="client-info">
+                        <div class="client-avatar-sm">
+                          {{ client.name[0].upper() if client.name else 'C' }}
+                        </div>
+                        <div class="client-details">
+                          <div class="client-name">{{ client.name or 'Unknown Client' }}</div>
+                          <div class="client-stats">
+                            <span class="stat-item">
+                              <i class="bi bi-currency-exchange text-success me-1"></i>
+                              {{ client.transaction_count }} transactions
+                            </span>
+                            <span class="stat-item">
+                              <i class="bi bi-calendar-event text-info me-1"></i>
+                              Last: {{ client.last_transaction_date | format_date if client.last_transaction_date else 'N/A' }}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="client-performance">
+                        <div class="performance-amount text-success fw-bold">
+                          {{ client.total_amount | format_currency if client.total_amount is not none else '₺0' }}
+                        </div>
+                        <div class="performance-trend">
+                          {% if client.is_active %}
+                            <span class="trend-up text-success">
+                              <i class="bi bi-check-circle"></i> Active
+                            </span>
+                          {% else %}
+                            <span class="trend-neutral text-muted">
+                              <i class="bi bi-clock"></i> Inactive
+                            </span>
+                          {% endif %}
+                        </div>
+                      </div>
+                    </div>
+                    {% endfor %}
+                  {% else %}
+                    <div class="empty-state">
+                      <i class="bi bi-people text-muted"></i>
+                      <p class="text-muted">No client data available</p>
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+
+            <!-- Client Activity Summary -->
+            <div class="col-lg-6 mb-4">
+              <div class="insight-card">
+                <div class="insight-header">
+                  <h6 class="insight-title">
+                    <i class="bi bi-activity text-info me-2"></i>
+                    Client Activity Summary
+                  </h6>
+                  <span class="insight-badge">This Month</span>
+                </div>
+                <div class="insight-content">
+                  <div class="activity-metrics">
+                    <div class="activity-item">
+                      <div class="activity-icon bg-primary">
+                        <i class="bi bi-people text-white"></i>
+                      </div>
+                      <div class="activity-details">
+                        <div class="activity-value">{{ client_stats.total_clients if client_stats and client_stats.total_clients is not none else '0' }}</div>
+                        <div class="activity-label">Total Clients</div>
+                      </div>
+                    </div>
+                    <div class="activity-item">
+                      <div class="activity-icon bg-success">
+                        <i class="bi bi-arrow-up-circle text-white"></i>
+                      </div>
+                      <div class="activity-details">
+                        <div class="activity-value">{{ "{:.0f}".format(client_stats.total_volume) if client_stats and client_stats.total_volume is not none else '0' }}</div>
+                        <div class="activity-label">Total Volume</div>
+                      </div>
+                    </div>
+                    <div class="activity-item">
+                      <div class="activity-icon bg-warning">
+                        <i class="bi bi-exclamation-triangle text-white"></i>
+                      </div>
+                      <div class="activity-details">
+                        <div class="activity-value">{{ client_stats.top_client if client_stats and client_stats.top_client is not none else 'N/A' }}</div>
+                        <div class="activity-label">Top Client</div>
+                      </div>
+                    </div>
+                    <div class="activity-item">
+                      <div class="activity-icon bg-info">
+                        <i class="bi bi-graph-up text-white"></i>
+                      </div>
+                      <div class="activity-details">
+                        <div class="activity-value">{{ "{:.1f}".format(client_stats.avg_transaction) if client_stats and client_stats.avg_transaction is not none else '0.0' }}</div>
+                        <div class="activity-label">Avg Transaction</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Client Risk Assessment -->
+            <div class="col-lg-6 mb-4">
+              <div class="insight-card">
+                <div class="insight-header">
+                  <h6 class="insight-title">
+                    <i class="bi bi-shield-check text-warning me-2"></i>
+                    Risk Assessment
+                  </h6>
+                  <span class="insight-badge">Monitor</span>
+                </div>
+                <div class="insight-content">
+                  {% if risk_clients %}
+                    {% for client in risk_clients %}
+                    <div class="risk-item">
+                      <div class="risk-indicator risk-{{ client.risk_level }}">
+                        <i class="bi bi-exclamation-triangle"></i>
+                      </div>
+                      <div class="risk-details">
+                        <div class="risk-client">{{ client.client_name }}</div>
+                        <div class="risk-reason">{{ client.risk_reason }}</div>
+                      </div>
+                      <div class="risk-actions">
+                        <button class="btn btn-sm btn-outline-primary" onclick="viewClientDetails('{{ client.client_name }}')">
+                          <i class="bi bi-eye me-1"></i>View
+                        </button>
+                      </div>
+                    </div>
+                    {% endfor %}
+                  {% else %}
+                    <div class="empty-state">
+                      <i class="bi bi-shield-check text-success"></i>
+                      <p class="text-success">No risk alerts</p>
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+
+            <!-- Client Opportunities -->
+            <div class="col-lg-6 mb-4">
+              <div class="insight-card">
+                <div class="insight-header">
+                  <h6 class="insight-title">
+                    <i class="bi bi-lightbulb text-success me-2"></i>
+                    Growth Opportunities
+                  </h6>
+                  <span class="insight-badge">Insights</span>
+                </div>
+                <div class="insight-content">
+                  {% if opportunity_clients %}
+                    {% for client in opportunity_clients %}
+                    <div class="opportunity-item">
+                      <div class="opportunity-icon bg-success">
+                        <i class="bi bi-arrow-up-right text-white"></i>
+                      </div>
+                      <div class="opportunity-details">
+                        <div class="opportunity-client">{{ client.client_name }}</div>
+                        <div class="opportunity-description">{{ client.opportunity_description }}</div>
+                        <div class="opportunity-potential">
+                          Potential: {{ client.potential_value | format_currency if client.potential_value is not none else '₺0' }}
+                        </div>
+                      </div>
+                      <div class="opportunity-actions">
+                        <button class="btn btn-sm btn-success" onclick="contactClient('{{ client.client_name }}')">
+                          <i class="bi bi-telephone me-1"></i>Contact
+                        </button>
+                      </div>
+                    </div>
+                    {% endfor %}
+                  {% else %}
+                    <div class="empty-state">
+                      <i class="bi bi-lightbulb text-muted"></i>
+                      <p class="text-muted">No opportunities identified</p>
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Client Performance Chart -->
+    <div class="col-12">
+      <div class="business-card">
+        <div class="business-card-header">
+          <div class="d-flex align-items-center justify-content-between">
+            <h5 class="business-heading mb-0">
+              <i class="bi bi-bar-chart-line text-primary me-2"></i>
+              Client Performance Trends
+            </h5>
+            <div class="chart-controls">
+              <select class="form-select form-select-sm" id="chartPeriod" onchange="updateChart()">
+                <option value="7">Last 7 Days</option>
+                <option value="30" selected>Last 30 Days</option>
+                <option value="90">Last 90 Days</option>
+                <option value="365">Last Year</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="business-card-body">
+          <div class="chart-container" style="height: 400px;">
+            <canvas id="clientPerformanceChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.insight-card {
+  background: #ffffff;
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  padding: 1.5rem;
+  height: 100%;
+  transition: all 0.2s ease;
+}
+
+.insight-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  transform: translateY(-2px);
+}
+
+.insight-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.insight-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #212529;
+  margin: 0;
+}
+
+.insight-badge {
+  background: #e9ecef;
+  color: #6c757d;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.client-performance-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  border: 1px solid #f8f9fa;
+  border-radius: 8px;
+  margin-bottom: 0.75rem;
+  background: #f8f9fa;
+  transition: all 0.2s ease;
+}
+
+.client-performance-item:hover {
+  background: #ffffff;
+  border-color: #dee2e6;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.client-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.client-avatar-sm {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.client-details {
+  flex: 1;
+}
+
+.client-name {
+  font-weight: 600;
+  color: #212529;
+  margin-bottom: 0.25rem;
+}
+
+.client-stats {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.75rem;
+  color: #6c757d;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+}
+
+.client-performance {
+  text-align: right;
+}
+
+.performance-amount {
+  font-size: 1.1rem;
+  margin-bottom: 0.25rem;
+}
+
+.performance-trend {
+  font-size: 0.75rem;
+}
+
+.trend-up {
+  color: #198754;
+}
+
+.trend-down {
+  color: #dc3545;
+}
+
+.trend-neutral {
+  color: #6c757d;
+}
+
+.activity-metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.activity-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.activity-item:hover {
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.activity-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.activity-details {
+  flex: 1;
+}
+
+.activity-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #212529;
+  line-height: 1.2;
+}
+
+.activity-label {
+  font-size: 0.875rem;
+  color: #6c757d;
+  margin-top: 0.25rem;
+}
+
+.risk-item, .opportunity-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid #f8f9fa;
+  border-radius: 8px;
+  margin-bottom: 0.75rem;
+  background: #f8f9fa;
+  transition: all 0.2s ease;
+}
+
+.risk-item:hover, .opportunity-item:hover {
+  background: #ffffff;
+  border-color: #dee2e6;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.risk-indicator {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.1rem;
+}
+
+.risk-high {
+  background: #dc3545;
+}
+
+.risk-medium {
+  background: #fd7e14;
+}
+
+.risk-low {
+  background: #ffc107;
+}
+
+.risk-details, .opportunity-details {
+  flex: 1;
+}
+
+.risk-client, .opportunity-client {
+  font-weight: 600;
+  color: #212529;
+  margin-bottom: 0.25rem;
+}
+
+.risk-reason, .opportunity-description {
+  font-size: 0.875rem;
+  color: #6c757d;
+  margin-bottom: 0.25rem;
+}
+
+.opportunity-potential {
+  font-size: 0.875rem;
+  color: #198754;
+  font-weight: 500;
+}
+
+.opportunity-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.1rem;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 2rem;
+  color: #6c757d;
+}
+
+.empty-state i {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+.chart-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.chart-controls .form-select {
+  width: auto;
+  min-width: 150px;
+}
+
+@media (max-width: 768px) {
+  .activity-metrics {
+    grid-template-columns: 1fr;
+  }
+  
+  .client-stats {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .client-performance-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .client-performance {
+    text-align: left;
+    width: 100%;
+  }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Initialize client performance chart
+  initializeClientChart();
+  
+  // Add event listeners for interactive elements
+  addClientInteractions();
+});
+
+function initializeClientChart() {
+  const ctx = document.getElementById('clientPerformanceChart').getContext('2d');
+  
+  {% if client_chart_data %}
+          const clientChartData = {{ client_chart_data|tojson|safe }};
+  
+  window.clientChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: clientChartData.labels,
+      datasets: [{
+        label: 'Total Volume',
+        data: clientChartData.volumes,
+        borderColor: '#0d6efd',
+        backgroundColor: 'rgba(13, 110, 253, 0.1)',
+        borderWidth: 2,
+        fill: true,
+        tension: 0.4
+      }, {
+        label: 'Net Amount',
+        data: clientChartData.net_amounts,
+        borderColor: '#198754',
+        backgroundColor: 'rgba(25, 135, 84, 0.1)',
+        borderWidth: 2,
+        fill: true,
+        tension: 0.4
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'top',
+        },
+        title: {
+          display: false
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: function(value) {
+              return '₺' + value.toLocaleString();
+            }
+          }
+        }
+      },
+      interaction: {
+        intersect: false,
+        mode: 'index'
+      }
+    }
+  });
+  {% endif %}
+}
+
+function updateChart() {
+  const period = document.getElementById('chartPeriod').value;
+  
+  // Show loading state
+  const chartContainer = document.querySelector('.chart-container');
+  chartContainer.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-2">Loading chart data...</p></div>';
+  
+  // Fetch new data
+  fetch(`/api/clients/chart-data?period=${period}`)
+    .then(response => response.json())
+    .then(data => {
+      if (window.clientChart) {
+        window.clientChart.destroy();
+      }
+      
+      // Reinitialize chart with new data
+      const ctx = document.getElementById('clientPerformanceChart').getContext('2d');
+      window.clientChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: data.labels,
+          datasets: [{
+            label: 'Total Volume',
+            data: data.volumes,
+            borderColor: '#0d6efd',
+            backgroundColor: 'rgba(13, 110, 253, 0.1)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4
+          }, {
+            label: 'Net Amount',
+            data: data.net_amounts,
+            borderColor: '#198754',
+            backgroundColor: 'rgba(25, 135, 84, 0.1)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'top',
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                callback: function(value) {
+                  return '₺' + value.toLocaleString();
+                }
+              }
+            }
+          },
+          interaction: {
+            intersect: false,
+            mode: 'index'
+          }
+        }
+      });
+    })
+    .catch(error => {
+      console.error('Error updating chart:', error);
+      chartContainer.innerHTML = '<div class="text-center py-4 text-danger"><i class="bi bi-exclamation-triangle"></i><p class="mt-2">Error loading chart data</p></div>';
+    });
+}
+
+function refreshClientData() {
+  // Show loading state
+  const refreshBtn = event.target;
+  const originalText = refreshBtn.innerHTML;
+  refreshBtn.innerHTML = '<i class="bi bi-arrow-clockwise spin me-1"></i>Refreshing...';
+  refreshBtn.disabled = true;
+  
+  // Reload page after a short delay to show loading state
+  setTimeout(() => {
+    window.location.reload();
+  }, 500);
+}
+
+function exportClientReport() {
+  // Show loading state
+  const exportBtn = event.target;
+  const originalText = exportBtn.innerHTML;
+  exportBtn.innerHTML = '<i class="bi bi-download spin me-1"></i>Exporting...';
+  exportBtn.disabled = true;
+  
+  // Trigger export
+  fetch('/api/clients/export-report')
+    .then(response => response.blob())
+    .then(blob => {
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'client-report-' + new Date().toISOString().split('T')[0] + '.xlsx';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    })
+    .catch(error => {
+      console.error('Export error:', error);
+      alert('Error exporting report');
+    })
+    .finally(() => {
+      exportBtn.innerHTML = originalText;
+      exportBtn.disabled = false;
+    });
+}
+
+function viewClientDetails(clientName) {
+  // Navigate to client details page
+  window.location.href = `/clients/details/${encodeURIComponent(clientName)}`;
+}
+
+function contactClient(clientName) {
+  // Open contact modal or navigate to contact page
+  alert(`Contact functionality for ${clientName} - This would open a contact form or CRM integration`);
+}
+
+function addClientInteractions() {
+  // Add hover effects and interactions
+  document.querySelectorAll('.client-performance-item, .risk-item, .opportunity-item').forEach(item => {
+    item.addEventListener('click', function() {
+      const clientName = this.querySelector('.client-name, .risk-client, .opportunity-client').textContent;
+      viewClientDetails(clientName);
+    });
+  });
+}
+
+// Add spinning animation for loading states
+const overviewStyle = document.createElement('style');
+overviewStyle.textContent = `
+  .spin {
+    animation: spin 1s linear infinite;
+  }
+  
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+`;
+document.head.appendChild(overviewStyle);
+</script> 

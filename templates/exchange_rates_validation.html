@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% block title %}Exchange Rates Validation - PipLinePro{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <!-- Header -->
+      <div class="d-flex align-items-center justify-content-between mb-4">
+        <div class="d-flex align-items-center">
+          <div class="me-3">
+            <i class="bi bi-exclamation-triangle text-warning fs-1"></i>
+          </div>
+          <div>
+            <h2 class="mb-0 fw-bold">Exchange Rates Validation</h2>
+            <p class="text-muted mb-0">Check for missing exchange rates that could cause incorrect currency conversions</p>
+          </div>
+        </div>
+        <div class="d-flex gap-2">
+          <a href="{{ url_for('settings.settings') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-2"></i>Back to Settings
+          </a>
+          <button class="btn btn-warning" onclick="refreshValidation()">
+            <i class="bi bi-arrow-clockwise me-2"></i>Refresh
+          </button>
+        </div>
+      </div>
+
+      <!-- Summary Cards -->
+      <div class="row mb-4">
+        <div class="col-md-3">
+          <div class="card border-0 bg-light">
+            <div class="card-body text-center">
+              <div class="h3 mb-0 text-primary">{{ total_dates }}</div>
+              <small class="text-muted">Total Dates</small>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card border-0 bg-light">
+            <div class="card-body text-center">
+              <div class="h3 mb-0 text-warning">{{ missing_count }}</div>
+              <small class="text-muted">Missing Rates</small>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card border-0 bg-light">
+            <div class="card-body text-center">
+              <div class="h3 mb-0 text-success">{{ total_dates - missing_count }}</div>
+              <small class="text-muted">Complete Dates</small>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card border-0 bg-light">
+            <div class="card-body text-center">
+              <div class="h3 mb-0 text-info">{{ "{:.1f}".format((total_dates - missing_count) / total_dates * 100) if total_dates > 0 else 0 }}%</div>
+              <small class="text-muted">Completion Rate</small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Missing Rates Alert -->
+      {% if missing_rates %}
+      <div class="alert alert-warning" role="alert">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-exclamation-triangle me-2"></i>
+          <div>
+            <strong>Warning:</strong> Found {{ missing_count }} missing exchange rates that could affect currency conversions.
+          </div>
+        </div>
+      </div>
+      {% else %}
+      <div class="alert alert-success" role="alert">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-check-circle me-2"></i>
+          <div>
+            <strong>Success:</strong> All exchange rates are present for the last 30 days.
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Exchange Rates Table -->
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-0">
+          <h5 class="mb-0 fw-semibold">
+            <i class="bi bi-currency-exchange me-2"></i>Exchange Rates (Last 30 Days)
+          </h5>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th class="border-0">Date</th>
+                  <th class="border-0 text-center">USD Rate</th>
+                  <th class="border-0 text-center">EUR Rate</th>
+                  <th class="border-0 text-center">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for date_str, rates in rates_by_date.items() %}
+                <tr>
+                  <td class="fw-semibold">{{ date_str }}</td>
+                  <td class="text-center">
+                    {% if 'USD' in rates %}
+                      <span class="badge bg-success">{{ "{:.4f}".format(rates['USD']) }}</span>
+                    {% else %}
+                      <span class="badge bg-danger">Missing</span>
+                    {% endif %}
+                  </td>
+                  <td class="text-center">
+                    {% if 'EUR' in rates %}
+                      <span class="badge bg-success">{{ "{:.4f}".format(rates['EUR']) }}</span>
+                    {% else %}
+                      <span class="badge bg-danger">Missing</span>
+                    {% endif %}
+                  </td>
+                  <td class="text-center">
+                    {% if 'USD' in rates and 'EUR' in rates %}
+                      <span class="badge bg-success">Complete</span>
+                    {% elif 'USD' in rates or 'EUR' in rates %}
+                      <span class="badge bg-warning">Partial</span>
+                    {% else %}
+                      <span class="badge bg-danger">Missing</span>
+                    {% endif %}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Missing Rates Details -->
+      {% if missing_rates %}
+      <div class="card border-0 shadow-sm mt-4">
+        <div class="card-header bg-white border-0">
+          <h5 class="mb-0 fw-semibold text-warning">
+            <i class="bi bi-exclamation-triangle me-2"></i>Missing Exchange Rates
+          </h5>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th class="border-0">Date</th>
+                  <th class="border-0">Currency</th>
+                  <th class="border-0">Status</th>
+                  <th class="border-0 text-end">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for missing in missing_rates %}
+                <tr>
+                  <td class="fw-semibold">{{ missing.date }}</td>
+                  <td>
+                    <span class="badge bg-primary">{{ missing.currency }}</span>
+                  </td>
+                  <td>
+                    <span class="badge bg-danger">{{ missing.status }}</span>
+                  </td>
+                  <td class="text-end">
+                    <button class="btn btn-sm btn-outline-primary" onclick="addExchangeRate('{{ missing.date }}', '{{ missing.currency }}')">
+                      <i class="bi bi-plus me-1"></i>Add Rate
+                    </button>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+function refreshValidation() {
+  location.reload();
+}
+
+function addExchangeRate(date, currency) {
+  // This would open a modal or redirect to add exchange rate page
+  alert(`Add ${currency} exchange rate for ${date}`);
+  // In a real implementation, this would open a modal or redirect to a form
+}
+</script>
+{% endblock %} 

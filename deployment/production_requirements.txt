@@ -1,0 +1,54 @@
+# Production Requirements for PipLinePro
+# Core Flask Dependencies
+flask==3.0.0
+flask_sqlalchemy==3.1.1
+flask_login==0.6.3
+flask_wtf==1.2.1
+flask_migrate==4.0.5
+flask_limiter==3.5.0
+wtforms==3.1.1
+werkzeug==3.0.1
+
+# Production WSGI Server
+gunicorn==21.2.0
+
+# Database Dependencies
+sqlalchemy==2.0.23
+
+# Data Processing
+pandas==2.1.4
+openpyxl==3.1.2
+
+# Exchange Rate Dependencies
+yfinance==0.2.65
+
+# Visualization and Analytics
+plotly==5.17.0
+matplotlib==3.7.2
+seaborn==0.12.2
+
+# Optional Caching (graceful fallback if Redis not available)
+redis==5.0.1
+flask_session==0.5.0
+flask-compress==1.18
+
+# Security and Validation
+email-validator==2.1.0
+filetype==1.2.0
+
+# Real-time Features
+flask-socketio==5.3.6
+eventlet==0.33.3
+
+# Internationalization
+flask-babel==4.0.0
+babel==2.14.0
+
+# System Monitoring
+psutil==5.9.6
+
+# Background Tasks
+schedule==1.2.0
+
+# Environment Management
+python-dotenv==1.0.0

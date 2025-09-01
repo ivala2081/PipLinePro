@@ -1,0 +1,729 @@
+{% extends "base.html" %}
+{% block title %}Admin Management - PipLine Treasury System{% endblock %}
+{% block content %}
+<div class="admin-management-container">
+  <!-- Enhanced Header -->
+  <div class="admin-header mb-4">
+    <div class="d-flex align-items-center justify-content-between">
+      <div>
+        <h1 class="h2 mb-1 text-dark fw-bold">
+          <i class="bi bi-shield-check text-primary me-2"></i>
+          Admin Management
+        </h1>
+        <p class="text-muted mb-0 small">
+          Manage administrator accounts and permissions
+        </p>
+      </div>
+      <div class="d-flex align-items-center gap-3">
+        <div class="status-indicator">
+          <span class="status-dot bg-success"></span>
+          <span class="status-text small text-muted">{{ current_user.get_admin_title() }}</span>
+        </div>
+        <div class="text-end">
+          <div class="small text-muted">Current User</div>
+          <div class="small fw-semibold">{{ current_user.username }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin Management Cards -->
+  <div class="row g-4">
+    <!-- Admin List Card -->
+    <div class="col-lg-8">
+      <div class="admin-card">
+        <div class="admin-card-header">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <h5 class="mb-0 fw-semibold">
+                <i class="bi bi-people-fill text-primary me-2"></i>
+                Administrator Accounts
+              </h5>
+              <small class="text-muted">Manage admin accounts and permissions</small>
+            </div>
+            <div class="d-flex gap-2">
+              {% if current_user.admin_level in [1, 2] %}
+              <button class="btn btn-primary btn-sm" onclick="openCreateAdminModal()">
+                <i class="bi bi-plus-circle me-1"></i>
+                Add Admin
+              </button>
+              {% endif %}
+              {% if current_user.is_main_admin() %}
+              <a href="{{ url_for('admin_permissions.admin_section_permissions') }}" class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-shield-lock me-1"></i>
+                Section Permissions
+              </a>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        <div class="admin-card-content">
+          <div class="table-responsive">
+            <table class="table table-hover admin-table">
+              <thead class="table-light">
+                <tr>
+                  <th>Username</th>
+                  <th>Email</th>
+                  <th>Admin Level</th>
+                  <th>Status</th>
+                  <th>Created</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for admin in admins %}
+                <tr>
+                  <td>
+                    <div class="d-flex align-items-center">
+                      <div class="admin-avatar me-2">
+                        {% if admin.profile_picture %}
+                          <img src="{{ url_for('static', filename='uploads/' ~ admin.profile_picture) }}" 
+                               alt="Profile" class="rounded-circle" width="32" height="32">
+                        {% else %}
+                          <div class="avatar-placeholder rounded-circle d-flex align-items-center justify-content-center">
+                            {{ admin.username[0].upper() }}
+                          </div>
+                        {% endif %}
+                      </div>
+                      <div>
+                        <div class="fw-semibold">{{ admin.username }}</div>
+                        <small class="text-muted">{{ admin.get_admin_title() }}</small>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="text-muted">{{ admin.email or 'N/A' }}</span>
+                  </td>
+                  <td>
+                    {% if admin.admin_level == 1 %}
+                      <span class="badge bg-danger">Main Admin</span>
+                    {% elif admin.admin_level == 2 %}
+                      <span class="badge bg-warning">Secondary Admin</span>
+                    {% elif admin.admin_level == 3 %}
+                      <span class="badge bg-info">Sub Admin</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if admin.is_active %}
+                      <span class="badge bg-success">Active</span>
+                    {% else %}
+                      <span class="badge bg-secondary">Inactive</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <small class="text-muted">{{ admin.created_at.strftime('%Y-%m-%d') }}</small>
+                  </td>
+                  <td>
+                    <div class="btn-group btn-group-sm" role="group">
+                      {% if can_manage_user(admin) %}
+                        <button class="btn btn-outline-primary btn-sm" onclick="editAdmin({{ admin.id }})">
+                          <i class="bi bi-pencil"></i>
+                        </button>
+                        {% if admin.id != current_user.id %}
+                          <button class="btn btn-outline-warning btn-sm" onclick="toggleAdminStatus({{ admin.id }})">
+                            <i class="bi bi-{{ 'pause' if admin.is_active else 'play' }}"></i>
+                          </button>
+                          <button class="btn btn-outline-danger btn-sm" onclick="deleteAdmin({{ admin.id }})">
+                            <i class="bi bi-trash"></i>
+                          </button>
+                        {% endif %}
+                      {% else %}
+                        <span class="text-muted small">No access</span>
+                      {% endif %}
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Admin Hierarchy Card -->
+    <div class="col-lg-4">
+      <div class="admin-card">
+        <div class="admin-card-header">
+          <h5 class="mb-0 fw-semibold">
+            <i class="bi bi-diagram-3 text-success me-2"></i>
+            Admin Hierarchy
+          </h5>
+          <small class="text-muted">Permission structure overview</small>
+        </div>
+        <div class="admin-card-content">
+          <div class="hierarchy-tree">
+            <div class="hierarchy-item hard-admin">
+              <div class="hierarchy-icon">
+                <i class="bi bi-shield-fill text-dark"></i>
+              </div>
+              <div class="hierarchy-content">
+                <div class="hierarchy-title">Hard Administrator</div>
+                <div class="hierarchy-desc">System-level access (invisible)</div>
+              </div>
+            </div>
+            
+            <div class="hierarchy-connector"></div>
+            
+            <div class="hierarchy-item main-admin">
+              <div class="hierarchy-icon">
+                <i class="bi bi-shield-fill-check text-danger"></i>
+              </div>
+              <div class="hierarchy-content">
+                <div class="hierarchy-title">Main Administrator</div>
+                <div class="hierarchy-desc">Full system access</div>
+              </div>
+            </div>
+            
+            <div class="hierarchy-connector"></div>
+            
+            <div class="hierarchy-item secondary-admin">
+              <div class="hierarchy-icon">
+                <i class="bi bi-shield-check text-warning"></i>
+              </div>
+              <div class="hierarchy-content">
+                <div class="hierarchy-title">Secondary Administrator</div>
+                <div class="hierarchy-desc">Most system access</div>
+              </div>
+            </div>
+            
+            <div class="hierarchy-connector"></div>
+            
+            <div class="hierarchy-item sub-admin">
+              <div class="hierarchy-icon">
+                <i class="bi bi-shield text-info"></i>
+              </div>
+              <div class="hierarchy-content">
+                <div class="hierarchy-title">Sub Administrator</div>
+                <div class="hierarchy-desc">Limited permissions</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="mt-3">
+            <h6 class="fw-semibold mb-2">Your Permissions:</h6>
+            <ul class="list-unstyled small">
+              {% if current_user.is_hard_admin() %}
+                <li><i class="bi bi-check-circle text-success me-2"></i>Manage all administrators (including hard admin)</li>
+                <li><i class="bi bi-check-circle text-success me-2"></i>Full system access</li>
+                <li><i class="bi bi-check-circle text-success me-2"></i>System configuration</li>
+                <li><i class="bi bi-check-circle text-success me-2"></i>Invisible in web interface</li>
+              {% elif current_user.is_main_admin() %}
+                <li><i class="bi bi-check-circle text-success me-2"></i>Manage all visible administrators</li>
+                <li><i class="bi bi-check-circle text-success me-2"></i>Full system access</li>
+                <li><i class="bi bi-check-circle text-success me-2"></i>System configuration</li>
+                <li><i class="bi bi-x-circle text-muted me-2"></i>Cannot manage hard admin</li>
+              {% elif current_user.is_secondary_admin() %}
+                <li><i class="bi bi-check-circle text-success me-2"></i>Manage sub-administrators</li>
+                <li><i class="bi bi-check-circle text-success me-2"></i>Most system access</li>
+                <li><i class="bi bi-x-circle text-muted me-2"></i>Cannot manage main admin</li>
+              {% elif current_user.is_sub_admin() %}
+                <li><i class="bi bi-check-circle text-success me-2"></i>Specific permissions only</li>
+                <li><i class="bi bi-x-circle text-muted me-2"></i>Cannot manage other admins</li>
+              {% endif %}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Create Admin Modal -->
+<div class="modal fade" id="createAdminModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="bi bi-person-plus text-primary me-2"></i>
+          Create New Administrator
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="createAdminForm">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label for="username" class="form-label fw-semibold">Username *</label>
+              <input type="text" class="form-control" id="username" name="username" required>
+            </div>
+            <div class="col-md-6">
+              <label for="email" class="form-label fw-semibold">Email *</label>
+              <input type="email" class="form-control" id="email" name="email" required>
+            </div>
+            <div class="col-md-6">
+              <label for="password" class="form-label fw-semibold">Password *</label>
+              <input type="password" class="form-control" id="password" name="password" required>
+            </div>
+            <div class="col-md-6">
+              <label for="admin_level" class="form-label fw-semibold">Admin Level *</label>
+              <select class="form-select" id="admin_level" name="admin_level" required>
+                <option value="">Select Level</option>
+                {% for level in manageable_levels %}
+                  {% if level == 2 %}
+                    <option value="2">Secondary Administrator</option>
+                  {% elif level == 3 %}
+                    <option value="3">Sub Administrator</option>
+                  {% endif %}
+                {% endfor %}
+              </select>
+            </div>
+            
+            <!-- Permissions Section (for Sub Admin) -->
+            <div class="col-12" id="permissionsSection" style="display: none;">
+              <hr>
+              <h6 class="fw-semibold mb-3">Permissions (Sub Administrator)</h6>
+              <div class="row g-3" id="permissionsGrid">
+                {% for perm_key, perm_desc in available_permissions.items() %}
+                <div class="col-md-6">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="perm_{{ perm_key }}" name="permissions[{{ perm_key }}]">
+                    <label class="form-check-label" for="perm_{{ perm_key }}">
+                      <div class="fw-semibold">{{ perm_key.replace('_', ' ').title() }}</div>
+                      <small class="text-muted">{{ perm_desc }}</small>
+                    </label>
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="createAdmin()">
+          <i class="bi bi-plus-circle me-1"></i>
+          Create Admin
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Admin Modal -->
+<div class="modal fade" id="editAdminModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="bi bi-pencil-square text-primary me-2"></i>
+          Edit Administrator
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="editAdminForm">
+          <input type="hidden" id="edit_admin_id" name="admin_id">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label for="edit_username" class="form-label fw-semibold">Username *</label>
+              <input type="text" class="form-control" id="edit_username" name="username" required>
+            </div>
+            <div class="col-md-6">
+              <label for="edit_email" class="form-label fw-semibold">Email *</label>
+              <input type="email" class="form-control" id="edit_email" name="email" required>
+            </div>
+            <div class="col-md-6">
+              <label for="edit_password" class="form-label fw-semibold">New Password</label>
+              <input type="password" class="form-control" id="edit_password" name="password" placeholder="Leave blank to keep current">
+            </div>
+            <div class="col-md-6">
+              <label for="edit_admin_level" class="form-label fw-semibold">Admin Level *</label>
+              <select class="form-select" id="edit_admin_level" name="admin_level" required>
+                <option value="">Select Level</option>
+                {% for level in manageable_levels %}
+                  {% if level == 2 %}
+                    <option value="2">Secondary Administrator</option>
+                  {% elif level == 3 %}
+                    <option value="3">Sub Administrator</option>
+                  {% endif %}
+                {% endfor %}
+              </select>
+            </div>
+            
+            <!-- Edit Permissions Section -->
+            <div class="col-12" id="editPermissionsSection" style="display: none;">
+              <hr>
+              <h6 class="fw-semibold mb-3">Permissions (Sub Administrator)</h6>
+              <div class="row g-3" id="editPermissionsGrid">
+                {% for perm_key, perm_desc in available_permissions.items() %}
+                <div class="col-md-6">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="edit_perm_{{ perm_key }}" name="permissions[{{ perm_key }}]">
+                    <label class="form-check-label" for="edit_perm_{{ perm_key }}">
+                      <div class="fw-semibold">{{ perm_key.replace('_', ' ').title() }}</div>
+                      <small class="text-muted">{{ perm_desc }}</small>
+                    </label>
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="updateAdmin()">
+          <i class="bi bi-check-circle me-1"></i>
+          Update Admin
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteAdminModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title text-danger">
+          <i class="bi bi-exclamation-triangle me-2"></i>
+          Confirm Deletion
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to delete this administrator?</p>
+        <p class="text-muted small">This action cannot be undone.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger" onclick="confirmDeleteAdmin()">
+          <i class="bi bi-trash me-1"></i>
+          Delete Admin
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentAdminId = null;
+
+function openCreateAdminModal() {
+  document.getElementById('createAdminForm').reset();
+  document.getElementById('permissionsSection').style.display = 'none';
+  new bootstrap.Modal(document.getElementById('createAdminModal')).show();
+}
+
+function editAdmin(adminId) {
+  // Fetch admin data and populate form
+  fetch(`/admin/${adminId}/edit`)
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        const admin = data.admin;
+        document.getElementById('edit_admin_id').value = admin.id;
+        document.getElementById('edit_username').value = admin.username;
+        document.getElementById('edit_email').value = admin.email || '';
+        document.getElementById('edit_admin_level').value = admin.admin_level;
+        
+        // Show/hide permissions section
+        const permissionsSection = document.getElementById('editPermissionsSection');
+        if (admin.admin_level == 3) {
+          permissionsSection.style.display = 'block';
+          // Set permissions
+          const permissions = admin.permissions || {};
+          Object.keys(permissions).forEach(perm => {
+            const checkbox = document.getElementById(`edit_perm_${perm}`);
+            if (checkbox) checkbox.checked = permissions[perm];
+          });
+        } else {
+          permissionsSection.style.display = 'none';
+        }
+        
+        new bootstrap.Modal(document.getElementById('editAdminModal')).show();
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      showAlert('Error loading admin data', 'error');
+    });
+}
+
+function createAdmin() {
+  const form = document.getElementById('createAdminForm');
+  const formData = new FormData(form);
+  
+  const data = {
+    username: formData.get('username'),
+    email: formData.get('email'),
+    password: formData.get('password'),
+    admin_level: parseInt(formData.get('admin_level')),
+    permissions: {}
+  };
+  
+  // Collect permissions for sub-admin
+  if (data.admin_level == 3) {
+    const permissionCheckboxes = document.querySelectorAll('#permissionsSection input[type="checkbox"]:checked');
+    permissionCheckboxes.forEach(checkbox => {
+      const permKey = checkbox.name.match(/\[(.*?)\]/)[1];
+      data.permissions[permKey] = true;
+    });
+  }
+  
+  fetch('/admin/create', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': '{{ csrf_token() }}'
+    },
+    body: JSON.stringify(data)
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      showAlert(data.message, 'success');
+      bootstrap.Modal.getInstance(document.getElementById('createAdminModal')).hide();
+      location.reload();
+    } else {
+      showAlert(data.error, 'error');
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    showAlert('Error creating admin', 'error');
+  });
+}
+
+function updateAdmin() {
+  const form = document.getElementById('editAdminForm');
+  const formData = new FormData(form);
+  
+  const data = {
+    username: formData.get('username'),
+    email: formData.get('email'),
+    admin_level: parseInt(formData.get('admin_level')),
+    permissions: {}
+  };
+  
+  // Add password if provided
+  const password = formData.get('password');
+  if (password) {
+    data.password = password;
+  }
+  
+  // Collect permissions for sub-admin
+  if (data.admin_level == 3) {
+    const permissionCheckboxes = document.querySelectorAll('#editPermissionsSection input[type="checkbox"]:checked');
+    permissionCheckboxes.forEach(checkbox => {
+      const permKey = checkbox.name.match(/\[(.*?)\]/)[1];
+      data.permissions[permKey] = true;
+    });
+  }
+  
+  const adminId = document.getElementById('edit_admin_id').value;
+  
+  fetch(`/admin/${adminId}/edit`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': '{{ csrf_token() }}'
+    },
+    body: JSON.stringify(data)
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      showAlert(data.message, 'success');
+      bootstrap.Modal.getInstance(document.getElementById('editAdminModal')).hide();
+      location.reload();
+    } else {
+      showAlert(data.error, 'error');
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    showAlert('Error updating admin', 'error');
+  });
+}
+
+function deleteAdmin(adminId) {
+  currentAdminId = adminId;
+  new bootstrap.Modal(document.getElementById('deleteAdminModal')).show();
+}
+
+function confirmDeleteAdmin() {
+  fetch(`/admin/${currentAdminId}/delete`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': '{{ csrf_token() }}'
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      showAlert(data.message, 'success');
+      bootstrap.Modal.getInstance(document.getElementById('deleteAdminModal')).hide();
+      location.reload();
+    } else {
+      showAlert(data.error, 'error');
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    showAlert('Error deleting admin', 'error');
+  });
+}
+
+function toggleAdminStatus(adminId) {
+  fetch(`/admin/${adminId}/toggle_status`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': '{{ csrf_token() }}'
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      showAlert(data.message, 'success');
+      location.reload();
+    } else {
+      showAlert(data.error, 'error');
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    showAlert('Error updating admin status', 'error');
+  });
+}
+
+// Show/hide permissions section based on admin level
+document.getElementById('admin_level').addEventListener('change', function() {
+  const permissionsSection = document.getElementById('permissionsSection');
+  if (this.value == '3') {
+    permissionsSection.style.display = 'block';
+  } else {
+    permissionsSection.style.display = 'none';
+  }
+});
+
+document.getElementById('edit_admin_level').addEventListener('change', function() {
+  const permissionsSection = document.getElementById('editPermissionsSection');
+  if (this.value == '3') {
+    permissionsSection.style.display = 'block';
+  } else {
+    permissionsSection.style.display = 'none';
+  }
+});
+
+function showAlert(message, type) {
+  const alertDiv = document.createElement('div');
+  alertDiv.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show`;
+  alertDiv.innerHTML = `
+    ${message}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  `;
+  document.querySelector('.admin-management-container').insertBefore(alertDiv, document.querySelector('.admin-header'));
+  
+  setTimeout(() => {
+    alertDiv.remove();
+  }, 5000);
+}
+</script>
+
+<style>
+.admin-management-container {
+  padding: 1rem;
+}
+
+.admin-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  border: 1px solid #e9ecef;
+}
+
+.admin-card-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.admin-card-content {
+  padding: 1.5rem;
+}
+
+.admin-table th {
+  border-top: none;
+  font-weight: 600;
+  color: #495057;
+}
+
+.avatar-placeholder {
+  width: 32px;
+  height: 32px;
+  background: #e9ecef;
+  color: #6c757d;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.hierarchy-tree {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.hierarchy-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 8px;
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+}
+
+.hierarchy-icon {
+  font-size: 1.5rem;
+  width: 40px;
+  text-align: center;
+}
+
+.hierarchy-content {
+  flex: 1;
+}
+
+.hierarchy-title {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.hierarchy-desc {
+  font-size: 0.875rem;
+  color: #6c757d;
+}
+
+.hierarchy-connector {
+  height: 20px;
+  border-left: 2px solid #dee2e6;
+  margin-left: 20px;
+}
+
+.main-admin {
+  background: #fff5f5;
+  border-color: #fed7d7;
+}
+
+.hard-admin {
+  background: #f8f9fa;
+  border-color: #6c757d;
+  opacity: 0.8;
+}
+
+.secondary-admin {
+  background: #fffbf0;
+  border-color: #feebc8;
+}
+
+.sub-admin {
+  background: #f0f9ff;
+  border-color: #bfdbfe;
+}
+</style>
+{% endblock %} 

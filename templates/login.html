@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - PipLine Pro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+      :root {
+        --primary-color: #3b82f6;
+        --primary-dark: #1e40af;
+        --secondary-color: #64748b;
+        --success-color: #10b981;
+        --error-color: #ef4444;
+        --warning-color: #f59e0b;
+        --text-primary: #1e293b;
+        --text-secondary: #64748b;
+        --text-light: #94a3b8;
+        --bg-primary: #ffffff;
+        --bg-secondary: #f8fafc;
+        --bg-dark: #0f172a;
+        --border-color: #e2e8f0;
+        --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+        --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        --radius-sm: 0.375rem;
+        --radius-md: 0.5rem;
+        --radius-lg: 0.75rem;
+        --radius-xl: 1rem;
+        --radius-2xl: 1.5rem;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        min-height: 100vh;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background-attachment: fixed;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+        position: relative;
+        overflow-x: hidden;
+      }
+
+      /* Animated background elements */
+      body::before,
+      body::after {
+        content: '';
+        position: fixed;
+        width: 300px;
+        height: 300px;
+        border-radius: 50%;
+        background: linear-gradient(45deg, rgba(59, 130, 246, 0.1), rgba(147, 51, 234, 0.1));
+        animation: float 6s ease-in-out infinite;
+        z-index: -1;
+      }
+
+      body::before {
+        top: 10%;
+        left: 10%;
+        animation-delay: 0s;
+      }
+
+      body::after {
+        bottom: 10%;
+        right: 10%;
+        animation-delay: 3s;
+      }
+
+      @keyframes float {
+        0%, 100% { transform: translateY(0px) rotate(0deg); }
+        50% { transform: translateY(-20px) rotate(180deg); }
+      }
+
+      .login-container {
+        width: 100%;
+        max-width: 420px;
+        position: relative;
+        z-index: 1;
+      }
+
+      .login-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: var(--radius-2xl);
+        padding: 2.5rem;
+        box-shadow: var(--shadow-xl);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .login-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary-color), #8b5cf6);
+        border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
+      }
+
+      .logo-section {
+        text-align: center;
+        margin-bottom: 2rem;
+      }
+
+      .logo-container {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 1rem;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .logo {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        border-radius: 50%;
+        box-shadow: var(--shadow-lg);
+        transition: transform 0.3s ease;
+      }
+
+      .logo:hover {
+        transform: scale(1.05);
+      }
+
+      .logo-fallback {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary-color), #8b5cf6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: var(--shadow-lg);
+        color: white;
+        font-weight: 700;
+        font-size: 1.5rem;
+        font-family: 'Poppins', sans-serif;
+      }
+
+      .welcome-text {
+        text-align: center;
+        margin-bottom: 2rem;
+      }
+
+      .welcome-title {
+        font-family: 'Poppins', sans-serif;
+        font-size: 1.75rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+      }
+
+      .welcome-subtitle {
+        color: var(--text-secondary);
+        font-size: 0.95rem;
+        line-height: 1.5;
+      }
+
+      .form-group {
+        margin-bottom: 1.5rem;
+        position: relative;
+      }
+
+      .form-label {
+        display: block;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+      }
+
+      .input-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+      }
+
+      .form-input {
+        width: 100%;
+        padding: 0.875rem 1rem 0.875rem 3rem;
+        border: 2px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        font-size: 1rem;
+        color: var(--text-primary);
+        background: var(--bg-primary);
+        transition: all 0.2s ease;
+        outline: none;
+      }
+
+      .form-input:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      }
+
+      .form-input.is-valid {
+        border-color: var(--success-color);
+      }
+
+      .form-input.is-invalid {
+        border-color: var(--error-color);
+      }
+
+      .input-icon {
+        position: absolute;
+        left: 1rem;
+        color: var(--text-light);
+        font-size: 1.1rem;
+        transition: color 0.2s ease;
+      }
+
+      .form-input:focus + .input-icon {
+        color: var(--primary-color);
+      }
+
+      .password-toggle {
+        position: absolute;
+        right: 1rem;
+        background: none;
+        border: none;
+        color: var(--text-light);
+        cursor: pointer;
+        padding: 0.25rem;
+        border-radius: var(--radius-sm);
+        transition: all 0.2s ease;
+      }
+
+      .password-toggle:hover {
+        color: var(--primary-color);
+        background: rgba(59, 130, 246, 0.1);
+      }
+
+      .form-options {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        font-size: 0.875rem;
+      }
+
+      .remember-me {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        cursor: pointer;
+      }
+
+      .remember-me input[type="checkbox"] {
+        width: 1rem;
+        height: 1rem;
+        accent-color: var(--primary-color);
+      }
+
+      .forgot-link {
+        color: var(--primary-color);
+        text-decoration: none;
+        font-weight: 500;
+        transition: color 0.2s ease;
+      }
+
+      .forgot-link:hover {
+        color: var(--primary-dark);
+        text-decoration: underline;
+      }
+
+      .login-btn {
+        width: 100%;
+        padding: 0.875rem 1.5rem;
+        background: linear-gradient(135deg, var(--primary-color), #8b5cf6);
+        color: white;
+        border: none;
+        border-radius: var(--radius-lg);
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .login-btn:hover:not(:disabled) {
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-lg);
+      }
+
+      .login-btn:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+      }
+
+      .btn-content {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+      }
+
+      .spinner {
+        width: 1rem;
+        height: 1rem;
+        border: 2px solid transparent;
+        border-top: 2px solid currentColor;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+
+      .footer {
+        text-align: center;
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--border-color);
+        color: var(--text-light);
+        font-size: 0.875rem;
+      }
+
+      .alert {
+        border-radius: var(--radius-lg);
+        border: none;
+        padding: 1rem 1.25rem;
+        margin-bottom: 1.5rem;
+        font-size: 0.875rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+
+      .alert-danger {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--error-color);
+        border-left: 4px solid var(--error-color);
+      }
+
+      .alert-success {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--success-color);
+        border-left: 4px solid var(--success-color);
+      }
+
+      /* Enhanced login alert styling */
+      .login-alert {
+        animation: slideInDown 0.3s ease-out;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        margin-bottom: 1.5rem;
+        border-radius: 8px;
+        font-weight: 500;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .login-alert.alert-danger {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(239, 68, 68, 0.05));
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        color: #dc2626;
+        border-left: 4px solid #dc2626;
+      }
+
+      .login-alert.alert-danger::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, #dc2626, #ef4444, #dc2626);
+        animation: shimmer 2s infinite;
+      }
+
+      .login-alert.alert-danger {
+        animation: slideInDown 0.3s ease-out, pulse 2s ease-in-out 0.3s 2;
+      }
+
+      @keyframes shimmer {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+      }
+
+      @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.02); }
+      }
+
+      .login-alert.alert-success {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.05));
+        border: 1px solid rgba(16, 185, 129, 0.3);
+        color: #059669;
+      }
+
+      .alert-message {
+        flex: 1;
+        line-height: 1.4;
+      }
+
+      @keyframes slideInDown {
+        from {
+          opacity: 0;
+          transform: translateY(-20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .alert-icon {
+        font-size: 1.1rem;
+        flex-shrink: 0;
+      }
+
+      .alert-close {
+        background: none;
+        border: none;
+        color: inherit;
+        cursor: pointer;
+        padding: 0.25rem;
+        margin-left: auto;
+        border-radius: var(--radius-sm);
+        transition: background-color 0.2s ease;
+      }
+
+      .alert-close:hover {
+        background: rgba(0, 0, 0, 0.1);
+      }
+
+      /* Modal styles */
+      .modal-content {
+        border-radius: var(--radius-xl);
+        border: none;
+        box-shadow: var(--shadow-xl);
+      }
+
+      .modal-header {
+        border-bottom: 1px solid var(--border-color);
+        padding: 1.5rem 1.5rem 1rem;
+      }
+
+      .modal-body {
+        padding: 1rem 1.5rem 1.5rem;
+      }
+
+      /* Responsive design */
+      @media (max-width: 480px) {
+        .login-card {
+          padding: 2rem 1.5rem;
+          margin: 0.5rem;
+        }
+
+        .welcome-title {
+          font-size: 1.5rem;
+        }
+
+        .logo-container {
+          width: 60px;
+          height: 60px;
+        }
+
+        .form-options {
+          flex-direction: column;
+          gap: 1rem;
+          align-items: flex-start;
+        }
+      }
+
+      /* Accessibility improvements */
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+
+      /* Focus styles for keyboard navigation */
+      .form-input:focus,
+      .login-btn:focus,
+      .password-toggle:focus,
+      .forgot-link:focus {
+        outline: 2px solid var(--primary-color);
+        outline-offset: 2px;
+      }
+
+      /* Loading animation */
+      .fade-in {
+        animation: fadeIn 0.5s ease-out;
+      }
+
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+    </style>
+</head>
+<body>
+  <div class="login-container fade-in">
+    <!-- Flash Messages Display -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ 'danger' if category == 'error' else category }} login-alert" role="alert" aria-live="assertive">
+            <i class="bi bi-{{ 'exclamation-triangle-fill' if category == 'error' else 'check-circle-fill' }} alert-icon"></i>
+            <span class="alert-message">{{ message }}</span>
+            <button type="button" class="alert-close" onclick="this.parentElement.remove()" aria-label="Close alert">
+              <i class="bi bi-x"></i>
+            </button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <!-- Legacy error/success handling for backward compatibility -->
+    {% if error %}
+    <div class="alert alert-danger" role="alert" aria-live="assertive">
+      <i class="bi bi-exclamation-triangle-fill alert-icon"></i>
+      <span>{{ error }}</span>
+      <button type="button" class="alert-close" onclick="this.parentElement.remove()" aria-label="Close alert">
+        <i class="bi bi-x"></i>
+      </button>
+    </div>
+    {% endif %}
+
+    {% if success %}
+    <div class="alert alert-success" role="alert" aria-live="assertive">
+      <i class="bi bi-check-circle-fill alert-icon"></i>
+      <span>{{ success }}</span>
+      <button type="button" class="alert-close" onclick="this.parentElement.remove()" aria-label="Close alert">
+        <i class="bi bi-x"></i>
+      </button>
+    </div>
+    {% endif %}
+
+    <div class="login-card">
+      <div class="logo-section">
+        <div class="logo-container">
+          <img src="{{ url_for('static', filename='plogo.png') }}" 
+               alt="PipLine Pro Logo" 
+               class="logo" 
+               onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" 
+               onload="this.nextElementSibling.style.display='none';">
+          <div class="logo-fallback" style="display: none;">PL</div>
+        </div>
+        <div class="welcome-text">
+          <h1 class="welcome-title">Welcome Back</h1>
+          <p class="welcome-subtitle">Sign in to your PipLine Pro account</p>
+        </div>
+      </div>
+
+      <form method="post" autocomplete="off" id="loginForm" novalidate>
+        {{ form.hidden_tag() }}
+        <!-- Fallback CSRF token in case form.hidden_tag() fails -->
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        
+        <div class="form-group">
+          <label for="username" class="form-label">Username</label>
+          <div class="input-wrapper">
+            <input type="text" 
+                   id="username" 
+                   name="username" 
+                   class="form-input" 
+                   placeholder="Enter your username"
+                   autocomplete="username"
+                   required 
+                   minlength="3" 
+                   maxlength="80"
+                   aria-describedby="username-help">
+            <i class="bi bi-person input-icon"></i>
+          </div>
+          <div id="username-help" class="sr-only">Enter your username</div>
+        </div>
+
+        <div class="form-group">
+          <label for="password" class="form-label">Password</label>
+          <div class="input-wrapper">
+            <input type="password" 
+                   id="password" 
+                   name="password" 
+                   class="form-input" 
+                   placeholder="Enter your password"
+                   autocomplete="current-password"
+                   required 
+                   minlength="8"
+                   aria-describedby="password-help">
+            <i class="bi bi-lock input-icon"></i>
+            <button type="button" 
+                    class="password-toggle" 
+                    onclick="togglePassword()" 
+                    aria-label="Toggle password visibility">
+              <i class="bi bi-eye" id="password-toggle-icon"></i>
+            </button>
+          </div>
+          <div id="password-help" class="sr-only">Enter your password</div>
+        </div>
+
+        <div class="form-options">
+          <label class="remember-me">
+            <input type="checkbox" id="remember-me" name="remember_me">
+            <span>Remember me</span>
+          </label>
+          <a href="#" 
+             class="forgot-link" 
+             data-bs-toggle="modal" 
+             data-bs-target="#forgotPasswordModal"
+             aria-label="Forgot password? Click to open password recovery options">
+            Forgot password?
+          </a>
+        </div>
+
+        <button type="submit" class="login-btn" id="loginBtn">
+          <div class="btn-content">
+            <span class="btn-text">Sign In</span>
+            <span class="btn-loading" style="display: none;">
+              <span class="spinner"></span>
+              <span>Signing in...</span>
+            </span>
+          </div>
+        </button>
+      </form>
+
+      <div class="footer">
+        <p>&copy; 2025 PipLine Pro. All rights reserved.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Forgot Password Modal -->
+  <div class="modal fade" id="forgotPasswordModal" tabindex="-1" aria-labelledby="forgotPasswordModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="forgotPasswordModalLabel">
+            <i class="bi bi-question-circle me-2"></i>
+            Forgot Password?
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p class="mb-3">If you've forgotten your password, please contact your system administrator to reset it.</p>
+          <div class="alert alert-info">
+            <i class="bi bi-info-circle me-2"></i>
+            <strong>Security Note:</strong> For security reasons, password resets must be handled by your administrator.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // CSRF Token handling
+    function ensureCSRFToken() {
+      const form = document.getElementById('loginForm');
+      const csrfInputs = form.querySelectorAll('input[name="csrf_token"]');
+      
+      // If no CSRF token found, create one
+      if (csrfInputs.length === 0) {
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrf_token';
+        csrfInput.value = generateFallbackToken();
+        form.appendChild(csrfInput);
+      }
+      
+      // If CSRF token is placeholder, replace it
+      csrfInputs.forEach(input => {
+        if (input.value === '__CSRF_TOKEN_PLACEHOLDER__') {
+          input.value = generateFallbackToken();
+        }
+      });
+    }
+    
+    function generateFallbackToken() {
+      // Generate a simple fallback token
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+      let result = '';
+      for (let i = 0; i < 32; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return result;
+    }
+    
+    // Password toggle functionality
+    function togglePassword() {
+      const passwordInput = document.getElementById('password');
+      const toggleIcon = document.getElementById('password-toggle-icon');
+      
+      if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        toggleIcon.className = 'bi bi-eye-slash';
+        toggleIcon.setAttribute('aria-label', 'Hide password');
+      } else {
+        passwordInput.type = 'password';
+        toggleIcon.className = 'bi bi-eye';
+        toggleIcon.setAttribute('aria-label', 'Show password');
+      }
+    }
+
+    // Form submission handling
+    document.getElementById('loginForm').addEventListener('submit', function(e) {
+      // Ensure CSRF token is present before submission
+      ensureCSRFToken();
+      
+      const btn = document.getElementById('loginBtn');
+      const btnText = btn.querySelector('.btn-text');
+      const btnLoading = btn.querySelector('.btn-loading');
+      
+      // Show loading state
+      btn.disabled = true;
+      btnText.style.display = 'none';
+      btnLoading.style.display = 'flex';
+    });
+
+    // Enhanced form validation
+    document.addEventListener('DOMContentLoaded', function() {
+      // Ensure CSRF token is present on page load
+      ensureCSRFToken();
+      
+      const form = document.getElementById('loginForm');
+      const inputs = form.querySelectorAll('input[required]');
+      
+      inputs.forEach(function(input) {
+        // Real-time validation
+        input.addEventListener('input', function() {
+          validateField(this);
+        });
+        
+        // Blur validation
+        input.addEventListener('blur', function() {
+          validateField(this);
+        });
+      });
+    });
+
+    function validateField(field) {
+      const isValid = field.checkValidity();
+      
+      field.classList.remove('is-valid', 'is-invalid');
+      
+      if (isValid) {
+        field.classList.add('is-valid');
+      } else {
+        field.classList.add('is-invalid');
+      }
+    }
+
+    // Auto-hide alerts after 8 seconds
+    setTimeout(function() {
+      const alerts = document.querySelectorAll('.alert');
+      alerts.forEach(function(alert) {
+        if (alert.classList.contains('alert-danger')) {
+          const bsAlert = new bootstrap.Alert(alert);
+          bsAlert.close();
+        }
+      });
+    }, 8000);
+
+    // Enhanced accessibility
+    document.addEventListener('keydown', function(e) {
+      // Close modal with Escape key
+      if (e.key === 'Escape') {
+        const modal = document.querySelector('.modal.show');
+        if (modal) {
+          const modalInstance = bootstrap.Modal.getInstance(modal);
+          if (modalInstance) {
+            modalInstance.hide();
+          }
+        }
+      }
+    });
+
+    // Focus management
+    document.addEventListener('DOMContentLoaded', function() {
+      const firstInput = document.querySelector('.form-input');
+      if (firstInput) {
+        firstInput.focus();
+      }
+    });
+  </script>
+</body>
+</html>

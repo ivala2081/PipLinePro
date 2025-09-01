@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+{% block title %}Summary - Order PipLine{% endblock %}
+
+{% block content %}
+<div class="business-typography">
+  <!-- Header -->
+  <div class="business-card mb-4">
+    <div class="business-card-header">
+      <div class="d-flex align-items-center justify-content-between">
+        <div>
+          <h1 class="business-heading business-heading-2 mb-2">
+            <i class="bi bi-calculator text-primary me-3"></i>
+            Financial Summary
+          </h1>
+          <p class="business-text-sm text-muted mb-0">
+            Daily financial overview and reconciliation status
+          </p>
+        </div>
+        <div class="d-flex align-items-center">
+          <div class="business-status-indicator me-3">
+            <i class="bi bi-circle-fill text-success"></i>
+            <span class="business-text-sm">System Online</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="business-card mb-4">
+    <div class="business-card-body">
+      <form method="GET" class="row g-3">
+        <div class="col-md-3">
+          <label class="business-form-label">Date From</label>
+          <input type="date" name="date_from" value="{{ filter_date_from }}" class="business-form-control">
+        </div>
+        <div class="col-md-3">
+          <label class="business-form-label">Date To</label>
+          <input type="date" name="date_to" value="{{ filter_date_to }}" class="business-form-control">
+        </div>
+        <div class="col-md-3">
+          <label class="business-form-label">PSP</label>
+          <select name="psp" class="business-form-control">
+            <option value="">All PSPs</option>
+            {% for psp in all_psps %}
+            <option value="{{ psp }}" {% if filter_psp == psp %}selected{% endif %}>{{ psp }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="business-form-label">&nbsp;</label>
+          <button type="submit" class="business-btn business-btn-primary w-100">
+            <i class="bi bi-search me-2"></i>Filter
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Summary Data -->
+  {% if summary_data %}
+  <div class="business-card">
+    <div class="business-card-header">
+      <h3 class="business-heading business-heading-3 mb-0">
+        <i class="bi bi-table me-2"></i>
+        Daily Summary
+      </h3>
+    </div>
+    <div class="business-card-body">
+      <div class="table-responsive">
+        <table class="business-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>PSP</th>
+              <th>Yatırım</th>
+                              <th>Withdraw</th>
+              <th>Toplam</th>
+              <th>Komisyon</th>
+              <th>Net</th>
+              <th>Tahsilat</th>
+              <th>Devir</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for date_summary in summary_data %}
+              {% for psp, psp_data in date_summary.psps.items() %}
+              <tr>
+                <td>{{ date_summary.date.strftime('%Y-%m-%d') }}</td>
+                <td><strong>{{ psp }}</strong></td>
+                                <td class="text-end">{{ "{:.2f}".format(psp_data['deposit']) }}</td>
+                <td class="text-end">{{ "{:.2f}".format(psp_data['withdraw']) }}</td>
+                <td class="text-end">{{ "{:.2f}".format(psp_data['toplam']) }}</td>
+                <td class="text-end">{{ "{:.2f}".format(psp_data['komisyon']) }}</td>
+                <td class="text-end">{{ "{:.2f}".format(psp_data['net']) }}</td>
+                <td class="text-end">
+                  {% if psp_data['tahs_tutar'] is not none %}
+                    {{ "{:.2f}".format(psp_data['tahs_tutar']) }}
+                  {% else %}
+                    -
+                  {% endif %}
+                </td>
+                <td class="text-end">{{ "{:.2f}".format(psp_data['devir']) }}</td>
+                <td>
+                  {# Show green badge for Paid if paid, or Net = Allocation, or Rollover = 0 #}
+                  {% if psp_data['paid'] or (psp_data['net'] == psp_data['tahs_tutar']) or (psp_data['devir'] == 0) %}
+                    <span class="badge bg-success">Paid</span>
+                  {% else %}
+                    <span class="badge bg-danger">Unpaid</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+              
+              <!-- Daily Totals Row -->
+              <tr class="table-secondary">
+                <td colspan="2"><strong>Daily Totals</strong></td>
+                                <td class="text-end"><strong>{{ "{:.2f}".format(date_summary.totals['deposit']) }}</strong></td>
+                <td class="text-end"><strong>{{ "{:.2f}".format(date_summary.totals['withdraw']) }}</strong></td>
+                <td class="text-end"><strong>{{ "{:.2f}".format(date_summary.totals['toplam']) }}</strong></td>
+                <td class="text-end"><strong>{{ "{:.2f}".format(date_summary.totals['komisyon']) }}</strong></td>
+                <td class="text-end"><strong>{{ "{:.2f}".format(date_summary.totals['net']) }}</strong></td>
+                <td class="text-end"><strong>{{ "{:.2f}".format(date_summary.totals['tahs_tutar']) }}</strong></td>
+                <td class="text-end"><strong>{{ "{:.2f}".format(date_summary.totals['devir']) }}</strong></td>
+                <td>
+                  <span class="badge bg-info">Total</span>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="business-card">
+    <div class="business-card-body text-center">
+      <i class="bi bi-inbox display-1 text-muted"></i>
+      <h4 class="business-heading business-heading-4 mt-3">No Data Found</h4>
+      <p class="business-text text-muted">No transactions found for the selected date range and filters.</p>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Exchange Rate Form (Admin Only) -->
+  {% if current_user.role == 'admin' %}
+  <div class="business-card mt-4">
+    <div class="business-card-header">
+      <h3 class="business-heading business-heading-3 mb-0">
+        <i class="bi bi-currency-exchange me-2"></i>
+        Update Exchange Rate
+      </h3>
+    </div>
+    <div class="business-card-body">
+      <form method="POST" class="row g-3">
+        <div class="col-md-3">
+          <label class="business-form-label">Date</label>
+          <input type="date" name="date" required class="business-form-control">
+        </div>
+        <div class="col-md-3">
+          <label class="business-form-label">USD Rate</label>
+          <input type="number" name="usd_rate" step="0.0001" required class="business-form-control">
+        </div>
+        <div class="col-md-3">
+          <label class="business-form-label">EUR Rate (Optional)</label>
+          <input type="number" name="eur_rate" step="0.0001" class="business-form-control">
+        </div>
+        <div class="col-md-3">
+          <label class="business-form-label">&nbsp;</label>
+          <button type="submit" class="business-btn business-btn-primary w-100">
+            <i class="bi bi-save me-2"></i>Update Rate
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %} 
