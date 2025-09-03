@@ -10,6 +10,8 @@ import {
 import { useLanguage } from '../contexts/LanguageContext';
 import { PageHeader, Section, ContentArea, CardGrid } from '../components/ProfessionalLayout';
 import { Button } from '../components/ProfessionalButtons';
+import StandardMetricsCard from '../components/StandardMetricsCard';
+import { AnalyticsPageSkeleton } from '../components/EnhancedSkeletonLoaders';
 
 interface PspSummary {
   psp: string;
@@ -96,33 +98,7 @@ export default function Analytics() {
   };
 
   if (loading) {
-    return (
-      <div className='space-y-8'>
-        <div className='space-y-2'>
-          <h1 className='text-3xl font-bold text-gray-900'>
-            {t('analytics.title')}
-          </h1>
-          <p className='text-gray-600'>{t('analytics.description')}</p>
-        </div>
-        <div className='grid grid-cols-1 lg:grid-cols-2 gap-8'>
-          {[1, 2].map(i => (
-            <div key={i} className='card animate-pulse'>
-              <div className='p-6'>
-                <div className='w-32 h-6 bg-gray-200 rounded mb-4'></div>
-                <div className='space-y-3'>
-                  {[1, 2, 3, 4].map(j => (
-                    <div key={j} className='flex justify-between'>
-                      <div className='w-24 h-4 bg-gray-200 rounded'></div>
-                      <div className='w-16 h-4 bg-gray-200 rounded'></div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
+    return <AnalyticsPageSkeleton />;
   }
 
   if (error) {
@@ -218,68 +194,40 @@ export default function Analytics() {
       {/* Summary Cards Section */}
       <Section title="Key Metrics" subtitle="Overview of your business performance">
         <CardGrid cols={4} gap="lg">
-          <div className='stats-card card-hover'>
-            <div className='stats-card-header'>
-              <div className='w-12 h-12 bg-success-50 rounded-lg flex items-center justify-center'>
-                <DollarSign className='h-6 w-6 text-success-600' />
-              </div>
-            </div>
-            <div className='stats-card-content'>
-              <p className='text-sm font-medium text-gray-500'>{t('dashboard.total_revenue')}</p>
-              <p className='text-2xl font-bold text-gray-900'>
-                {formatCurrency(totalAmount)}
-              </p>
-            </div>
-          </div>
-
-          <div className='stats-card card-hover'>
-            <div className='stats-card-header'>
-              <div className='w-12 h-12 bg-accent-50 rounded-lg flex items-center justify-center'>
-                <TrendingUp className='h-6 w-6 text-accent-600' />
-              </div>
-            </div>
-            <div className='stats-card-content'>
-              <p className='text-sm font-medium text-gray-500'>
-                {t('dashboard.total_commission')}
-              </p>
-              <p className='text-2xl font-bold text-gray-900'>
-                {formatCurrency(totalCommission)}
-              </p>
-            </div>
-          </div>
-
-          <div className='stats-card card-hover'>
-            <div className='stats-card-header'>
-              <div className='w-12 h-12 bg-warning-50 rounded-lg flex items-center justify-center'>
-                <Users className='h-6 w-6 text-warning-600' />
-              </div>
-            </div>
-            <div className='stats-card-content'>
-              <p className='text-sm font-medium text-gray-500'>{t('dashboard.active_clients')}</p>
-              <p className='text-2xl font-bold text-gray-900'>
-                {analyticsData.client_summary.length}
-              </p>
-            </div>
-          </div>
-
-          <div className='stats-card card-hover'>
-            <div className='stats-card-header'>
-              <div className='w-12 h-12 bg-gray-50 rounded-lg flex items-center justify-center'>
-                <Activity className='h-6 w-6 text-gray-600' />
-              </div>
-            </div>
-            <div className='stats-card-content'>
-              <p className='text-sm font-medium text-gray-500'>
-                {t('dashboard.total_transactions')}
-              </p>
-              <p className='text-2xl font-bold text-gray-900'>
-                {analyticsData.psp_summary.reduce(
-                  (sum, item) => sum + item.transaction_count,
-                  0
-                )}
-              </p>
-            </div>
-          </div>
+          <StandardMetricsCard
+            title={t('dashboard.total_revenue')}
+            value={formatCurrency(totalAmount)}
+            icon={DollarSign}
+            color="green"
+            variant="default"
+          />
+          
+          <StandardMetricsCard
+            title={t('dashboard.total_commission')}
+            value={formatCurrency(totalCommission)}
+            icon={TrendingUp}
+            color="blue"
+            variant="default"
+          />
+          
+          <StandardMetricsCard
+            title={t('dashboard.active_clients')}
+            value={analyticsData.client_summary.length}
+            icon={Users}
+            color="purple"
+            variant="default"
+          />
+          
+          <StandardMetricsCard
+            title={t('dashboard.total_transactions')}
+            value={analyticsData.psp_summary.reduce(
+              (sum, item) => sum + item.transaction_count,
+              0
+            )}
+            icon={Activity}
+            color="orange"
+            variant="default"
+          />
         </CardGrid>
       </Section>
 

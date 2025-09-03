@@ -22,7 +22,6 @@ analytics_api = Blueprint('analytics_api', __name__)
 # Simple in-memory cache for analytics data
 analytics_cache = {}
 CACHE_DURATION = 300  # 5 minutes
-
 def cache_result(duration=CACHE_DURATION):
     """Decorator to cache API results"""
     def decorator(f):
@@ -148,10 +147,29 @@ def dashboard_stats():
         ).all()
         
         # Process data in memory to avoid multiple database queries
-        total_revenue = sum(float(t.amount or 0) for t in transactions)
+        # Use TRY amounts for consistent currency reporting
+        total_revenue = 0
+        total_commission = 0
+        total_net = 0
+        
+        for t in transactions:
+            # Use TRY amounts if available, otherwise use original amounts
+            if t.amount_try is not None:
+                total_revenue += float(t.amount_try)
+            else:
+                total_revenue += float(t.amount or 0)
+                
+            if t.commission_try is not None:
+                total_commission += float(t.commission_try)
+            else:
+                total_commission += float(t.commission or 0)
+                
+            if t.net_amount_try is not None:
+                total_net += float(t.net_amount_try)
+            else:
+                total_net += float(t.net_amount or 0)
+        
         total_transactions = len(transactions)
-        total_commission = sum(float(t.commission or 0) for t in transactions)
-        total_net = sum(float(t.net_amount or 0) for t in transactions)
         
         # Get unique clients
         unique_clients = len(set(t.client_name for t in transactions if t.client_name))
@@ -163,7 +181,13 @@ def dashboard_stats():
             Transaction.created_at < start_date
         ).all()
         
-        prev_revenue = sum(float(t.amount or 0) for t in prev_transactions)
+        # Calculate previous period revenue using same logic
+        prev_revenue = 0
+        for t in prev_transactions:
+            if t.amount_try is not None:
+                prev_revenue += float(t.amount_try)
+            else:
+                prev_revenue += float(t.amount or 0)
         prev_transactions_count = len(prev_transactions)
         prev_clients = len(set(t.client_name for t in prev_transactions if t.client_name))
         
@@ -1367,26 +1391,36 @@ def get_dashboard_stats_optimized(start_date, end_date):
 def get_revenue_trends_optimized(start_date, end_date):
     """Optimized revenue trends query"""
     try:
-        # Daily revenue trends
-        daily_revenue = db.session.query(
-            func.date(Transaction.created_at).label('date'),
-            func.sum(Transaction.amount).label('revenue'),
-            func.count(Transaction.id).label('transactions')
-        ).filter(
+        # Get all transactions for the date range
+        transactions = Transaction.query.filter(
             Transaction.created_at >= start_date,
             Transaction.created_at <= end_date
-        ).group_by(
-            func.date(Transaction.created_at)
-        ).order_by(
-            func.date(Transaction.created_at)
         ).all()
         
+        # Group by date and calculate TRY amounts
+        daily_stats = {}
+        for transaction in transactions:
+            date_key = transaction.created_at.date()
+            
+            if date_key not in daily_stats:
+                daily_stats[date_key] = {'revenue': 0, 'transactions': 0}
+            
+            # Use TRY amount if available, otherwise use original amount
+            if transaction.amount_try is not None:
+                revenue = float(transaction.amount_try)
+            else:
+                revenue = float(transaction.amount or 0)
+            
+            daily_stats[date_key]['revenue'] += revenue
+            daily_stats[date_key]['transactions'] += 1
+        
+        # Convert to sorted list
         return [
             {
-                'date': str(day.date),
-                'revenue': float(day.revenue or 0),
-                'transactions': int(day.transactions or 0)
-            } for day in daily_revenue
+                'date': str(date),
+                'revenue': stats['revenue'],
+                'transactions': stats['transactions']
+            } for date, stats in sorted(daily_stats.items())
         ]
     except Exception as e:
         logging.error(f"Error getting revenue trends: {str(e)}")

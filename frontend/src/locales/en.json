@@ -175,7 +175,7 @@
   },
   "clients": {
     "title": "Clients",
-    "description": "Manage and analyze your client relationships, transactions, and performance metrics",
+    "description": "Client management and analytics",
     "add_client": "Add Client",
     "edit_client": "Edit Client",
     "client_name": "Client Name",
@@ -196,7 +196,7 @@
   },
   "transactions": {
     "title": "Transactions",
-    "description": "Track, manage, and analyze all your financial transactions and payment activities",
+    "description": "Financial transaction management",
     "add_transaction": "Add Transaction",
     "edit_transaction": "Edit Transaction",
     "transaction_id": "Transaction ID",

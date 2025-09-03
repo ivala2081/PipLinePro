@@ -7,6 +7,7 @@ from typing import Any, Dict, List, Optional
 from functools import wraps
 from flask import current_app
 from celery import Celery
+from app.utils.safe_logging import safe_log, setup_safe_logging
 
 class BackgroundTaskService:
     """Background task service for handling heavy operations asynchronously"""
@@ -52,13 +53,13 @@ class BackgroundTaskService:
                 )
                 
                 self.connected = True
-                logging.info("✅ Background task service initialized successfully")
+                safe_log(logging.getLogger(__name__), logging.INFO, "✅ Background task service initialized successfully")
                 
             else:
-                logging.info("⚠️ Background tasks disabled in configuration")
+                safe_log(logging.getLogger(__name__), logging.INFO, "⚠️ Background tasks disabled in configuration")
                 
         except Exception as e:
-            logging.warning(f"⚠️ Background task service initialization failed: {e}")
+            safe_log(logging.getLogger(__name__), logging.WARNING, f"⚠️ Background task service initialization failed: {e}")
             self.connected = False
     
     def is_connected(self) -> bool:

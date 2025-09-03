@@ -1456,7 +1456,7 @@ export default function Settings() {
       {/* Enhanced Header */}
       <PageHeader
         title="Settings"
-        subtitle="Manage your application settings and preferences"
+        subtitle="Application settings"
       />
 
       {/* Enhanced Tabs */}

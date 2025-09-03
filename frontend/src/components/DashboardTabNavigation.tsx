@@ -50,9 +50,9 @@ const DashboardTabNavigation = memo<DashboardTabNavigationProps>(({
   ];
 
   return (
-    <div className='business-card overflow-hidden'>
-      <div className='business-card-header bg-gradient-to-r from-gray-50 to-gray-100/50'>
-        <nav className='flex space-business-x-sm'>
+    <div className='bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden'>
+      <div className='bg-gradient-to-r from-gray-50 to-gray-100/50 px-6 py-2'>
+        <nav className='flex space-x-1'>
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -61,9 +61,9 @@ const DashboardTabNavigation = memo<DashboardTabNavigationProps>(({
               <div key={tab.id} className="flex items-center gap-2">
                 <button
                   onClick={() => onTabChange(tab.id)}
-                  className={`px-6 py-3 rounded-lg font-medium text-sm transition-all duration-200 flex items-center gap-2 ${
+                  className={`px-6 py-3 rounded-xl font-medium text-sm transition-all duration-200 flex items-center gap-2 ${
                     isActive
-                      ? 'bg-white text-gray-900 shadow-sm border border-gray-200'
+                      ? 'bg-white text-blue-600 shadow-md border border-gray-200'
                       : 'text-gray-600 hover:text-gray-800 hover:bg-white/50'
                   }`}
                   title={tab.description}

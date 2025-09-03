@@ -36,6 +36,8 @@ import { api } from '../utils/apiClient';
 import { formatCurrency } from '../utils/currencyUtils';
 import { PageHeader, Section, ContentArea, CardGrid } from '../components/ProfessionalLayout';
 import { Button } from '../components/ProfessionalButtons';
+import StandardMetricsCard from '../components/StandardMetricsCard';
+import { LedgerPageSkeleton } from '../components/EnhancedSkeletonLoaders';
 
 interface PSPData {
   psp: string;
@@ -100,21 +102,23 @@ export default function Ledger() {
   const [tempAllocations, setTempAllocations] = useState<{[key: string]: number}>({});
   const [pspOverviewData, setPspOverviewData] = useState<PSPOverviewData[]>([]);
 
+  // Consolidated data fetching effect
   useEffect(() => {
     if (isAuthenticated && !authLoading) {
+      console.log('🔄 Ledger: Component mounted, fetching data...');
+      
+      // Clear any previous errors when component mounts
+      setError(null);
+      
+      // Always fetch PSP data first
       fetchPSPData();
-      // Also fetch ledger data for Overview tab
-      if (activeTab === 'overview') {
+      
+      // Fetch ledger data if on relevant tabs
+      if (activeTab === 'ledger' || activeTab === 'overview') {
         fetchLedgerData();
       }
     }
-  }, [isAuthenticated, authLoading]);
-
-  useEffect(() => {
-    if ((activeTab === 'ledger' || activeTab === 'overview') && isAuthenticated && !authLoading) {
-      fetchLedgerData();
-    }
-  }, [activeTab, isAuthenticated, authLoading]);
+  }, [isAuthenticated, authLoading, activeTab]);
 
   // Listen for transaction updates to automatically refresh ledger data
   useEffect(() => {
@@ -128,12 +132,13 @@ export default function Ledger() {
         console.log('🔄 Ledger: Refreshing data due to transaction updates...');
         console.log('🔄 Ledger: Current active tab:', activeTab);
         
-        fetchPSPData();
+        // Force refresh to get latest data after transaction updates
+        fetchPSPData(true);
         
         // Also refresh ledger data if we're on a tab that uses it
         if (activeTab === 'ledger' || activeTab === 'overview') {
           console.log('🔄 Ledger: Refreshing ledger data for tab:', activeTab);
-          fetchLedgerData();
+          fetchLedgerData(true);
         } else {
           console.log('🔄 Ledger: Not on ledger/overview tab, skipping ledger refresh');
         }
@@ -151,24 +156,47 @@ export default function Ledger() {
     };
   }, [isAuthenticated, authLoading, activeTab]);
 
-  const fetchPSPData = async () => {
+  // Cleanup effect to clear cache when component unmounts
+  useEffect(() => {
+    return () => {
+      // Clear cache when component unmounts to prevent stale data
+      api.clearCacheForUrl('psp_summary_stats');
+      api.clearCacheForUrl('ledger-data');
+    };
+  }, []);
+
+  const fetchPSPData = async (forceRefresh = false) => {
     try {
+      console.log('🔄 Ledger: Starting PSP data fetch...', { forceRefresh });
       setLoading(true);
       setError(null);
 
-      const response = await api.get('/api/v1/transactions/psp_summary_stats');
+      // Clear cache if forcing refresh
+      if (forceRefresh) {
+        api.clearCacheForUrl('psp_summary_stats');
+      }
+
+      const response = await api.get('/api/v1/transactions/psp_summary_stats', undefined, !forceRefresh);
+      console.log('🔄 Ledger: PSP API response received:', {
+        status: response.status,
+        ok: response.ok,
+        statusText: response.statusText
+      });
 
       if (response.status === 401) {
+        console.log('🔄 Ledger: Unauthorized, redirect will be handled by AuthContext');
         // User is not authenticated, redirect will be handled by AuthContext
         return;
       }
 
       const data = await api.parseResponse(response);
+      console.log('🔄 Ledger: PSP data parsed:', data);
 
       if (response.ok && data) {
         // Handle the correct API response format
         // Backend now returns: [{ psp, total_amount, total_commission, total_net, transaction_count, commission_rate }]
         const pspStats = Array.isArray(data) ? data : [];
+        console.log('🔄 Ledger: PSP stats array:', pspStats);
 
         // Transform backend data to frontend format (if needed)
         const transformedData: PSPData[] = pspStats.map((item: any) => ({
@@ -180,24 +208,35 @@ export default function Ledger() {
           commission_rate: item.commission_rate || 0,
         }));
 
+        console.log('🔄 Ledger: Transformed PSP data:', transformedData);
         setPspData(transformedData);
+        console.log('🔄 Ledger: PSP data set successfully');
       } else {
+        console.error('🔄 Ledger: PSP API response not ok or no data:', { response, data });
         setError(data?.message || 'Failed to load PSP data');
         setPspData([]); // Ensure it's always an array
       }
     } catch (error) {
-      console.error('Error fetching PSP data:', error);
-      setError('Failed to load PSP data');
+      console.error('🔄 Ledger: Error fetching PSP data:', error);
+      setError(`Failed to load PSP data: ${error instanceof Error ? error.message : 'Unknown error'}`);
       setPspData([]); // Ensure it's always an array
     } finally {
       setLoading(false);
+      console.log('🔄 Ledger: PSP data fetch completed');
     }
   };
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await fetchPSPData();
-    setRefreshing(false);
+    try {
+      // Force refresh both PSP and ledger data
+      await Promise.all([
+        fetchPSPData(true),
+        fetchLedgerData(true)
+      ]);
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   const handleExport = () => {
@@ -410,11 +449,17 @@ export default function Ledger() {
     return metrics;
   };
 
-  const fetchLedgerData = async () => {
+  const fetchLedgerData = async (forceRefresh = false) => {
     setLedgerLoading(true);
     try {
-      console.log('🔄 Ledger: Fetching ledger data...');
-      const response = await api.get('/api/v1/analytics/ledger-data');
+      console.log('🔄 Ledger: Fetching ledger data...', { forceRefresh });
+      
+      // Clear cache if forcing refresh
+      if (forceRefresh) {
+        api.clearCacheForUrl('ledger-data');
+      }
+      
+      const response = await api.get('/api/v1/analytics/ledger-data', undefined, !forceRefresh);
       console.log('🔄 Ledger: Response status:', response.status);
       
       if (response.ok) {
@@ -666,17 +711,9 @@ export default function Ledger() {
     ? [...new Set(pspData.map(entry => entry.psp))]
     : [];
 
-  // Loading state
+  // Enhanced loading state
   if (authLoading || loading) {
-    return (
-      <div className='min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-blue-50'>
-        <div className='text-center'>
-          <div className='animate-spin rounded-full h-16 w-16 border-b-2 border-accent-600 mx-auto mb-4'></div>
-          <h2 className='text-xl font-semibold text-gray-900 mb-2'>Loading Ledger</h2>
-          <p className='text-gray-600'>Fetching PSP data...</p>
-        </div>
-      </div>
-    );
+    return <LedgerPageSkeleton />;
   }
 
   // Error state
@@ -692,7 +729,7 @@ export default function Ledger() {
           </h2>
           <p className='text-gray-600 mb-6'>{error}</p>
           <button 
-            onClick={fetchPSPData} 
+            onClick={() => fetchPSPData(true)} 
             className='inline-flex items-center gap-2 px-6 py-3 bg-accent-600 text-white rounded-lg hover:bg-accent-700 transition-colors duration-200'
           >
             <RefreshCw className='h-4 w-4' />
@@ -708,7 +745,7 @@ export default function Ledger() {
       {/* Enhanced Header */}
       <PageHeader
         title="PSP Ledger"
-        subtitle="Track Payment Service Provider transactions and balances"
+        subtitle="PSP transactions and balances"
         actions={
           <div className='flex items-center gap-3'>
             <Button 
@@ -848,8 +885,8 @@ export default function Ledger() {
               {activeTab === 'overview' && (
                 <button
                   onClick={() => {
-                    fetchPSPData();
-                    fetchLedgerData();
+                    fetchPSPData(true);
+                    fetchLedgerData(true);
                   }}
                   disabled={refreshing}
                   className="p-2 text-gray-500 hover:text-gray-700 hover:bg-white/60 rounded-lg transition-all duration-200 hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
@@ -874,7 +911,7 @@ export default function Ledger() {
               {activeTab === 'ledger' && (
                 <button
                   onClick={() => {
-                    fetchLedgerData();
+                    fetchLedgerData(true);
                   }}
                   disabled={refreshing}
                   className="p-2 text-gray-500 hover:text-gray-700 hover:bg-white/60 rounded-lg transition-all duration-200 hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
@@ -899,8 +936,8 @@ export default function Ledger() {
               {activeTab === 'analytics' && (
                 <button
                   onClick={() => {
-                    fetchPSPData();
-                    fetchLedgerData();
+                    fetchPSPData(true);
+                    fetchLedgerData(true);
                   }}
                   disabled={refreshing}
                   className="p-2 text-gray-500 hover:text-gray-700 hover:bg-white/60 rounded-lg transition-all duration-200 hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
@@ -925,8 +962,8 @@ export default function Ledger() {
               {activeTab === 'risk-monitoring' && (
                 <button
                   onClick={() => {
-                    fetchPSPData();
-                    fetchLedgerData();
+                    fetchPSPData(true);
+                    fetchLedgerData(true);
                   }}
                   disabled={refreshing}
                   className="p-2 text-gray-500 hover:text-gray-700 hover:bg-white/60 rounded-lg transition-all duration-200 hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
@@ -946,21 +983,14 @@ export default function Ledger() {
           {/* Enhanced Stats Cards Section */}
           <Section title="PSP Overview" subtitle="Key performance indicators for all payment service providers (Showing all available data)">
             <CardGrid cols={4} gap="lg">
-              <div className='bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-2xl p-6 shadow-sm border border-blue-200 hover:shadow-md transition-all duration-200 group'>
-                <div className='flex items-center justify-between'>
-                  <div className='space-y-2'>
-                    <p className='text-sm font-medium text-blue-700'>Total PSPs</p>
-                    <p className='text-3xl font-bold text-blue-900'>{formatNumber(pspOverviewData.length)}</p>
-                    <div className='flex items-center gap-1 text-xs text-blue-600'>
-                      <Building className='h-3 w-3' />
-                      <span>Active providers</span>
-                    </div>
-                  </div>
-                  <div className='p-4 bg-white/80 rounded-xl shadow-sm group-hover:scale-110 transition-transform duration-200'>
-                    <Building className='h-7 w-7 text-blue-600' />
-                  </div>
-                </div>
-              </div>
+              <StandardMetricsCard
+                title="Total PSPs"
+                value={formatNumber(pspOverviewData.length)}
+                subtitle="Active providers"
+                icon={Building}
+                color="blue"
+                variant="default"
+              />
 
               {/* Rollover Risk Overview Card */}
               {(() => {
@@ -982,72 +1012,38 @@ export default function Ledger() {
                 const hasRisk = riskSummary.critical > 0 || riskSummary.high > 0;
                 const riskColor = hasRisk ? 'red' : 'green';
                 const riskIcon = hasRisk ? AlertTriangle : Shield;
+                const riskValue = hasRisk ? `${riskSummary.critical + riskSummary.high}` : '0';
+                const riskSubtitle = hasRisk ? `${riskSummary.critical} critical, ${riskSummary.high} high` : 'Healthy levels';
 
                 return (
-                  <div className={`bg-gradient-to-br from-${riskColor}-50 to-${riskColor}-100/50 rounded-2xl p-6 shadow-sm border border-${riskColor}-200 hover:shadow-md transition-all duration-200 group`}>
-                    <div className='flex items-center justify-between'>
-                      <div className='space-y-2'>
-                        <p className={`text-sm font-medium text-${riskColor}-700`}>Rollover Risk</p>
-                        <p className={`text-3xl font-bold text-${riskColor}-900`}>
-                          {hasRisk ? `${riskSummary.critical + riskSummary.high} High Risk` : 'All Clear'}
-                        </p>
-                        <div className='flex items-center gap-1 text-xs text-gray-600'>
-                          {riskSummary.critical > 0 && (
-                            <span className='text-red-600 font-medium'>{riskSummary.critical} Critical</span>
-                          )}
-                          {riskSummary.high > 0 && (
-                            <span className='text-orange-600 font-medium'>{riskSummary.high} High</span>
-                          )}
-                          {!hasRisk && <span>Healthy rollover levels</span>}
-                        </div>
-                      </div>
-                      <div className={`p-4 bg-white/80 rounded-xl shadow-sm group-hover:scale-110 transition-transform duration-200`}>
-                        {hasRisk ? (
-                          <AlertTriangle className={`h-7 w-7 text-${riskColor}-600`} />
-                        ) : (
-                          <Shield className={`h-7 w-7 text-${riskColor}-600`} />
-                        )}
-                      </div>
-                    </div>
-                  </div>
+                  <StandardMetricsCard
+                    title="Rollover Risk"
+                    value={riskValue}
+                    subtitle={riskSubtitle}
+                    icon={riskIcon}
+                    color={riskColor}
+                    variant="default"
+                  />
                 );
               })()}
 
-              <div className='bg-gradient-to-br from-orange-50 to-orange-100/50 rounded-2xl p-6 shadow-sm border border-orange-200 hover:shadow-md transition-all duration-200 group'>
-                <div className='flex items-center justify-between'>
-                  <div className='space-y-2'>
-                    <p className='text-sm font-medium text-orange-700'>{t('ledger.total_allocations')}</p>
-                    <p className='text-3xl font-bold text-orange-900'>
-                      {formatCurrency(pspOverviewData.reduce((sum, psp) => sum + psp.total_allocations, 0), '₺')}
-                    </p>
-                    <div className='flex items-center gap-1 text-xs text-orange-600'>
-                      <CreditCard className='h-3 w-3' />
-                      <span>Funds allocated</span>
-                    </div>
-                  </div>
-                  <div className='p-4 bg-white/80 rounded-xl shadow-sm group-hover:scale-110 transition-transform duration-200'>
-                    <CreditCard className='h-7 w-7 text-orange-600' />
-                  </div>
-                </div>
-              </div>
+              <StandardMetricsCard
+                title={t('ledger.total_allocations')}
+                value={formatCurrency(pspOverviewData.reduce((sum, psp) => sum + psp.total_allocations, 0), '₺')}
+                subtitle="Funds allocated"
+                icon={CreditCard}
+                color="orange"
+                variant="default"
+              />
 
-              <div className='bg-gradient-to-br from-purple-50 to-purple-100/50 rounded-2xl p-6 shadow-sm border border-purple-200 hover:shadow-md transition-all duration-200 group'>
-                <div className='flex items-center justify-between'>
-                  <div className='space-y-2'>
-                    <p className='text-sm font-medium text-purple-700'>{t('ledger.total_rollover')}</p>
-                    <p className='text-3xl font-bold text-purple-900'>
-                      {formatCurrency(pspOverviewData.reduce((sum, psp) => sum + psp.total_rollover, 0), '₺')}
-                    </p>
-                    <div className='flex items-center gap-1 text-xs text-purple-600'>
-                      <Activity className='h-3 w-3' />
-                      <span>Available balance</span>
-                    </div>
-                  </div>
-                  <div className='p-4 bg-white/80 rounded-xl shadow-sm group-hover:scale-110 transition-transform duration-200'>
-                    <Activity className='h-7 w-7 text-purple-600' />
-                  </div>
-                </div>
-              </div>
+              <StandardMetricsCard
+                title={t('ledger.total_rollover')}
+                value={formatCurrency(pspOverviewData.reduce((sum, psp) => sum + psp.total_rollover, 0), '₺')}
+                subtitle="Available balance"
+                icon={Activity}
+                color="purple"
+                variant="default"
+              />
             </CardGrid>
           </Section>
 
@@ -1502,9 +1498,9 @@ export default function Ledger() {
                     </div>
                   )}
                   
-                  {/* Debug Information */}
+                  {/* Additional Information */}
                   <div className='mt-4 p-4 bg-gray-100 rounded-lg text-left text-sm'>
-                    <p className='font-medium text-gray-700 mb-2'>Debug Info:</p>
+                    <p className='font-medium text-gray-700 mb-2'>Additional Info:</p>
                     <p>Active Tab: {activeTab}</p>
                     <p>Ledger Loading: {ledgerLoading ? 'Yes' : 'No'}</p>
                     <p>Ledger Data Length: {ledgerData.length}</p>
@@ -1514,7 +1510,7 @@ export default function Ledger() {
                   
                   <div className='mt-4'>
                     <button 
-                      onClick={fetchLedgerData}
+                      onClick={() => fetchLedgerData(true)}
                       className='btn btn-primary'
                     >
                       <RefreshCw className='h-4 w-4 mr-2' />

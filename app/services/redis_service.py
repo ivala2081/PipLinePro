@@ -8,6 +8,7 @@ import logging
 from typing import Any, Optional, Dict, List
 from functools import wraps
 from flask import current_app
+from app.utils.safe_logging import safe_log, setup_safe_logging
 
 class RedisService:
     """Advanced Redis service for caching, sessions, and background tasks"""
@@ -48,13 +49,13 @@ class RedisService:
                 # Test connection
                 self.redis_client.ping()
                 self.connected = True
-                logging.info("✅ Redis service initialized successfully")
+                safe_log(logging.getLogger(__name__), logging.INFO, "✅ Redis service initialized successfully")
                 
             else:
-                logging.info("⚠️ Redis disabled in configuration")
+                safe_log(logging.getLogger(__name__), logging.INFO, "⚠️ Redis disabled in configuration")
                 
         except Exception as e:
-            logging.warning(f"⚠️ Redis connection failed: {e}")
+            safe_log(logging.getLogger(__name__), logging.WARNING, f"⚠️ Redis connection failed: {e}")
             self.connected = False
     
     def is_connected(self) -> bool:

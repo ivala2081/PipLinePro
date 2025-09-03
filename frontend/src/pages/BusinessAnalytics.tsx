@@ -29,6 +29,7 @@ import {
   AlertCircle,
   XCircle,
 } from 'lucide-react';
+import StandardMetricsCard from '../components/StandardMetricsCard';
 
 // TypeScript interfaces for analytics data
 interface DashboardStats {
@@ -576,37 +577,41 @@ export default function BusinessAnalytics() {
       </div>
 
       {/* Enhanced KPI Grid */}
-      <div className='business-kpi-grid'>
+      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
         {kpiData.map((kpi, index) => (
-          <div key={index} className='business-kpi-card'>
-            <div className={`business-kpi-icon ${kpi.color} text-white`}>
-              <kpi.icon className='w-6 h-6' />
-            </div>
-            <div className='business-kpi-value'>{kpi.value}</div>
-            <div className='business-kpi-label'>{kpi.title}</div>
-            <div className='text-xs text-gray-500 mb-3'>{kpi.subtitle}</div>
-            <div className={`business-kpi-trend ${getTrendClass(kpi.trend)}`}>
-              {getTrendIcon(kpi.trend)}
-              <span>{kpi.change}</span>
-            </div>
-          </div>
+          <StandardMetricsCard
+            key={index}
+            title={kpi.title}
+            value={kpi.value}
+            subtitle={kpi.subtitle}
+            change={kpi.change}
+            changeType={kpi.trend === 'up' ? 'positive' : kpi.trend === 'down' ? 'negative' : 'neutral'}
+            icon={kpi.icon}
+            color={kpi.color.includes('blue') ? 'blue' : 
+                  kpi.color.includes('green') ? 'green' : 
+                  kpi.color.includes('purple') ? 'purple' : 
+                  kpi.color.includes('orange') ? 'orange' : 'blue'}
+            variant="default"
+          />
         ))}
       </div>
 
       {/* Business Metrics Grid */}
       <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
         {businessMetrics.map((metric, index) => (
-          <div key={index} className='business-kpi-card'>
-            <div className={`business-kpi-icon ${metric.color} text-white`}>
-              <metric.icon className='w-6 h-6' />
-            </div>
-            <div className='business-kpi-value'>{metric.value}</div>
-            <div className='business-kpi-label'>{metric.title}</div>
-            <div className={`business-kpi-trend ${getTrendClass(metric.trend)}`}>
-              {getTrendIcon(metric.trend)}
-              <span>{metric.change}</span>
-            </div>
-          </div>
+          <StandardMetricsCard
+            key={index}
+            title={metric.title}
+            value={metric.value}
+            change={metric.change}
+            changeType={metric.trend === 'up' ? 'positive' : metric.trend === 'down' ? 'negative' : 'neutral'}
+            icon={metric.icon}
+            color={metric.color.includes('blue') ? 'blue' : 
+                  metric.color.includes('green') ? 'green' : 
+                  metric.color.includes('purple') ? 'purple' : 
+                  metric.color.includes('orange') ? 'orange' : 'blue'}
+            variant="compact"
+          />
         ))}
       </div>
 

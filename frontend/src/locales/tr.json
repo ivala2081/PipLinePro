@@ -175,7 +175,7 @@
   },
   "clients": {
     "title": "Müşteriler",
-    "description": "Müşteri ilişkilerinizi, işlemlerinizi ve performans metriklerinizi yönetin ve analiz edin",
+    "description": "Müşteri yönetimi ve analizi",
     "add_client": "Müşteri Ekle",
     "edit_client": "Müşteri Düzenle",
     "client_name": "Müşteri Adı",
@@ -196,7 +196,7 @@
   },
   "transactions": {
     "title": "İşlemler",
-    "description": "Tüm finansal işlemlerinizi ve ödeme aktivitelerinizi takip edin, yönetin ve analiz edin",
+    "description": "Finansal işlem yönetimi",
     "add_transaction": "İşlem Ekle",
     "edit_transaction": "İşlem Düzenle",
     "transaction_id": "İşlem ID",

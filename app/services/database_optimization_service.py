@@ -62,8 +62,8 @@ class DatabaseOptimizationService:
                 ('idx_user_active_optimized', 'user', ['is_active']),
                 
                 # Indexes for ExchangeRate table
-                ('idx_exchange_rate_date_optimized', 'exchange_rate', ['date']),
-                ('idx_exchange_rate_currency_optimized', 'exchange_rate', ['currency']),
+                ('idx_exchange_rate_date_optimized', 'exchange_rates', ['date']),
+                ('idx_exchange_rate_currency_optimized', 'exchange_rates', ['currency_pair']),
                 
                 # Indexes for PspTrack table
                 ('idx_psp_track_date_optimized', 'psp_track', ['date']),

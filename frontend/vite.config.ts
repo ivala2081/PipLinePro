@@ -19,11 +19,18 @@ export default defineConfig({
         target: 'http://127.0.0.1:5000',
         changeOrigin: true,
         secure: false,
+        timeout: 10000, // 10 second timeout
         configure: (proxy, _options) => {
           proxy.on('error', (err, _req, _res) => {
-            console.log('proxy error', err);
+            console.log('🔴 Proxy error:', err.message);
+            console.log('💡 Make sure Flask backend is running on http://127.0.0.1:5000');
           });
-          // Request/response logging removed for cleaner development experience
+          proxy.on('proxyReq', (proxyReq, req, _res) => {
+            console.log('📤 Proxying:', req.method, req.url);
+          });
+          proxy.on('proxyRes', (proxyRes, req, _res) => {
+            console.log('📥 Response:', proxyRes.statusCode, req.url);
+          });
         },
       },
     },

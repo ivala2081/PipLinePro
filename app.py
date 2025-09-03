@@ -17,6 +17,7 @@ try:
     elif Path('.env').exists():
         load_dotenv('.env')
         print("✅ Environment variables loaded from .env")
+
     else:
         print("ℹ️ No .env file found, using system environment variables")
 except ImportError:

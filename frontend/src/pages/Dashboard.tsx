@@ -56,6 +56,13 @@ import ExchangeRatesWidget from '../components/ExchangeRatesWidget';
 import DashboardTabNavigation from '../components/DashboardTabNavigation';
 import usePerformanceMonitor from '../hooks/usePerformanceMonitor';
 import { DashboardSkeleton } from '../components/SkeletonLoader';
+import StandardMetricsCard from '../components/StandardMetricsCard';
+import { 
+  DashboardPageSkeleton, 
+  TableSkeleton, 
+  ChartSkeleton,
+  ProgressiveLoader 
+} from '../components/EnhancedSkeletonLoaders';
 
 import {
   PageHeader,
@@ -90,7 +97,7 @@ const Dashboard = memo(() => {
   
   // Early return for loading state - must be done BEFORE calling other hooks
   if (authLoading) {
-    return <DashboardSkeleton />;
+    return <DashboardPageSkeleton />;
   }
   
   const { showUniqueSuccess, showUniqueError, showUniqueInfo } = useUniqueToast();
@@ -121,6 +128,16 @@ const Dashboard = memo(() => {
 
   // Local state for exchange rates modal
   const [showExchangeRatesModal, setShowExchangeRatesModal] = useState(false);
+  
+  // Enhanced loading states
+  const [loadingStep, setLoadingStep] = useState(0);
+  const loadingSteps = [
+    'Initializing dashboard...',
+    'Loading financial data...',
+    'Fetching analytics...',
+    'Preparing charts...',
+    'Finalizing display...'
+  ];
 
   // Exchange Rates Integration
   const currentDate = useMemo(() => new Date().toISOString().slice(0, 10), []);
@@ -161,11 +178,23 @@ const Dashboard = memo(() => {
         return;
       }
 
+      // Progressive loading steps
+      setLoadingStep(0);
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
+      setLoadingStep(1);
       // Fetch essential data
       await dispatch(fetchDashboardData(timeRange));
 
+      setLoadingStep(2);
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      setLoadingStep(3);
       // Fetch secondary data in background
       dispatch(fetchSecondaryData(timeRange));
+      
+      setLoadingStep(4);
+      await new Promise(resolve => setTimeout(resolve, 100));
 
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
@@ -367,6 +396,16 @@ const Dashboard = memo(() => {
         refreshing={refreshing}
       />
 
+      {/* Progressive Loading State */}
+      {refreshing && (
+        <Section>
+          <ProgressiveLoader 
+            steps={loadingSteps}
+            currentStep={loadingStep}
+          />
+        </Section>
+      )}
+
       {/* Error State */}
       {error && (
         <Section>
@@ -397,97 +436,53 @@ const Dashboard = memo(() => {
         <ContentArea>
           {/* Enhanced Stats Cards */}
           {dashboardData && (
-            <Section title="Key Metrics" subtitle="Overview of important business metrics" spacing="lg">
+            <Section title="Key Metrics" subtitle="Business overview" spacing="lg">
               <CardGrid cols={4} gap="lg">
-                {/* Total Revenue */}
-                <div className='bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-2xl p-6 shadow-sm border border-blue-200 hover:shadow-md transition-all duration-200 group'>
-                  <div className='flex items-center justify-between'>
-                    <div className='space-y-2'>
-                      <p className='text-sm font-medium text-blue-700'>
-                        {t('dashboard.total_revenue')}
-                      </p>
-                      <p className='text-3xl font-bold text-blue-900'>
-                        {formatCurrency(dashboardData.summary.total_revenue, '₺')}
-                      </p>
-                      <div className='flex items-center gap-1 text-xs text-blue-600'>
-                        <TrendingUp className='h-3 w-3' />
-                        <span>{dashboardData.stats.total_revenue.change}</span>
-                      </div>
-                    </div>
-                    <div className='p-4 bg-white/80 rounded-xl shadow-sm group-hover:scale-110 transition-transform duration-200'>
-                      <DollarSign className='h-7 w-7 text-blue-600' />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Total Transactions */}
-                <div className='bg-gradient-to-br from-green-50 to-green-100/50 rounded-2xl p-6 shadow-sm border border-green-200 hover:shadow-md transition-all duration-200 group'>
-                  <div className='flex items-center justify-between'>
-                    <div className='space-y-2'>
-                      <p className='text-sm font-medium text-green-700'>
-                        {t('dashboard.total_transactions')}
-                      </p>
-                      <p className='text-3xl font-bold text-green-900'>
-                        {formatNumber(dashboardData.summary.transaction_count)}
-                      </p>
-                      <div className='flex items-center gap-1 text-xs text-green-600'>
-                        <CreditCard className='h-3 w-3' />
-                        <span>{dashboardData.stats.total_transactions.change}</span>
-                      </div>
-                    </div>
-                    <div className='p-4 bg-white/80 rounded-xl shadow-sm group-hover:scale-110 transition-transform duration-200'>
-                      <CreditCard className='h-7 w-7 text-green-600' />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Active Clients */}
-                <div className='bg-gradient-to-br from-purple-50 to-purple-100/50 rounded-2xl p-6 shadow-sm border border-purple-200 hover:shadow-md transition-all duration-200 group'>
-                  <div className='flex items-center justify-between'>
-                    <div className='space-y-2'>
-                      <p className='text-sm font-medium text-purple-700'>
-                        {t('dashboard.active_clients')}
-                      </p>
-                      <p className='text-3xl font-bold text-purple-900'>
-                        {formatNumber(dashboardData.summary.active_clients)}
-                      </p>
-                      <div className='flex items-center gap-1 text-xs text-purple-600'>
-                        <Users className='h-3 w-3' />
-                        <span>{dashboardData.stats.active_clients.change}</span>
-                      </div>
-                    </div>
-                    <div className='p-4 bg-white/80 rounded-xl shadow-sm group-hover:scale-110 transition-transform duration-200'>
-                      <Users className='h-7 w-7 text-purple-600' />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Total Commissions */}
-                <div className='bg-gradient-to-br from-emerald-50 to-emerald-100/50 rounded-2xl p-6 shadow-sm border border-emerald-200 hover:shadow-md transition-all duration-200 group'>
-                  <div className='flex items-center justify-between'>
-                    <div className='space-y-2'>
-                      <p className='text-sm font-medium text-emerald-700'>
-                        {t('dashboard.total_commissions')}
-                      </p>
-                      <p className='text-3xl font-bold text-emerald-900'>
-                        {formatCurrency(dashboardData.summary.total_commission, '₺')}
-                      </p>
-                      <div className='flex items-center gap-1 text-xs text-emerald-600'>
-                        <TrendingUp className='h-3 w-3' />
-                        <span>{((dashboardData.summary.total_commission / dashboardData.summary.total_revenue) * 100).toFixed(2)}%</span>
-                      </div>
-                    </div>
-                    <div className='p-4 bg-white/80 rounded-xl shadow-sm group-hover:scale-110 transition-transform duration-200'>
-                      <TrendingUp className='h-7 w-7 text-emerald-600' />
-                    </div>
-                  </div>
-                </div>
+                <StandardMetricsCard
+                  title={t('dashboard.total_revenue')}
+                  value={formatCurrency(dashboardData.summary.total_revenue, '₺')}
+                  change={dashboardData.stats.total_revenue.change}
+                  changeType="positive"
+                  icon={DollarSign}
+                  color="blue"
+                  variant="default"
+                />
+                
+                <StandardMetricsCard
+                  title={t('dashboard.total_transactions')}
+                  value={formatNumber(dashboardData.summary.transaction_count)}
+                  change={dashboardData.stats.total_transactions.change}
+                  changeType="positive"
+                  icon={CreditCard}
+                  color="green"
+                  variant="default"
+                />
+                
+                <StandardMetricsCard
+                  title={t('dashboard.active_clients')}
+                  value={formatNumber(dashboardData.summary.active_clients)}
+                  change={dashboardData.stats.active_clients.change}
+                  changeType="positive"
+                  icon={Users}
+                  color="purple"
+                  variant="default"
+                />
+                
+                <StandardMetricsCard
+                  title={t('dashboard.total_commissions')}
+                  value={formatCurrency(dashboardData.summary.total_commission, '₺')}
+                  change={`${((dashboardData.summary.total_commission / dashboardData.summary.total_revenue) * 100).toFixed(2)}%`}
+                  changeType="positive"
+                  icon={TrendingUp}
+                  color="teal"
+                  variant="default"
+                />
               </CardGrid>
             </Section>
           )}
 
           {/* Exchange Rates Widget */}
-          <Section title="Exchange Rates" subtitle="Current currency exchange rates" spacing="lg">
+          <Section title="Exchange Rates" subtitle="Current rates" spacing="lg">
             <ExchangeRatesWidget
               rates={rates}
               loading={ratesLoading}
@@ -502,7 +497,7 @@ const Dashboard = memo(() => {
 
           {/* Top Performers */}
           {topPerformersData && (
-            <Section title="Top Performers" subtitle="Best performing clients and transactions" spacing="lg">
+            <Section title="Top Performers" subtitle="Best performers" spacing="lg">
               <CardGrid cols={2} gap="lg">
                 <TopPerformersCard
                   {...topPerformersData.volumeLeaders}
@@ -523,7 +518,7 @@ const Dashboard = memo(() => {
         <ContentArea>
           {/* Revenue Trends Chart */}
           {revenueTrends && (
-            <Section title="Revenue Trends" subtitle="Revenue performance over time" spacing="lg">
+            <Section title="Revenue Trends" subtitle="Performance over time" spacing="lg">
               <div className='business-chart'>
                 <div className='business-chart-header'>
                   <div>
@@ -633,74 +628,34 @@ const Dashboard = memo(() => {
         <ContentArea>
           {/* System Performance Metrics */}
           {systemPerformance && (
-            <Section title="System Performance" subtitle="Real-time system monitoring and metrics" spacing="lg">
+            <Section title="System Performance" subtitle="Real-time monitoring" spacing="lg">
               <CardGrid cols={3} gap="lg">
-                {/* CPU Usage */}
-                <div className='bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-2xl p-6 shadow-sm border border-blue-200 hover:shadow-md transition-all duration-200 group'>
-                  <div className='flex items-center gap-3 mb-4'>
-                    <div className='w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center'>
-                      <Server className='h-5 w-5 text-blue-600' />
-                    </div>
-                    <div>
-                      <h3 className='text-lg font-semibold text-gray-900'>CPU Usage</h3>
-                      <p className='text-sm text-gray-600'>System performance</p>
-                    </div>
-                  </div>
-                  <div className='text-3xl font-bold text-blue-600 mb-2'>
-                    {systemPerformance.cpu_usage?.toFixed(1)}%
-                  </div>
-                  <div className='w-full bg-gray-200 rounded-full h-2'>
-                    <div 
-                      className='bg-blue-600 h-2 rounded-full transition-all duration-300'
-                      style={{ width: `${Math.min(systemPerformance.cpu_usage || 0, 100)}%` }}
-                    ></div>
-                  </div>
-                </div>
-
-                {/* Memory Usage */}
-                <div className='bg-gradient-to-br from-green-50 to-green-100/50 rounded-2xl p-6 shadow-sm border border-green-200 hover:shadow-md transition-all duration-200 group'>
-                  <div className='flex items-center gap-3 mb-4'>
-                    <div className='w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center'>
-                      <HardDrive className='h-5 w-5 text-green-600' />
-                    </div>
-                    <div>
-                      <h3 className='text-lg font-semibold text-gray-900'>Memory Usage</h3>
-                      <p className='text-sm text-gray-600'>RAM utilization</p>
-                    </div>
-                  </div>
-                  <div className='text-3xl font-bold text-green-600 mb-2'>
-                    {systemPerformance.memory_usage?.toFixed(1)}%
-                  </div>
-                  <div className='w-full bg-gray-200 rounded-full h-2'>
-                    <div 
-                      className='bg-green-600 h-2 rounded-full transition-all duration-300'
-                      style={{ width: `${Math.min(systemPerformance.memory_usage || 0, 100)}%` }}
-                    ></div>
-                  </div>
-                </div>
-
-                {/* System Health */}
-                <div className='bg-gradient-to-br from-purple-50 to-purple-100/50 rounded-2xl p-6 shadow-sm border border-purple-200 hover:shadow-md transition-all duration-200 group'>
-                  <div className='flex items-center gap-3 mb-4'>
-                    <div className='w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center'>
-                      <Network className='h-5 w-5 text-purple-600' />
-                    </div>
-                    <div>
-                      <h3 className='text-lg font-semibold text-gray-900'>System Health</h3>
-                      <p className='text-sm text-gray-600'>Overall status</p>
-                    </div>
-                  </div>
-                  <div className='text-3xl font-bold text-purple-600 mb-2'>
-                    {systemPerformance.system_health === 'healthy' ? 'Healthy' : systemPerformance.system_health === 'warning' ? 'Warning' : 'Critical'}
-                  </div>
-                  <div className='flex items-center gap-2'>
-                    <div className={`w-3 h-3 rounded-full ${
-                      systemPerformance.system_health === 'healthy' ? 'bg-green-500' : 
-                      systemPerformance.system_health === 'warning' ? 'bg-yellow-500' : 'bg-red-500'
-                    }`}></div>
-                    <span className='text-sm text-gray-600 capitalize'>{systemPerformance.system_health}</span>
-                  </div>
-                </div>
+                <StandardMetricsCard
+                  title="CPU Usage"
+                  value={`${systemPerformance.cpu_usage?.toFixed(1)}%`}
+                  subtitle="System performance"
+                  icon={Server}
+                  color="blue"
+                  variant="default"
+                />
+                
+                <StandardMetricsCard
+                  title="Memory Usage"
+                  value={`${systemPerformance.memory_usage?.toFixed(1)}%`}
+                  subtitle="RAM utilization"
+                  icon={HardDrive}
+                  color="green"
+                  variant="default"
+                />
+                
+                <StandardMetricsCard
+                  title="System Health"
+                  value={systemPerformance.system_health === 'healthy' ? 'Healthy' : systemPerformance.system_health === 'warning' ? 'Warning' : 'Critical'}
+                  subtitle="Overall status"
+                  icon={Network}
+                  color={systemPerformance.system_health === 'healthy' ? 'green' : systemPerformance.system_health === 'warning' ? 'orange' : 'red'}
+                  variant="default"
+                />
               </CardGrid>
             </Section>
           )}
@@ -708,26 +663,39 @@ const Dashboard = memo(() => {
           {/* Data Quality Metrics */}
           {dataQuality && (
             <Section title="Data Quality Metrics" subtitle="Comprehensive data quality assessment" spacing="lg">
-              <div className='bg-white rounded-2xl shadow-sm border border-gray-200 p-6'>
-                <GridContainer cols={4} gap="md">
-                  <div className='text-center p-4 bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-lg border border-blue-200'>
-                    <div className='text-2xl font-bold text-blue-600'>{dataQuality.client_completeness?.toFixed(1)}%</div>
-                    <div className='text-sm text-gray-600'>Client Completeness</div>
-                  </div>
-                  <div className='text-center p-4 bg-gradient-to-br from-green-50 to-green-100/50 rounded-lg border border-green-200'>
-                    <div className='text-2xl font-bold text-green-600'>{dataQuality.amount_completeness?.toFixed(1)}%</div>
-                    <div className='text-sm text-gray-600'>Amount Completeness</div>
-                  </div>
-                  <div className='text-center p-4 bg-gradient-to-br from-purple-50 to-purple-100/50 rounded-lg border border-purple-200'>
-                    <div className='text-2xl font-bold text-purple-600'>{dataQuality.date_completeness?.toFixed(1)}%</div>
-                    <div className='text-sm text-gray-600'>Date Completeness</div>
-                  </div>
-                  <div className='text-center p-4 bg-gradient-to-br from-orange-50 to-orange-100/50 rounded-lg border border-orange-200'>
-                    <div className='text-2xl font-bold text-orange-600'>{dataQuality.overall_quality_score?.toFixed(1)}%</div>
-                    <div className='text-sm text-gray-600'>Overall Score</div>
-                  </div>
-                </GridContainer>
-              </div>
+              <CardGrid cols={4} gap="lg">
+                <StandardMetricsCard
+                  title="Client Completeness"
+                  value={`${dataQuality.client_completeness?.toFixed(1)}%`}
+                  icon={Users}
+                  color="blue"
+                  variant="compact"
+                />
+                
+                <StandardMetricsCard
+                  title="Amount Completeness"
+                  value={`${dataQuality.amount_completeness?.toFixed(1)}%`}
+                  icon={DollarSign}
+                  color="green"
+                  variant="compact"
+                />
+                
+                <StandardMetricsCard
+                  title="Date Completeness"
+                  value={`${dataQuality.date_completeness?.toFixed(1)}%`}
+                  icon={Calendar}
+                  color="purple"
+                  variant="compact"
+                />
+                
+                <StandardMetricsCard
+                  title="Overall Score"
+                  value={`${dataQuality.overall_quality_score?.toFixed(1)}%`}
+                  icon={Award}
+                  color="orange"
+                  variant="compact"
+                />
+              </CardGrid>
             </Section>
           )}
         </ContentArea>
@@ -741,88 +709,24 @@ const Dashboard = memo(() => {
             <Section title="Security & Monitoring" subtitle="System security and integration status" spacing="lg">
               <CardGrid cols={2} gap="lg">
                 {/* Security Status */}
-                <div className='bg-gradient-to-br from-red-50 to-red-100/50 rounded-2xl p-6 shadow-sm border border-red-200 hover:shadow-md transition-all duration-200 group'>
-                  <div className='flex items-center gap-3 mb-4'>
-                    <div className='w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center'>
-                      <Shield className='h-5 w-5 text-red-600' />
-                    </div>
-                    <div>
-                      <h3 className='text-lg font-semibold text-gray-900'>Security Status</h3>
-                      <p className='text-sm text-gray-600'>System security overview</p>
-                    </div>
-                  </div>
-                  <div className='space-y-3'>
-                    <div className='flex items-center justify-between p-3 bg-white/60 rounded-lg border border-red-200/30'>
-                      <span className='text-sm text-gray-700'>Failed Logins (Today)</span>
-                      <div className='flex items-center gap-2'>
-                        <span className='text-sm font-medium text-gray-900'>{securityMetrics.failed_logins.today}</span>
-                      </div>
-                    </div>
-                    <div className='flex items-center justify-between p-3 bg-white/60 rounded-lg border border-red-200/30'>
-                      <span className='text-sm text-gray-700'>Suspicious Activities</span>
-                      <div className='flex items-center gap-2'>
-                        <span className='text-sm font-medium text-gray-900'>{securityMetrics.suspicious_activities.total_alerts}</span>
-                      </div>
-                    </div>
-                    <div className='flex items-center justify-between p-3 bg-white/60 rounded-lg border border-red-200/30'>
-                      <span className='text-sm text-gray-700'>Active Sessions</span>
-                      <div className='flex items-center gap-2'>
-                        <span className='text-sm font-medium text-gray-900'>{securityMetrics.session_management.active_sessions}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <StandardMetricsCard
+                  title="Security Status"
+                  value={securityMetrics.failed_logins.today}
+                  subtitle={`${securityMetrics.suspicious_activities.total_alerts} alerts, ${securityMetrics.session_management.active_sessions} sessions`}
+                  icon={Shield}
+                  color="danger"
+                  variant="default"
+                />
 
                 {/* Integration Status */}
-                <div className='bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-2xl p-6 shadow-sm border border-blue-200 hover:shadow-md transition-all duration-200 group'>
-                  <div className='flex items-center gap-3 mb-4'>
-                    <div className='w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center'>
-                      <ActivityIcon className='h-5 w-5 text-blue-600' />
-                    </div>
-                    <div>
-                      <h3 className='text-lg font-semibold text-gray-900'>Integration Status</h3>
-                      <p className='text-sm text-gray-600'>External service connections</p>
-                    </div>
-                  </div>
-                  <div className='space-y-3'>
-                    {integrationStatus && (
-                      <>
-                        <div className='flex items-center justify-between p-3 bg-white/60 rounded-lg border border-blue-200/30'>
-                          <span className='text-sm text-gray-700'>Bank Connections</span>
-                          <div className='flex items-center gap-2'>
-                            {integrationStatus.bank_connections.status === 'connected' ? (
-                              <>
-                                <CheckCircle className='h-4 w-4 text-green-600' />
-                                <span className='text-sm text-green-600'>Connected</span>
-                              </>
-                            ) : (
-                              <>
-                                <XCircle className='h-4 w-4 text-red-600' />
-                                <span className='text-sm text-red-600'>Disconnected</span>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                        <div className='flex items-center justify-between p-3 bg-white/60 rounded-lg border border-blue-200/30'>
-                          <span className='text-sm text-gray-700'>PSP Connections</span>
-                          <div className='flex items-center gap-2'>
-                            {integrationStatus.psp_connections.status === 'connected' ? (
-                              <>
-                                <CheckCircle className='h-4 w-4 text-green-600' />
-                                <span className='text-sm text-green-600'>Connected</span>
-                              </>
-                            ) : (
-                              <>
-                                <XCircle className='h-4 w-4 text-red-600' />
-                                <span className='text-sm text-red-600'>Disconnected</span>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </div>
+                <StandardMetricsCard
+                  title="Integration Status"
+                  value={integrationStatus ? (integrationStatus.bank_connections.status === 'connected' && integrationStatus.psp_connections.status === 'connected' ? 'All Connected' : 'Issues Detected') : 'Unknown'}
+                  subtitle={integrationStatus ? `Bank: ${integrationStatus.bank_connections.status}, PSP: ${integrationStatus.psp_connections.status}` : 'Status unavailable'}
+                  icon={ActivityIcon}
+                  color={integrationStatus && integrationStatus.bank_connections.status === 'connected' && integrationStatus.psp_connections.status === 'connected' ? 'success' : 'warning'}
+                  variant="default"
+                />
               </CardGrid>
             </Section>
           )}
@@ -888,68 +792,44 @@ const Dashboard = memo(() => {
             <Section title={t('dashboard.financial_overview')} subtitle={t('dashboard.comprehensive_financial_metrics')} spacing="lg">
               <CardGrid cols={4} gap="lg">
                 {/* Total Revenue */}
-                <div className='bg-gradient-to-br from-green-50 to-green-100/50 rounded-2xl p-6 shadow-sm border border-green-200 hover:shadow-md transition-all duration-200 group'>
-                  <div className='flex items-center gap-3 mb-4'>
-                    <div className='w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center'>
-                      <TrendingUp className='h-5 w-5 text-green-600' />
-                    </div>
-                    <div>
-                      <h3 className='text-lg font-semibold text-gray-900'>{t('dashboard.total_revenue')}</h3>
-                      <p className='text-sm text-gray-600'>{t('dashboard.all_time')}</p>
-                    </div>
-                  </div>
-                  <div className='text-3xl font-bold text-green-600'>
-                    {formatCurrency(dashboardData.summary.total_revenue, '₺')}
-                  </div>
-                </div>
+                <StandardMetricsCard
+                  title={t('dashboard.total_revenue')}
+                  value={formatCurrency(dashboardData.summary.total_revenue, '₺')}
+                  subtitle={t('dashboard.all_time')}
+                  icon={TrendingUp}
+                  color="success"
+                  variant="default"
+                />
 
                 {/* Total Commission */}
-                <div className='bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-2xl p-6 shadow-sm border border-blue-200 hover:shadow-md transition-all duration-200 group'>
-                  <div className='flex items-center gap-3 mb-4'>
-                    <div className='w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center'>
-                      <DollarSign className='h-5 w-5 text-blue-600' />
-                    </div>
-                    <div>
-                      <h3 className='text-lg font-semibold text-gray-900'>{t('dashboard.total_commission')}</h3>
-                      <p className='text-sm text-gray-600'>{t('dashboard.earned')}</p>
-                    </div>
-                  </div>
-                  <div className='text-3xl font-bold text-blue-600'>
-                    {formatCurrency(dashboardData.summary.total_commission, '₺')}
-                  </div>
-                </div>
+                <StandardMetricsCard
+                  title={t('dashboard.total_commission')}
+                  value={formatCurrency(dashboardData.summary.total_commission, '₺')}
+                  subtitle={t('dashboard.earned')}
+                  icon={DollarSign}
+                  color="primary"
+                  variant="default"
+                />
 
                 {/* Active Clients */}
-                <div className='bg-gradient-to-br from-purple-50 to-purple-100/50 rounded-2xl p-6 shadow-sm border border-purple-200 hover:shadow-md transition-all duration-200 group'>
-                  <div className='flex items-center gap-3 mb-4'>
-                    <div className='w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center'>
-                      <Users className='h-5 w-5 text-purple-600' />
-                    </div>
-                    <div>
-                      <h3 className='text-lg font-semibold text-gray-900'>{t('dashboard.active_clients')}</h3>
-                      <p className='text-sm text-gray-600'>{t('dashboard.this_month')}</p>
-                    </div>
-                  </div>
-                  <div className='text-3xl font-bold text-purple-600'>
-                    {dashboardData.summary.active_clients}
-                  </div>
-                </div>
+                <StandardMetricsCard
+                  title={t('dashboard.active_clients')}
+                  value={dashboardData.summary.active_clients}
+                  subtitle={t('dashboard.this_month')}
+                  icon={Users}
+                  color="purple"
+                  variant="default"
+                />
 
                 {/* Total Transactions */}
-                <div className='bg-gradient-to-br from-orange-50 to-orange-100/50 rounded-2xl p-6 shadow-sm border border-orange-200 hover:shadow-md transition-all duration-200 group'>
-                  <div className='flex items-center gap-3 mb-4'>
-                    <div className='w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center'>
-                      <CreditCard className='h-5 w-5 text-orange-600' />
-                    </div>
-                    <div>
-                      <h3 className='text-lg font-semibold text-gray-900'>{t('dashboard.total_transactions')}</h3>
-                      <p className='text-sm text-gray-600'>{t('dashboard.all_time')}</p>
-                    </div>
-                  </div>
-                  <div className='text-3xl font-bold text-orange-600'>
-                    {formatNumber(dashboardData.summary.transaction_count)}
-                  </div>
-                </div>
+                <StandardMetricsCard
+                  title={t('dashboard.total_transactions')}
+                  value={formatNumber(dashboardData.summary.transaction_count)}
+                  subtitle={t('dashboard.all_time')}
+                  icon={CreditCard}
+                  color="orange"
+                  variant="default"
+                />
               </CardGrid>
             </Section>
           )}

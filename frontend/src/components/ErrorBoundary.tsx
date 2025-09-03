@@ -1,5 +1,6 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
+import { handleComponentError, getUserFriendlyMessage } from '../utils/errorHandler';
 
 interface Props {
   children: ReactNode;
@@ -23,7 +24,8 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   override componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
+    // Use standardized error handling
+    handleComponentError(error, errorInfo, 'ErrorBoundary');
     this.setState({ error, errorInfo });
   }
 
@@ -54,7 +56,8 @@ class ErrorBoundary extends Component<Props, State> {
               </h1>
               
               <p className="text-gray-600 mb-6">
-                We encountered an unexpected error. Please try refreshing the page or contact support if the problem persists.
+                {this.state.error ? getUserFriendlyMessage(this.state.error as any) : 
+                  'We encountered an unexpected error. Please try refreshing the page or contact support if the problem persists.'}
               </p>
 
               {process.env.NODE_ENV === 'development' && this.state.error && (

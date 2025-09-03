@@ -15,6 +15,9 @@ import { ToastProvider } from './components/ToastProvider';
 import SkipLink from './components/SkipLink';
 import AccessibilitySettings from './components/AccessibilitySettings';
 
+import './utils/apiTest'; // Auto-run API tests
+import './styles/navigation-hover-effects.css'; // Navigation hover effects
+
 // Lazy load pages for code splitting
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Analytics = lazy(() => import('./pages/Analytics'));
@@ -39,6 +42,7 @@ function App() {
               <AccessibilityProvider>
                 <ToastProvider>
                   <SkipLink />
+
                   <div className='min-h-screen bg-slate-50'>
                     <Suspense fallback={<LoadingSpinner />}>
                       <Routes>

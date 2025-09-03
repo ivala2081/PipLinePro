@@ -5,6 +5,7 @@
 
 import { apiConfig, loggingConfig } from '../config/environment';
 import { measureAsync } from './performance';
+import { handleApiError, PipLineError } from './errorHandler';
 
 class ApiClient {
   private csrfToken: string | null = null;
@@ -17,12 +18,17 @@ class ApiClient {
   private authCheckCache = new Map<string, { data: any; timestamp: number }>();
   private readonly CACHE_DURATION = 30000; // 30 seconds
   private readonly RATE_LIMIT_DELAY = 2000; // 2 seconds between auth checks
+  private readonly MAX_CACHE_SIZE = 100; // Maximum number of cached items
 
   // Request deduplication and batching
   private pendingRequests = new Map<string, Promise<any>>();
   private requestQueue: Array<{ id: string; request: () => Promise<any>; resolve: (value: any) => void; reject: (error: any) => void }> = [];
   private isProcessingQueue = false;
   private readonly BATCH_DELAY = 50; // 50ms to batch requests
+  
+  // Request throttling
+  private requestTimestamps = new Map<string, number[]>();
+  private readonly MAX_REQUESTS_PER_SECOND = 10; // Maximum requests per second per endpoint
 
   /**
    * Get CSRF token with caching and deduplication
@@ -32,7 +38,6 @@ class ApiClient {
     
     // Rate limiting: don't fetch token too frequently
     if (now - this.lastTokenFetch < this.RATE_LIMIT_DELAY) {
-      console.log('⏳ Rate limiting CSRF token fetch');
       return this.csrfToken;
     }
 
@@ -65,7 +70,6 @@ class ApiClient {
    */
   private async fetchCsrfToken(): Promise<string | null> {
     try {
-      console.log('🔄 Fetching fresh CSRF token...');
 
       // Step 1: Ensure we have a valid session by checking auth
       const authResponse = await fetch('/api/v1/auth/check', {
@@ -78,7 +82,6 @@ class ApiClient {
       });
 
       if (!authResponse.ok) {
-        console.warn('⚠️ Auth check failed, session may be invalid');
         return null;
       }
 
@@ -97,24 +100,18 @@ class ApiClient {
         const data = await response.json();
         const token = data.csrf_token;
 
-        console.log(
-          '✅ CSRF token fetched successfully:',
-          token ? `${token.substring(0, 20)}...` : 'null'
-        );
+        // CSRF token fetched successfully
 
         // Enhanced validation - check if token exists and has reasonable length
         if (token && token.length > 20) {
           return token;
         } else {
-          console.warn('⚠️ Invalid CSRF token format');
           return null;
         }
       } else {
-        console.error('❌ Failed to fetch CSRF token:', response.status, response.statusText);
         return null;
       }
     } catch (error) {
-      console.error('💥 Error fetching CSRF token:', error);
       return null;
     }
   }
@@ -125,6 +122,36 @@ class ApiClient {
   private createRequestKey(method: string, url: string, data?: any): string {
     const dataStr = data ? JSON.stringify(data) : '';
     return `${method}:${url}:${dataStr}`;
+  }
+
+  /**
+   * Check if request should be throttled
+   */
+  private shouldThrottleRequest(url: string): boolean {
+    const now = Date.now();
+    const endpoint = url.split('?')[0]; // Remove query parameters for throttling
+    
+    if (!this.requestTimestamps.has(endpoint)) {
+      this.requestTimestamps.set(endpoint, []);
+    }
+    
+    const timestamps = this.requestTimestamps.get(endpoint)!;
+    
+    // Remove timestamps older than 1 second
+    const oneSecondAgo = now - 1000;
+    const recentTimestamps = timestamps.filter(timestamp => timestamp > oneSecondAgo);
+    
+    // Update the timestamps array
+    this.requestTimestamps.set(endpoint, recentTimestamps);
+    
+    // Check if we've exceeded the rate limit
+    if (recentTimestamps.length >= this.MAX_REQUESTS_PER_SECOND) {
+      return true;
+    }
+    
+    // Add current timestamp
+    recentTimestamps.push(now);
+    return false;
   }
 
   /**
@@ -148,7 +175,6 @@ class ApiClient {
 
       // Process analytics requests in parallel (they can be batched)
       if (analyticsRequests.length > 0) {
-        console.log(`🚀 Batching ${analyticsRequests.length} analytics requests`);
         const promises = analyticsRequests.map(req => req.request());
         
         try {
@@ -209,15 +235,31 @@ class ApiClient {
     
     // Check if we have a pending request for this key
     if (this.pendingRequests.has(requestKey)) {
-      console.log(`🔄 Deduplicating request: ${method} ${url}`);
       const originalResponse = await this.pendingRequests.get(requestKey)!;
       
       // Clone the response for each consumer to avoid "body stream already read" error
-      if (originalResponse instanceof Response) {
+      if (originalResponse instanceof Response && typeof originalResponse.clone === 'function') {
         return originalResponse.clone() as T;
       }
       
       return originalResponse;
+    }
+
+    // Check throttling for GET requests
+    if (method === 'GET' && this.shouldThrottleRequest(url)) {
+      // Return cached data if available, otherwise wait
+      const cacheKey = data ? `${url}?${new URLSearchParams(data).toString()}` : url;
+      if (this.authCheckCache.has(cacheKey)) {
+        const cached = this.authCheckCache.get(cacheKey)!;
+        const now = Date.now();
+        
+        if (now - cached.timestamp < this.CACHE_DURATION) {
+          return cached.data as T;
+        }
+      }
+      
+      // Wait a bit before making the request
+      await new Promise(resolve => setTimeout(resolve, 100));
     }
 
     // Create the request promise
@@ -279,16 +321,58 @@ class ApiClient {
       const response = await fetch(url, requestOptions);
       return response as T;
     } catch (error) {
-      console.error(`💥 Request failed: ${method} ${url}`, error);
-      throw error;
+      throw handleApiError(error, `API ${method} ${url}`);
     }
   }
 
   /**
-   * GET request with deduplication
+   * GET request with deduplication and caching
    */
-  async get<T = Response>(url: string, params?: Record<string, any>): Promise<T> {
-    return this.makeRequest<T>('GET', url, params);
+  async get<T = Response>(url: string, params?: Record<string, any>, useCache: boolean = true): Promise<T> {
+    // Create cache key including params
+    const cacheKey = params ? `${url}?${new URLSearchParams(params).toString()}` : url;
+    
+    // Check cache first for GET requests
+    if (useCache && this.authCheckCache.has(cacheKey)) {
+      const cached = this.authCheckCache.get(cacheKey)!;
+      const now = Date.now();
+      
+      // Return cached data if it's still valid
+      if (now - cached.timestamp < this.CACHE_DURATION) {
+        return cached.data as T;
+      } else {
+        // Remove expired cache entry
+        this.authCheckCache.delete(cacheKey);
+      }
+    }
+    
+    const response = await this.makeRequest<T>('GET', url, params);
+    
+    // Cache successful GET responses
+    if (useCache && response instanceof Response && response.ok) {
+      try {
+        const responseToParse = typeof response.clone === 'function' ? response.clone() : response;
+        const data = await responseToParse.json();
+        
+        // Implement cache size limit
+        if (this.authCheckCache.size >= this.MAX_CACHE_SIZE) {
+          // Remove oldest entries
+          const oldestKey = this.authCheckCache.keys().next().value;
+          if (oldestKey) {
+            this.authCheckCache.delete(oldestKey);
+          }
+        }
+        
+        this.authCheckCache.set(cacheKey, {
+          data: data,
+          timestamp: Date.now()
+        });
+      } catch {
+        // If parsing fails, don't cache
+      }
+    }
+    
+    return response;
   }
 
   /**
@@ -328,7 +412,7 @@ class ApiClient {
    */
   async parseResponse<T = any>(response: Response): Promise<T> {
     // Clone the response to avoid "body stream already read" errors
-    const clonedResponse = response.clone();
+    const clonedResponse = typeof response.clone === 'function' ? response.clone() : response;
     
     if (!clonedResponse.ok) {
       const errorText = await clonedResponse.text();
@@ -351,8 +435,7 @@ class ApiClient {
         return await clonedResponse.text() as T;
       }
     } catch (error) {
-      console.error('Error parsing response:', error);
-      throw new Error('Failed to parse response');
+      throw handleApiError(error, 'Response parsing');
     }
   }
 
@@ -371,8 +454,6 @@ class ApiClient {
    */
   async refreshSession(): Promise<boolean> {
     try {
-      console.log('🔄 Refreshing session...');
-      
       // Clear current token
       this.clearToken();
       
@@ -380,14 +461,11 @@ class ApiClient {
       const newToken = await this.getCsrfToken();
       
       if (newToken) {
-        console.log('✅ Session refreshed successfully');
         return true;
       } else {
-        console.warn('⚠️ Failed to refresh session');
         return false;
       }
     } catch (error) {
-      console.error('❌ Error refreshing session:', error);
       return false;
     }
   }
@@ -399,6 +477,24 @@ class ApiClient {
     this.authCheckCache.clear();
     this.pendingRequests.clear();
     this.requestQueue = [];
+    this.requestTimestamps.clear();
+  }
+
+  /**
+   * Clear cache for specific URL pattern
+   */
+  clearCacheForUrl(urlPattern: string): void {
+    const keysToDelete = Array.from(this.authCheckCache.keys()).filter(key => 
+      key.includes(urlPattern)
+    );
+    keysToDelete.forEach(key => this.authCheckCache.delete(key));
+    
+    // Also clear throttling data for the pattern
+    const throttlingKeysToDelete = Array.from(this.requestTimestamps.keys()).filter(key => 
+      key.includes(urlPattern)
+    );
+    throttlingKeysToDelete.forEach(key => this.requestTimestamps.delete(key));
+    
     this.csrfToken = null;
     this.lastAuthCheck = 0;
     this.lastTokenFetch = 0;
@@ -411,11 +507,13 @@ class ApiClient {
     pendingRequests: number;
     queuedRequests: number;
     cacheSize: number;
+    throttledEndpoints: number;
   } {
     return {
       pendingRequests: this.pendingRequests.size,
       queuedRequests: this.requestQueue.length,
       cacheSize: this.authCheckCache.size,
+      throttledEndpoints: this.requestTimestamps.size,
     };
   }
 }

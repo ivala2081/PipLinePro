@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
+import StandardMetricsCard from '../components/StandardMetricsCard';
 import {
   Search,
   Filter,
@@ -246,7 +247,7 @@ export default function Agents() {
       {/* Enhanced Header */}
       <PageHeader
         title="Agent Management"
-        subtitle="Manage your team members and track their performance"
+        subtitle="Team management"
         actions={
           <div className='flex items-center gap-3'>
             <Button variant="outline" size="sm" className="flex items-center gap-2" onClick={handleExportAgents}>
@@ -369,85 +370,41 @@ export default function Agents() {
           {/* Enhanced Stats Cards Section */}
           <Section title="Performance Overview" subtitle="Key metrics and performance indicators for your agent team">
             <CardGrid cols={4} gap="lg">
-              <div className='bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-2xl p-6 shadow-sm border border-blue-200 hover:shadow-md transition-all duration-200 group'>
-                <div className='flex items-center justify-between'>
-                  <div className='space-y-2'>
-                    <p className='text-sm font-medium text-blue-700'>
-                    Total Agents
-                    </p>
-                    <p className='text-3xl font-bold text-blue-900'>
-                    {totalAgents}
-                    </p>
-                    <div className='flex items-center gap-1 text-xs text-blue-600'>
-                      <TrendingUp className='h-3 w-3' />
-                      <span>+5.2% from last month</span>
-                    </div>
-                  </div>
-                  <div className='p-4 bg-white/80 rounded-xl shadow-sm group-hover:scale-110 transition-transform duration-200'>
-                    <Users className='h-7 w-7 text-blue-600' />
-                  </div>
-                </div>
-              </div>
+              <StandardMetricsCard
+                title="Total Agents"
+                value={totalAgents}
+                subtitle="+5.2% from last month"
+                icon={Users}
+                color="primary"
+                variant="default"
+              />
 
-              <div className='bg-gradient-to-br from-green-50 to-green-100/50 rounded-2xl p-6 shadow-sm border border-green-200 hover:shadow-md transition-all duration-200 group'>
-                <div className='flex items-center justify-between'>
-                  <div className='space-y-2'>
-                    <p className='text-sm font-medium text-green-700'>
-                    Active Agents
-                    </p>
-                    <p className='text-3xl font-bold text-green-900'>
-                    {activeAgents}
-                    </p>
-                    <div className='flex items-center gap-1 text-xs text-green-600'>
-                      <Activity className='h-3 w-3' />
-                      <span>+8.7% from last month</span>
-                    </div>
-                  </div>
-                  <div className='p-4 bg-white/80 rounded-xl shadow-sm group-hover:scale-110 transition-transform duration-200'>
-                    <Activity className='h-7 w-7 text-green-600' />
-                  </div>
-                </div>
-              </div>
+              <StandardMetricsCard
+                title="Active Agents"
+                value={activeAgents}
+                subtitle="+8.7% from last month"
+                icon={Activity}
+                color="success"
+                variant="default"
+              />
 
-              <div className='bg-gradient-to-br from-orange-50 to-orange-100/50 rounded-2xl p-6 shadow-sm border border-orange-200 hover:shadow-md transition-all duration-200 group'>
-                <div className='flex items-center justify-between'>
-                  <div className='space-y-2'>
-                    <p className='text-sm font-medium text-orange-700'>
-                      {t('dashboard.total_transactions')}
-                    </p>
-                    <p className='text-3xl font-bold text-orange-900'>
-                      {totalTransactions.toLocaleString()}
-                    </p>
-                    <div className='flex items-center gap-1 text-xs text-orange-600'>
-                      <DollarSign className='h-3 w-3' />
-                      <span>+12.3% from last month</span>
-                    </div>
-                  </div>
-                  <div className='p-4 bg-white/80 rounded-xl shadow-sm group-hover:scale-110 transition-transform duration-200'>
-                    <DollarSign className='h-7 w-7 text-orange-600' />
-                  </div>
-                </div>
-              </div>
+              <StandardMetricsCard
+                title={t('dashboard.total_transactions')}
+                value={totalTransactions.toLocaleString()}
+                subtitle="+12.3% from last month"
+                icon={DollarSign}
+                color="orange"
+                variant="default"
+              />
 
-              <div className='bg-gradient-to-br from-purple-50 to-purple-100/50 rounded-2xl p-6 shadow-sm border border-purple-200 hover:shadow-md transition-all duration-200 group'>
-                <div className='flex items-center justify-between'>
-                  <div className='space-y-2'>
-                    <p className='text-sm font-medium text-purple-700'>
-                    Avg. Performance
-                    </p>
-                    <p className='text-3xl font-bold text-purple-900'>
-                    {avgPerformance}%
-                    </p>
-                    <div className='flex items-center gap-1 text-xs text-purple-600'>
-                      <Award className='h-3 w-3' />
-                      <span>+3.1% from last month</span>
-                    </div>
-                  </div>
-                  <div className='p-4 bg-white/80 rounded-xl shadow-sm group-hover:scale-110 transition-transform duration-200'>
-                    <Award className='h-7 w-7 text-purple-600' />
-                  </div>
-                </div>
-              </div>
+              <StandardMetricsCard
+                title="Avg. Performance"
+                value={`${avgPerformance}%`}
+                subtitle="+3.1% from last month"
+                icon={Award}
+                color="purple"
+                variant="default"
+              />
             </CardGrid>
           </Section>
         </ContentArea>

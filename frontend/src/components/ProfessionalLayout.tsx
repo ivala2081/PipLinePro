@@ -8,34 +8,43 @@ interface SectionHeaderProps {
   className?: string;
 }
 
-export const SectionHeader: React.FC<SectionHeaderProps> = ({ 
-  title, 
-  subtitle, 
-  actions, 
-  className = '' 
+export const SectionHeader: React.FC<SectionHeaderProps> = ({
+  title,
+  subtitle,
+  actions,
+  className = ''
 }) => {
   return (
-    <div className={`business-card mb-8 ${className}`}>
-      <div className="business-card-header">
-        <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
-          <div className='space-business-sm'>
-            {/* Icon and Title */}
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-gray-500 to-blue-600 rounded-lg flex items-center justify-center shadow-sm">
-                <div className="w-3 h-3 bg-white rounded-sm" />
+    <div className={`enterprise-card ${className}`} style={{ marginBottom: 'var(--space-4)' }}>
+      <div style={{ padding: 'var(--space-4)' }}>
+        <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between' style={{ gap: 'var(--space-3)' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
+            <div className="flex items-center" style={{ gap: 'var(--space-2)' }}>
+              <div 
+                className="rounded-md flex items-center justify-center"
+                style={{ 
+                  width: 'var(--space-6)', 
+                  height: 'var(--space-6)',
+                  background: 'linear-gradient(135deg, var(--primary-blue) 0%, var(--secondary-turquoise) 100%)'
+                }}
+              >
+                <div 
+                  className="bg-white rounded-sm" 
+                  style={{ width: 'var(--space-2)', height: 'var(--space-2)' }}
+                />
               </div>
-              <h2 className='text-xl lg:text-2xl font-bold text-gray-900 tracking-tight'>
+              <h2 className='enterprise-section-header'>
                 {title}
               </h2>
             </div>
             {subtitle && (
-              <p className='text-base text-gray-600 ml-11 max-w-2xl leading-relaxed'>
+              <p className='enterprise-body' style={{ marginLeft: 'var(--space-8)' }}>
                 {subtitle}
               </p>
             )}
           </div>
           {actions && (
-            <div className='flex items-center gap-3'>
+            <div className='flex items-center' style={{ gap: 'var(--space-2)' }}>
               {actions}
             </div>
           )}
@@ -69,10 +78,10 @@ export const GridContainer: React.FC<GridContainerProps> = ({
   };
 
   const gridGaps = {
-    sm: 'gap-4',
-    md: 'gap-6',
-    lg: 'gap-8',
-    xl: 'gap-10'
+    sm: 'gap-3',
+    md: 'gap-4',
+    lg: 'gap-5',
+    xl: 'gap-6'
   };
 
   return (
@@ -106,10 +115,10 @@ export const CardGrid: React.FC<CardGridProps> = ({
   };
 
   const gridGaps = {
-    sm: 'gap-6',
-    md: 'gap-8',
-    lg: 'gap-10',
-    xl: 'gap-12'
+    sm: 'gap-3',
+    md: 'gap-4',
+    lg: 'gap-5',
+    xl: 'gap-6'
   };
 
   return (
@@ -138,10 +147,10 @@ export const Section: React.FC<SectionProps> = ({
   spacing = 'lg'
 }) => {
   const sectionSpacing = {
-    sm: 'mb-6',
-    md: 'mb-8',
-    lg: 'mb-12',
-    xl: 'mb-16'
+    sm: 'mb-3',
+    md: 'mb-4',
+    lg: 'mb-6',
+    xl: 'mb-8'
   };
 
   return (
@@ -150,23 +159,26 @@ export const Section: React.FC<SectionProps> = ({
         <div className="relative overflow-hidden bg-gradient-to-br from-white via-gray-50/50 to-blue-50/30 rounded-2xl border border-gray-200/60 shadow-lg backdrop-blur-sm mb-8">
           {/* Background Pattern */}
           <div className="absolute inset-0 bg-gradient-to-r from-blue-600/3 via-transparent to-purple-600/3" />
-          <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-bl from-blue-400/8 to-transparent rounded-full -translate-y-10 translate-x-10" />
+          <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-blue-400/8 to-transparent rounded-full -translate-y-12 translate-x-12" />
+          <div className="absolute bottom-0 left-0 w-20 h-20 bg-gradient-to-tr from-purple-400/8 to-transparent rounded-full translate-y-10 -translate-x-10" />
           
           {/* Content */}
           <div className="relative p-6 lg:p-8">
             <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
-              <div className='space-y-2'>
+              <div className='space-y-3'>
                 {/* Icon and Title */}
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center shadow-sm">
-                    <div className="w-3 h-3 bg-white rounded-sm" />
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <div className="w-6 h-6 bg-white/90 rounded-lg flex items-center justify-center">
+                      <div className="w-3 h-3 bg-gradient-to-br from-blue-500 to-purple-600 rounded-sm" />
+                    </div>
                   </div>
-                  <h2 className='text-xl lg:text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent tracking-tight'>
+                  <h2 className='text-2xl lg:text-3xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-purple-800 bg-clip-text text-transparent tracking-tight'>
                     {title}
                   </h2>
                 </div>
                 {subtitle && (
-                  <p className='text-base text-gray-600 ml-11 max-w-2xl leading-relaxed'>
+                  <p className='text-base lg:text-lg text-gray-600 ml-16 max-w-2xl leading-relaxed'>
                     {subtitle}
                   </p>
                 )}
@@ -248,10 +260,10 @@ export const Row: React.FC<RowProps> = ({
   justify = 'start'
 }) => {
   const rowSpacing = {
-    sm: 'gap-4',
-    md: 'gap-6',
-    lg: 'gap-8',
-    xl: 'gap-10'
+    sm: 'gap-3',
+    md: 'gap-4',
+    lg: 'gap-5',
+    xl: 'gap-6'
   };
 
   const rowAlign = {
@@ -393,14 +405,14 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   className = '' 
 }) => {
   return (
-    <div className={`relative overflow-hidden bg-gradient-to-br from-white via-blue-50/30 to-purple-50/40 rounded-3xl border border-white/60 shadow-xl backdrop-blur-sm ${className}`}>
+    <div className={`relative overflow-hidden bg-gradient-to-br from-white via-blue-50/30 to-purple-50/40 rounded-2xl border border-gray-200/60 shadow-lg backdrop-blur-sm ${className}`}>
       {/* Background Pattern */}
-      <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 via-transparent to-purple-600/5" />
-      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-blue-400/10 to-transparent rounded-full -translate-y-16 translate-x-16" />
-      <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-purple-400/10 to-transparent rounded-full translate-y-12 -translate-x-12" />
+      <div className="absolute inset-0 bg-gradient-to-r from-blue-600/3 via-transparent to-purple-600/3" />
+      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-blue-400/8 to-transparent rounded-full -translate-y-16 translate-x-16" />
+      <div className="absolute bottom-0 left-0 w-28 h-28 bg-gradient-to-tr from-purple-400/8 to-transparent rounded-full translate-y-14 -translate-x-14" />
       
       {/* Content */}
-      <div className="relative p-8 lg:p-10">
+      <div className="relative p-6 lg:p-8">
         {breadcrumbs && (
           <div className='mb-6'>
             {breadcrumbs}
@@ -426,22 +438,6 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
                 )}
               </div>
             </div>
-            
-            {/* Status Indicators */}
-            <div className="flex items-center gap-6 text-sm">
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-green-100/80 backdrop-blur-sm rounded-full border border-green-200/60">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-green-700 font-medium">System Active</span>
-              </div>
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-100/80 backdrop-blur-sm rounded-full border border-blue-200/60">
-                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                <span className="text-blue-700 font-medium">Real-time Updates</span>
-              </div>
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-purple-100/80 backdrop-blur-sm rounded-full border border-purple-200/60">
-                <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                <span className="text-purple-700 font-medium">Secure Connection</span>
-              </div>
-            </div>
           </div>
           
           {/* Actions */}
@@ -454,7 +450,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
       </div>
       
       {/* Bottom Accent */}
-      <div className="h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500" />
+      <div className="h-0.5 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400" />
     </div>
   );
 };
@@ -472,10 +468,10 @@ export const ContentArea: React.FC<ContentAreaProps> = ({
   spacing = 'lg'
 }) => {
   const contentSpacing = {
-    sm: 'space-y-6',
-    md: 'space-y-8',
-    lg: 'space-y-10',
-    xl: 'space-y-14'
+    sm: 'space-y-3',
+    md: 'space-y-4',
+    lg: 'space-y-5',
+    xl: 'space-y-6'
   };
 
   return (

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import * as XLSX from 'xlsx';
+import { handleApiError, getUserFriendlyMessage } from '../utils/errorHandler';
 import {
   BarChart3,
   Users,
@@ -18,6 +19,7 @@ import {
   Search,
   Download,
   AlertCircle,
+  Award,
   BarChart,
   User,
   Building,
@@ -67,6 +69,8 @@ import TransactionDetailView from '../components/TransactionDetailView';
 import TransactionEditForm from '../components/TransactionEditForm';
 import { PageHeader, Section, ContentArea, CardGrid } from '../components/ProfessionalLayout';
 import { Button } from '../components/ProfessionalButtons';
+import StandardMetricsCard from '../components/StandardMetricsCard';
+import { ClientsPageSkeleton } from '../components/EnhancedSkeletonLoaders';
 
 interface Client {
   client_name: string;
@@ -186,6 +190,7 @@ export default function Clients() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [clientsError, setClientsError] = useState<string | null>(null);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [selectedTransactions, setSelectedTransactions] = useState<number[]>(
     []
@@ -297,13 +302,7 @@ export default function Clients() {
       if (filters.psp && filters.psp.trim() !== '') params.append('psp', filters.psp);
       if (filters.currency && filters.currency.trim() !== '') params.append('currency', filters.currency);
       
-      // Debug: Log the filters being applied
-      console.log('🔍 Debug - Filters being applied:', {
-        category: filters.category,
-        categoryTrimmed: filters.category?.trim(),
-        categoryEmpty: filters.category?.trim() === '',
-        willSendCategory: filters.category && filters.category.trim() !== ''
-      });
+      // Apply filters to transactions
       
       params.append('page', pagination.page.toString());
       params.append('per_page', pagination.per_page.toString());
@@ -312,12 +311,10 @@ export default function Clients() {
 
       if (response.ok) {
       const data = await api.parseResponse(response);
+        // Validate response data structure
+        
         if (data?.transactions) {
-          // Debug: Log the first transaction to see what fields are present
-          if (data.transactions.length > 0) {
-            console.log('🔍 Debug - First transaction data:', data.transactions[0]);
-            console.log('🔍 Debug - Company field:', data.transactions[0].company);
-          }
+          // Process transaction data
           setTransactions(data.transactions);
           setPagination(prev => ({
             ...prev,
@@ -325,13 +322,16 @@ export default function Clients() {
             pages: data.pagination?.pages || prev.pages,
             page: data.pagination?.page || prev.page
           }));
+        } else {
+          setError(`No transaction data received. Response structure: ${JSON.stringify(data)}`);
         }
       } else {
-        setError('Failed to fetch transactions');
+        const errorData = await response.json().catch(() => ({}));
+        setError(errorData.message || 'Failed to fetch transactions');
       }
     } catch (error) {
-      console.error('Error fetching transactions:', error);
-      setError('Error fetching transactions');
+      const pipLineError = handleApiError(error, 'fetchTransactions');
+      setError(getUserFriendlyMessage(pipLineError));
     } finally {
       setLoading(false);
     }
@@ -340,7 +340,7 @@ export default function Clients() {
   const fetchClients = async () => {
     try {
       setLoading(true);
-      setError(null);
+      setClientsError(null);
 
       const response = await api.get('/api/v1/transactions/clients');
 
@@ -349,6 +349,8 @@ export default function Clients() {
       }
 
       const data = await api.parseResponse(response);
+      
+      // Process clients data
 
       if (response.ok && data) {
         const clientsData = Array.isArray(data) ? data : [];
@@ -371,12 +373,12 @@ export default function Clients() {
 
         setClients(transformedData);
       } else {
-        setError(data?.message || 'Failed to load clients data');
+        setClientsError(data?.message || 'Failed to load clients data');
         setClients([]);
       }
     } catch (error) {
-      console.error('Error fetching clients:', error);
-      setError('Failed to load clients data');
+      const pipLineError = handleApiError(error, 'fetchClients');
+      setClientsError(getUserFriendlyMessage(pipLineError));
       setClients([]);
     } finally {
       setLoading(false);
@@ -505,17 +507,10 @@ export default function Clients() {
   };
 
     const handleImport = async (event: Event) => {
-    console.log('🚀 ===== IMPORT PROCESS STARTED =====');
-    console.log('📅 Timestamp:', new Date().toISOString());
-    
     const target = event.target as HTMLInputElement;
-    console.log('🎯 Target element:', target);
-    
     const file = target.files?.[0];
-    console.log('📁 File object:', file);
     
     if (!file) {
-      console.error('❌ No file selected');
       return;
     }
     
@@ -552,7 +547,7 @@ export default function Clients() {
         const data = lines.slice(1).filter(line => line.trim());
         console.log('📊 Data lines (after filtering):', data.length);
         
-        // Debug: Show first few lines to understand structure
+        // Process CSV structure
         if (data.length > 0) {
           console.log('📊 First data line:', data[0]);
           console.log('📊 First line values:', data[0].split(','));
@@ -566,47 +561,25 @@ export default function Clients() {
           return;
         }
         
-        console.log('🔄 Starting transaction processing loop...');
-        console.log(`🔄 Will process ${data.length} lines`);
+        // Process transaction data
         
         transactions = data.map((line, index) => {
           try {
-            console.log(`\n🔍 ===== PROCESSING LINE ${index + 1} =====`);
-            console.log(`🔍 Raw line content:`, line);
-            console.log(`🔍 Line length:`, line.length);
             
             const values = line.split(',');
-            console.log(`🔍 Split values count:`, values.length);
-            console.log(`🔍 All values:`, values);
             
             const amount = parseFloat(values[5]) || 0;
-            console.log(`🔍 Parsed amount:`, amount);
-            console.log(`🔍 Raw amount value:`, values[5]);
             
-            // Debug logging for specific transactions
+            // Handle special transaction types
             if (values[0] && (values[0].includes('TETHER ALIM') || values[0].includes('KUR FARKI MALİYETİ'))) {
-              console.log('Debug - Found special transaction:', {
-                line: index + 1,
-                client_name: values[0],
-                amount: values[5],
-                parsed_amount: amount,
-                category: values[4],
-                currency: values[6],
-                psp: values[7],
-                date: values[8]
-              });
+              // Special handling for Tether and currency difference transactions
             }
             
-            // CRITICAL FIX: Define category FIRST, before any other logic
-            console.log(`📝 ===== CATEGORY PROCESSING =====`);
-            console.log(`📝 Raw category value (values[4]):`, values[4]);
-            console.log(`📝 Raw category type:`, typeof values[4]);
-            console.log(`📝 Raw category length:`, values[4] ? values[4].length : 'N/A');
+            // Process category data
             
             let category: string;
             if (values[4] && values[4].trim()) {
               const rawCategory = values[4].trim().toUpperCase();
-              console.log(`📝 Trimmed and uppercased: ${values[4]} -> ${rawCategory}`);
               
               // Map common variations
               const categoryMapping: { [key: string]: string } = {
@@ -619,18 +592,10 @@ export default function Clients() {
                 'DEP': 'DEP'
               };
               
-              console.log(`📝 Available mappings:`, Object.keys(categoryMapping));
-              console.log(`📝 Looking for:`, rawCategory);
-              
               category = categoryMapping[rawCategory] || 'DEP';
-              console.log(`📝 Final mapped category: ${category}`);
             } else {
               category = 'DEP'; // Default value
-              console.log(`📝 Using default category: ${category} (no value or empty)`);
             }
-            
-            console.log(`📝 Final category value:`, category);
-            console.log(`📝 Category type:`, typeof category);
             
             // Validate and clean data
             const client_name = values[0]?.trim() || '';
@@ -642,23 +607,10 @@ export default function Clients() {
             
             // SAFETY CHECK: Ensure category is defined before validation
             if (typeof category === 'undefined') {
-              console.error(`Row ${index + 1}: Category is undefined! This should never happen.`);
               category = 'DEP'; // Emergency fallback
             }
             
-            // Generate warnings for data quality issues - now category is guaranteed to be defined
-            if (!client_name) {
-              console.warn(`Row ${index + 1}: Missing client name`);
-            }
-            if (amount <= 0 && category === 'DEP') {
-              console.warn(`Row ${index + 1}: DEP transactions should have positive amounts, got: ${amount}`);
-            }
-            if (amount >= 0 && category === 'WD') {
-              console.warn(`Row ${index + 1}: WD transactions typically have negative amounts, got: ${amount}`);
-            }
-            if (!category || !['DEP', 'WD'].includes(category)) {
-              console.warn(`Row ${index + 1}: Invalid category: ${category}, defaulting to DEP`);
-            }
+            // Validate data quality
             
             const transaction = {
               id: index + 1,
@@ -675,13 +627,10 @@ export default function Clients() {
               notes: `Imported from CSV - Row ${index + 2}`
             };
             
-            console.log(`✅ Transaction created successfully:`, transaction);
-            console.log(`✅ Line ${index + 1} processing completed`);
+            // Transaction created successfully
             
             return transaction;
           } catch (error) {
-            console.error(`❌ Error processing line ${index + 1}:`, error);
-            console.error(`❌ Line content:`, line);
             // Return a safe default transaction
             return {
               id: index + 1,
@@ -1619,16 +1568,9 @@ export default function Clients() {
     chartColors.info
   ];
 
-  // Loading state
+  // Enhanced loading state
   if (authLoading) {
-    return (
-      <div className='min-h-screen flex items-center justify-center bg-gray-50'>
-        <div className='text-center'>
-          <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-accent-600 mx-auto'></div>
-          <p className='mt-4 text-gray-600'>Loading clients...</p>
-        </div>
-      </div>
-    );
+    return <ClientsPageSkeleton />;
   }
 
   const fetchClientTransactions = async (clientName: string) => {
@@ -2078,163 +2020,74 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
       {activeTab === 'overview' && (
         <div className='space-y-6'>
           {/* Professional Financial Metrics Section */}
-          <Section title="Financial Overview" subtitle="Key financial metrics and transaction summaries">
-            <CardGrid cols={3} gap="lg">
-              {/* Total Withdrawals */}
-              <div className='bg-gradient-to-br from-red-50 to-red-100/50 rounded-2xl p-6 shadow-sm border border-red-200 hover:shadow-md transition-all duration-200 group'>
-                <div className='flex items-center justify-between'>
-                  <div className='space-y-2'>
-                    <p className='text-sm font-medium text-red-700'>
-                      Total Withdrawals
-                    </p>
-                    <p className='text-3xl font-bold text-red-900'>
-                      {formatCurrency(totalWithdrawals, '₺')}
-                    </p>
-                    <div className='flex items-center gap-1 text-xs text-red-600'>
-                      <TrendingUp className='h-3 w-3 rotate-180' />
-                      <span>WD Transactions</span>
-                    </div>
-                  </div>
-                  <div className='p-4 bg-white/80 rounded-xl shadow-sm group-hover:scale-110 transition-transform duration-200'>
-                    <TrendingUp className='h-7 w-7 text-red-600 rotate-180' />
-                  </div>
-                </div>
-              </div>
-
-              {/* Net Flow */}
-              <div className='bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-2xl p-6 shadow-sm border border-blue-200 hover:shadow-md transition-all duration-200 group'>
-                <div className='flex items-center justify-between'>
-                  <div className='space-y-2'>
-                    <p className='text-sm font-medium text-blue-700'>
-                      Net Flow
-                    </p>
-                    <p className={`text-3xl font-bold ${totalDeposits - totalWithdrawals >= 0 ? 'text-blue-900' : 'text-red-600'}`}>
-                      {formatCurrency(totalDeposits - totalWithdrawals, '₺')}
-                    </p>
-                    <div className='flex items-center gap-1 text-xs text-blue-600'>
-                      <Activity className='h-3 w-3' />
-                      <span>Deposits - Withdrawals</span>
-                    </div>
-                  </div>
-                  <div className='p-4 bg-white/80 rounded-xl shadow-sm group-hover:scale-110 transition-transform duration-200'>
-                    <Activity className='h-7 w-7 text-blue-600' />
-                  </div>
-                </div>
-              </div>
-
-              {/* Total Transactions */}
-              <div className='bg-gradient-to-br from-purple-50 to-purple-100/50 rounded-2xl p-6 shadow-sm border border-purple-200 hover:shadow-md transition-all duration-200 group'>
-                <div className='flex items-center justify-between'>
-                  <div className='space-y-2'>
-                    <p className='text-sm font-medium text-purple-700'>
-                      {t('dashboard.total_transactions')}
-                    </p>
-                    <p className='text-3xl font-bold text-purple-900'>
-                      {totalTransactions.toLocaleString()}
-                    </p>
-                    <div className='flex items-center gap-1 text-xs text-purple-600'>
-                      <CreditCard className='h-3 w-3' />
-                      <span>All Categories</span>
-                    </div>
-                  </div>
-                  <div className='p-4 bg-white/80 rounded-xl shadow-sm group-hover:scale-110 transition-transform duration-200'>
-                    <CreditCard className='h-7 w-7 text-purple-600' />
-                  </div>
-                </div>
-              </div>
+          <Section title="Financial Overview" subtitle="Key financial metrics">
+            <CardGrid cols={4} gap="lg">
+              <StandardMetricsCard
+                title="Total Deposit"
+                value={formatCurrency(totalDeposits, '₺')}
+                subtitle="DEP Transactions"
+                icon={TrendingUp}
+                color="green"
+                variant="default"
+                changeType="positive"
+              />
+              
+              <StandardMetricsCard
+                title="Total Withdraw"
+                value={formatCurrency(Math.abs(totalWithdrawals), '₺')}
+                subtitle="WD Transactions"
+                icon={TrendingDown}
+                color="red"
+                variant="default"
+                changeType="negative"
+              />
+              
+              <StandardMetricsCard
+                title="Net Cash"
+                value={formatCurrency(totalDeposits - totalWithdrawals, '₺')}
+                subtitle="Tot DEP - Tot WD"
+                icon={DollarSign}
+                color={totalDeposits - totalWithdrawals >= 0 ? "blue" : "red"}
+                variant="default"
+                changeType={totalDeposits - totalWithdrawals >= 0 ? "positive" : "negative"}
+              />
+              
+              <StandardMetricsCard
+                title="Total Commissions"
+                value={formatCurrency(totalCommissions, '₺')}
+                subtitle="All paid commissions"
+                icon={FileText}
+                color="purple"
+                variant="default"
+              />
             </CardGrid>
           </Section>
 
           {/* Client Distribution and Top Performers */}
-          <Section title="Client Insights" subtitle="Distribution analysis and top performing clients">
+          <Section title="Client Insights" subtitle="Distribution and top performers">
             <CardGrid cols={2} gap="lg">
-              <div className='bg-white rounded-xl p-6 shadow-sm border border-gray-100'>
-                <h3 className='text-lg font-semibold text-gray-900 mb-4'>
-                  Client Distribution
-                </h3>
-                <div className='space-y-4'>
-                  <div className='flex items-center justify-between'>
-                    <span className='text-sm text-gray-600'>{t('dashboard.active_clients')}</span>
-                    <span className='text-lg font-semibold text-gray-900'>
-                      {clients.length}
-                    </span>
-                  </div>
-                  <div className='flex items-center justify-between'>
-                    <span className='text-sm text-gray-600'>
-                      Active Clients
-                    </span>
-                    <span className='text-lg font-semibold text-gray-900'>
-                      {clients.length}
-                    </span>
-                  </div>
-                  <div className='flex items-center justify-between'>
-                    <span className='text-sm text-gray-600'>
-                      Multi-Currency Clients
-                    </span>
-                    <span className='text-lg font-semibold text-gray-900'>
-                      {
-                        clients.filter(
-                          c =>
-                            Array.isArray(c.currencies) && c.currencies.length > 1
-                        ).length
-                      }
-                    </span>
-                  </div>
-                </div>
-              </div>
+              <StandardMetricsCard
+                title="Client Distribution"
+                value={clients.length}
+                subtitle={`${clients.filter(c => Array.isArray(c.currencies) && c.currencies.length > 1).length} multi-currency`}
+                icon={Users}
+                color="primary"
+                variant="default"
+              />
 
-              <div className='bg-white rounded-xl p-6 shadow-sm border border-gray-100'>
-                <h3 className='text-lg font-semibold text-gray-900 mb-4'>
-                  Top Performers
-                </h3>
-                <div className='space-y-4'>
-                  <div className='flex items-center justify-between'>
-                    <span className='text-sm text-gray-600'>
-                      Highest Volume Client
-                    </span>
-                    <span className='text-sm font-medium text-gray-900'>
-                      {clients.length > 0
-                        ? clients.reduce((max, client) =>
-                            client.total_amount > max.total_amount ? client : max
-                          ).client_name
-                        : 'N/A'}
-                    </span>
-                  </div>
-                  <div className='flex items-center justify-between'>
-                    <span className='text-sm text-gray-600'>
-                      Most Transactions
-                    </span>
-                    <span className='text-sm font-medium text-gray-900'>
-                      {clients.length > 0
-                        ? clients.reduce((max, client) =>
-                            client.transaction_count > max.transaction_count
-                              ? client
-                              : max
-                          ).client_name
-                        : 'N/A'}
-                    </span>
-                  </div>
-                  <div className='flex items-center justify-between'>
-                    <span className='text-sm text-gray-600'>
-                      Highest Avg Transaction
-                    </span>
-                    <span className='text-sm font-medium text-gray-900'>
-                      {clients.length > 0
-                        ? clients.reduce((max, client) =>
-                            client.avg_transaction > max.avg_transaction
-                              ? client
-                              : max
-                        ).client_name
-                      : 'N/A'}
-                    </span>
-                  </div>
-                </div>
-              </div>
+              <StandardMetricsCard
+                title="Top Performers"
+                value={clients.length > 0 ? clients.reduce((max, client) => client.total_amount > max.total_amount ? client : max).client_name : 'N/A'}
+                subtitle={`Most transactions: ${clients.length > 0 ? clients.reduce((max, client) => client.transaction_count > max.transaction_count ? client : max).client_name : 'N/A'}`}
+                icon={Award}
+                color="success"
+                variant="default"
+              />
             </CardGrid>
           </Section>
 
           {/* Payment Method Breakdown */}
-          <Section title="Payment Method Analysis" subtitle="Deposits and withdrawals by payment method">
+          <Section title="Payment Method Analysis" subtitle="Payment method breakdown">
             {Object.keys(paymentMethodBreakdown).length > 0 ? (
               <div className='space-y-4'>
                 {Object.entries(paymentMethodBreakdown)
@@ -2288,7 +2141,7 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
       {activeTab === 'transactions' && (
         <ContentArea>
           {/* Transactions Header Section */}
-          <Section title="Transaction Management" subtitle="Complete overview of all transaction records">
+          <Section title="Transaction Management" subtitle="All transaction records">
             
             {/* Category Filter */}
             <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
@@ -2460,7 +2313,7 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
       {activeTab === 'analytics' && (
         <ContentArea>
           {/* Analytics Overview Section */}
-          <Section title="Analytics Overview" subtitle="Comprehensive financial and performance insights">
+          <Section title="Analytics Overview" subtitle="Financial and performance insights">
             {/* Professional Charts Section */}
             <CardGrid cols={2} gap="lg">
               {/* Transaction Volume Trend Chart */}
@@ -2570,7 +2423,7 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
           </Section>
 
           {/* Client Performance and Currency Charts Section */}
-          <Section title="Client & Currency Analysis" subtitle="Performance metrics and distribution analysis">
+          <Section title="Client & Currency Analysis" subtitle="Performance and distribution">
             <CardGrid cols={2} gap="lg">
               {/* Top Client Performance Chart */}
               <div className='bg-white rounded-2xl p-6 shadow-sm border border-gray-200 hover:shadow-lg transition-all duration-200'>
@@ -3254,8 +3107,7 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                             </div>
                             <div className='space-y-2'>
                               {dailySummaryData.psp_summary.slice(0, 4).map((psp, idx) => {
-                                // Debug logging to see what data we're receiving
-                                console.log('🔍 PSP Debug:', psp.name, 'is_tether:', psp.is_tether, 'primary_currency:', psp.primary_currency, 'net_usd:', psp.net_usd, 'net_tl:', psp.net_tl);
+                                // Process PSP data
                                 
                                 return (
                                   <div key={idx} className='flex justify-between items-center text-sm'>
@@ -3353,11 +3205,11 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
         <div className='space-y-6'>
           {/* Clients Table */}
           <div className='bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden'>
-            <div className='px-8 py-6 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-gray-100/50'>
+            <div className='px-8 py-6 border-b border-gray-100'>
               <div className='flex items-center justify-between'>
                 <div className='flex items-center gap-3'>
-                  <div className='w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-sm'>
-                    <Users className='h-5 w-5 text-white' />
+                  <div className='w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center'>
+                    <Users className='h-5 w-5 text-blue-600' />
     </div>
                   <div>
                     <h3 className='text-xl font-bold text-gray-900'>
@@ -3391,6 +3243,24 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
               <div className='p-12 text-center'>
                 <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-accent-600 mx-auto mb-4'></div>
                 <p className='text-gray-600 text-lg'>Loading clients...</p>
+              </div>
+            ) : clientsError ? (
+              <div className='p-12 text-center'>
+                <div className='text-red-500 mb-4'>
+                  <AlertCircle className='h-16 w-16 mx-auto' />
+                </div>
+                <h3 className='text-xl font-semibold text-gray-900 mb-2'>
+                  Error Loading Clients
+                </h3>
+                <p className='text-gray-600 mb-6'>{clientsError}</p>
+                <Button
+                  variant="primary"
+                  onClick={fetchClients}
+                  className="inline-flex items-center gap-2"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                  Try Again
+                </Button>
               </div>
             ) : clients.length === 0 ? (
               <div className='p-12 text-center'>

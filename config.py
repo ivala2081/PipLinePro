@@ -115,7 +115,7 @@ class Config:
     DB_POOL_OVERFLOW_RECOVERY = True  # Automatically recover from overflow
     
     # Redis Configuration for Advanced Caching
-    REDIS_ENABLED = True
+    REDIS_ENABLED = False  # Disabled by default, enable per environment
     REDIS_HOST = 'localhost'
     REDIS_PORT = 6379
     REDIS_DB = 0
@@ -216,7 +216,8 @@ class DevelopmentConfig(Config):
         'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdn.socket.io https://cdnjs.cloudflare.com https://cdn.datatables.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://cdn.datatables.net; img-src 'self' data:; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; connect-src 'self' https://cdn.socket.io;",
     }
     
-    # Development Redis settings (optional)
+    # Development Redis settings (disabled by default)
+    REDIS_ENABLED = False  # Disable Redis in development by default
     REDIS_URL = os.environ.get('REDIS_URL') or None  # Use in-memory cache if Redis not available
 
 class ProductionConfig(Config):
@@ -249,7 +250,8 @@ class ProductionConfig(Config):
     SESSION_COOKIE_SAMESITE = 'Strict'  # Strict same-site policy for production
     PERMANENT_SESSION_LIFETIME = timedelta(hours=4)  # Reasonable session time
     
-    # Redis for rate limiting and caching
+    # Redis for rate limiting and caching (enabled in production)
+    REDIS_ENABLED = True  # Enable Redis in production
     REDIS_URL = os.environ.get('REDIS_URL') or "redis://localhost:6379/0"
     RATELIMIT_STORAGE_URL = os.environ.get('REDIS_URL') or "memory://"
     

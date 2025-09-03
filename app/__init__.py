@@ -3,6 +3,11 @@ PipLine Treasury System - Application Factory
 """
 # Configure comprehensive logging to reduce verbosity FIRST - before any imports
 import logging
+import sys
+import os
+
+# Add the app directory to the Python path for imports
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 # Completely silence SQLAlchemy logging
 logging.getLogger('sqlalchemy.engine').disabled = True
@@ -407,19 +412,12 @@ def create_app(config_name=None):
     # Initialize color enhancement routes
     init_color_enhancement_routes(app)
     
-    # Enhanced logging and error handling
-    if is_development:
-        # Use simplified development logging
-        from app.utils.dev_logger import setup_dev_logging
-        enhanced_logger = setup_dev_logging()
-        print("✅ Development logging enabled (minimal output)")
-    else:
-        # Use full enhanced logging for production
-        from app.utils.enhanced_logger import setup_enhanced_logging, get_enhanced_logger
-        from app.services.enhanced_database_monitor import init_database_monitor
-        setup_enhanced_logging(app)
-        init_database_monitor(app)
-        enhanced_logger = get_enhanced_logger("PipLinePro")
+    # Unified logging system
+    from app.utils.unified_logger import setup_logging, get_logger
+    from app.utils.safe_logging import setup_safe_logging
+    enhanced_logger = setup_logging(app)
+    setup_safe_logging()  # Setup safe logging for Unicode handling
+    print("✅ Unified logging system enabled")
     
     # Error handling (always enabled)
     from app.utils.enhanced_error_handler import (
@@ -662,7 +660,7 @@ def create_app(config_name=None):
         
         # Only log non-static requests (skip in development for cleaner output)
         if should_log and request.method not in ['OPTIONS', 'HEAD'] and not is_development:
-            enhanced_logger = get_enhanced_logger("RequestHandler")
+            enhanced_logger = get_logger("RequestHandler")
             enhanced_logger.info(f"Request started: {request.method} {request.path}", {
                 'request_id': request.request_id,
                 'operation': 'request_start'
@@ -687,11 +685,11 @@ def create_app(config_name=None):
         if should_log and request.method not in ['OPTIONS', 'HEAD'] and not is_development:
             # Only log if request took more than 100ms or had an error
             if duration > 0.1 or response.status_code >= 400:
-                enhanced_logger = get_enhanced_logger("RequestHandler")
-                enhanced_logger.log_performance_metrics(
+                enhanced_logger = get_logger("RequestHandler")
+                enhanced_logger.log_performance(
                     operation=f"HTTP {response.status_code}",
                     duration=duration,
-                    additional_metrics={
+                    extra_data={
                         'request_id': getattr(request, 'request_id', 'Unknown'),
                         'method': request.method,
                         'url': request.path,  # Use path instead of full URL
@@ -743,11 +741,11 @@ def create_app(config_name=None):
     def handle_csrf_error(error):
         """Handle CSRF errors automatically"""
         from app.services.csrf_fix_service import handle_csrf_error_safe, is_csrf_protection_enabled
-        from app.utils.enhanced_logger import get_enhanced_logger
+        from app.utils.unified_logger import get_logger
         from flask import jsonify
         
         # Get logger
-        logger = get_enhanced_logger("CSRFHandler")
+        logger = get_logger("CSRFHandler")
         
         # Check if this is a CSRF error
         if hasattr(error, 'description') and 'CSRF' in str(error.description):
@@ -798,10 +796,10 @@ def create_app(config_name=None):
 
     @app.errorhandler(Exception)
     def handle_unexpected_error(error):
-        """Handle unexpected errors with enhanced logging"""
+        """Handle unexpected errors with unified logging"""
         from flask import jsonify
-        from app.utils.smart_logger import get_smart_logger
-        error_logger = get_smart_logger("ErrorHandler")
+        from app.utils.unified_logger import get_logger
+        error_logger = get_logger("ErrorHandler")
         error_logger.error(f"Unexpected error: {type(error).__name__}: {error}")
         
         # Check if this is a CSRF-related error
@@ -847,5 +845,18 @@ def create_app(config_name=None):
         app.logger.info("CLI commands initialized")
     except Exception as e:
         app.logger.error(f"Failed to initialize CLI commands: {e}")
+
+    # Initialize Database Optimization Service
+    try:
+        from app.services.database_optimization_service import DatabaseOptimizationService
+        with app.app_context():
+            db_optimizer = DatabaseOptimizationService()
+            result = db_optimizer.create_performance_indexes()
+            if result['status'] == 'success':
+                app.logger.info(f"Database optimization completed: {result['indexes_created']} indexes created")
+            else:
+                app.logger.warning(f"Database optimization failed: {result.get('error', 'Unknown error')}")
+    except Exception as e:
+        app.logger.error(f"Failed to initialize database optimization: {e}")
 
     return app 
