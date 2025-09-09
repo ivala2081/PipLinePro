@@ -55,6 +55,7 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isInitialized, setIsInitialized] = useState(false);
   const navigate = useNavigate();
 
   // Check if user is authenticated on app load
@@ -64,27 +65,54 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const checkAuth = async () => {
     try {
-      const response = await api.get('/api/v1/auth/check');
-      const data = await api.parseResponse(response);
+      setIsLoading(true);
+      
+      // Use direct fetch to avoid CSRF token issues during auth check
+      const response = await fetch('/api/v1/auth/check', {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+      });
 
-      if (response.ok && data.authenticated) {
-        setUser(data.user);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.authenticated && data.user) {
+          // Only clear cache if user data has actually changed
+          const userChanged = !user || user.id !== data.user.id || user.username !== data.user.username;
+          if (userChanged) {
+            setUser(data.user);
+            // Only clear cache when user actually changes
+            api.clearCache();
+          } else {
+            setUser(data.user);
+          }
+        } else {
+          // Only clear cache if we were previously authenticated
+          if (user) {
+            setUser(null);
+            api.clearToken();
+            api.clearCache();
+          }
+        }
       } else {
-        setUser(null);
-        // Redirect to login if not authenticated and not already on login page
-        if (window.location.pathname !== '/login') {
-          navigate('/login');
+        // Only clear cache if we were previously authenticated
+        if (user) {
+          setUser(null);
+          api.clearToken();
+          api.clearCache();
         }
       }
     } catch (error) {
       console.error('Auth check failed:', error);
       setUser(null);
-      // Redirect to login on any auth error
-      if (window.location.pathname !== '/login') {
-        navigate('/login');
-      }
+      api.clearToken();
     } finally {
       setIsLoading(false);
+      setIsInitialized(true);
     }
   };
 
@@ -96,16 +124,28 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       setIsLoading(true);
 
-      const response = await api.post('/api/v1/auth/login', {
-        username,
-        password,
-        remember_me: rememberMe,
+      // Use direct fetch for login to avoid CSRF token issues
+      const response = await fetch('/api/v1/auth/login', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+        body: JSON.stringify({
+          username,
+          password,
+          remember_me: rememberMe,
+        }),
       });
 
-      const data = await api.parseResponse(response);
+      const data = await response.json();
 
-      if (response.ok) {
+      if (response.ok && data.user) {
         setUser(data.user);
+        // Clear cache and get fresh CSRF token after successful login
+        api.clearCache();
+        await api.refreshSession();
         return { success: true, message: data.message || 'Login successful' };
       } else {
         return { success: false, message: data.message || 'Login failed' };
@@ -120,11 +160,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = async () => {
     try {
-      await api.post('/api/v1/auth/logout');
+      // Use direct fetch for logout
+      await fetch('/api/v1/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+      });
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
       api.clearToken(); // Clear CSRF token
+      api.clearCache(); // Clear all cached data
       setUser(null);
       navigate('/login');
     }
@@ -132,12 +181,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const clearAuth = () => {
     setUser(null);
+    api.clearToken();
+    api.clearCache();
   };
 
   const value: AuthContextType = {
     user,
     isAuthenticated: !!user,
-    isLoading,
+    isLoading: isLoading || !isInitialized,
     login,
     logout,
     checkAuth,

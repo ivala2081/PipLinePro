@@ -43,12 +43,13 @@ interface ExchangeRate {
 
 export default function AddTransaction() {
   const { t } = useLanguage();
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { isAuthenticated, isLoading: authLoading, user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [dropdownOptions, setDropdownOptions] = useState<GroupedOptions>({});
+  const [dropdownsLoaded, setDropdownsLoaded] = useState(false);
   const [exchangeRate, setExchangeRate] = useState<ExchangeRate>({
     has_rates: false,
   });
@@ -72,7 +73,11 @@ export default function AddTransaction() {
   });
 
   useEffect(() => {
-    if (isAuthenticated && !authLoading) {
+    console.log('🔍 Auth state check:', { isAuthenticated, authLoading, dropdownsLoaded, user: !!user });
+    
+    // Only fetch dropdowns if we're authenticated and they haven't been loaded yet
+    if (isAuthenticated && !authLoading && !dropdownsLoaded) {
+      console.log('✅ Conditions met, fetching dropdown options...');
       fetchDropdownOptions();
 
       // Perform health check when component mounts
@@ -82,22 +87,46 @@ export default function AddTransaction() {
           console.log('💡 Recommendations:', result.recommendations);
         }
       });
+    } else {
+      console.log('⏳ Waiting for conditions:', { 
+        needsAuth: !isAuthenticated, 
+        needsLoadingComplete: authLoading, 
+        needsDropdowns: dropdownsLoaded 
+      });
     }
-  }, [isAuthenticated, authLoading]);
+  }, [isAuthenticated, authLoading, dropdownsLoaded]);
+
+  // Fallback: If dropdowns still aren't loaded after a delay, try again
+  useEffect(() => {
+    if (isAuthenticated && !authLoading && !dropdownsLoaded) {
+      const timeoutId = setTimeout(() => {
+        if (!dropdownsLoaded) {
+          console.log('🔄 Fallback: Attempting to load dropdowns again...');
+          fetchDropdownOptions();
+        }
+      }, 1000); // Wait 1 second before retry
+
+      return () => clearTimeout(timeoutId);
+    }
+    return undefined;
+  }, [isAuthenticated, authLoading, dropdownsLoaded]);
 
   const fetchDropdownOptions = async () => {
     try {
+      console.log('🔄 Fetching dropdown options...');
       setLoading(true);
       const response = await api.get('/api/v1/transactions/dropdown-options');
 
       if (response.ok) {
         const data = await api.parseResponse(response);
+        console.log('✅ Dropdown options loaded successfully:', data);
         setDropdownOptions(data || {});
+        setDropdownsLoaded(true);
       } else {
-        console.error('Failed to fetch dropdown options');
+        console.error('❌ Failed to fetch dropdown options:', response.status);
       }
     } catch (error) {
-      console.error('Error fetching dropdown options:', error);
+      console.error('💥 Error fetching dropdown options:', error);
     } finally {
       setLoading(false);
     }
@@ -385,6 +414,19 @@ export default function AddTransaction() {
       if (response.ok && data.success) {
         console.log('✅ Transaction created successfully!');
         setSuccess(true);
+        
+        // Dispatch event to refresh transaction lists in other components
+        // Add a small delay to ensure transaction is fully committed
+        setTimeout(() => {
+          console.log('🔄 Dispatching transactionsUpdated event...');
+          window.dispatchEvent(new CustomEvent('transactionsUpdated', {
+            detail: { 
+              action: 'create',
+              transactionId: data.transaction?.id
+            }
+          }));
+        }, 500);
+        
         // Reset form
         setFormData({
           client_name: '',
@@ -465,21 +507,22 @@ export default function AddTransaction() {
   };
 
   const resetForm = () => {
-                  setFormData({
-        client_name: '',
-        company: '',
-        date: '',
-        amount: '',
-        payment_method: '',
-        currency: '',
-        category: '',
-          psp: '',
-          notes: '',
-          eur_rate: '',
-          usd_rate: '',
-        });
+    setFormData({
+      client_name: '',
+      company: '',
+      date: '',
+      amount: '',
+      payment_method: '',
+      currency: '',
+      category: '',
+      psp: '',
+      notes: '',
+      eur_rate: '',
+      usd_rate: '',
+    });
     setSuccess(false);
     setError(null);
+    setDropdownsLoaded(false);
   };
 
   // Loading state

@@ -10,8 +10,17 @@ import {
   Filter,
   RefreshCw,
 } from 'lucide-react';
-import { PageHeader, Section, ContentArea, CardGrid } from '../components/ProfessionalLayout';
-import { Button } from '../components/ProfessionalButtons';
+import { 
+  UnifiedCard, 
+  UnifiedButton, 
+  UnifiedBadge, 
+  UnifiedSection, 
+  UnifiedGrid 
+} from '../design-system';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+import { Badge } from '../components/ui/badge';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
 
 export default function Reports() {
   const { t } = useLanguage();
@@ -45,72 +54,108 @@ export default function Reports() {
   ];
 
   return (
-    <div className='space-y-6'>
-      {/* Enhanced Header */}
-      <PageHeader
-        title="Reports"
-        subtitle="Generate and view comprehensive business reports"
-        actions={
-          <div className='flex items-center gap-3'>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => window.location.reload()}
-              className="flex items-center gap-2"
-            >
-              <RefreshCw className='h-4 w-4' />
-              Refresh
-            </Button>
-            <Button variant="outline" size="sm" className="flex items-center gap-2">
-              <Calendar className='h-4 w-4' />
-              Date Range
-            </Button>
-            <Button variant="outline" size="sm" className="flex items-center gap-2">
-              <Filter className='h-4 w-4' />
-              Filters
-            </Button>
-            <Button variant="primary" size="sm" className="flex items-center gap-2">
-              <Download className='h-4 w-4' />
-              Export Report
-            </Button>
+    <div className="min-h-screen bg-slate-50">
+      {/* Modern Header */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                <FileText className="h-8 w-8 text-blue-600" />
+                Reports
+              </h1>
+              <p className="text-gray-600 mt-1">Generate and view comprehensive business reports</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <UnifiedButton 
+                variant="outline" 
+                size="sm" 
+                onClick={() => window.location.reload()}
+                icon={<RefreshCw className='h-4 w-4' />}
+              >
+                Refresh
+              </UnifiedButton>
+              <UnifiedButton variant="outline" size="sm" icon={<Calendar className='h-4 w-4' />}>
+                Date Range
+              </UnifiedButton>
+              <UnifiedButton variant="outline" size="sm" icon={<Filter className='h-4 w-4' />}>
+                Filters
+              </UnifiedButton>
+              <UnifiedButton variant="primary" size="sm" icon={<Download className='h-4 w-4' />}>
+                Export Report
+              </UnifiedButton>
+            </div>
           </div>
-        }
-      />
+        </div>
+      </div>
+
+      <div className="p-6 space-y-6">
 
       {/* Report Types Section */}
-      <Section title="Available Reports" subtitle="Select the type of report you want to generate">
-        <CardGrid cols={4} gap="md">
-          {reports.map(report => (
-            <div
-              key={report.id}
-              onClick={() => setSelectedReport(report.id)}
-              className={`card cursor-pointer transition-colors ${
-                selectedReport === report.id
-                  ? 'ring-2 ring-primary-500 bg-primary-50'
-                  : 'hover:bg-gray-50'
-              }`}
-            >
-              <div className='p-6'>
-                <div className='flex items-center'>
-                  <report.icon className='h-8 w-8 text-primary-600' />
-                  <div className='ml-4'>
-                    <h3 className='text-lg font-medium text-gray-900'>
-                      {report.name}
-                    </h3>
-                    <p className='text-sm text-gray-500'>{report.description}</p>
+      <UnifiedCard variant="elevated" className="mb-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart3 className="h-5 w-5 text-blue-600" />
+            Available Reports
+          </CardTitle>
+          <CardDescription>
+            Select the type of report you want to generate
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {reports.map(report => (
+              <div
+                key={report.id}
+                onClick={() => setSelectedReport(report.id)}
+                className={`cursor-pointer transition-all duration-200 ${
+                  selectedReport === report.id
+                    ? 'ring-2 ring-blue-500 bg-blue-50/50'
+                    : 'hover:bg-gray-50 hover:shadow-md'
+                }`}
+              >
+                <UnifiedCard
+                  variant={selectedReport === report.id ? "elevated" : "outlined"}
+                  className="h-full"
+                >
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-4">
+                    <div className={`p-3 rounded-lg ${
+                      selectedReport === report.id ? 'bg-blue-100' : 'bg-gray-100'
+                    }`}>
+                      <report.icon className={`h-6 w-6 ${
+                        selectedReport === report.id ? 'text-blue-600' : 'text-gray-600'
+                      }`} />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-gray-900">{report.name}</h3>
+                      <p className="text-sm text-gray-500 mt-1">{report.description}</p>
+                    </div>
                   </div>
-                </div>
+                </CardContent>
+                </UnifiedCard>
               </div>
-            </div>
-          ))}
-        </CardGrid>
-      </Section>
+            ))}
+          </div>
+        </CardContent>
+      </UnifiedCard>
 
       {/* Report Content */}
-      <ContentArea>
-        <h2 className='text-xl font-semibold text-gray-900 mb-4'>
-          {reports.find(r => r.id === selectedReport)?.name}
-        </h2>
+      <UnifiedCard variant="elevated">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            {(() => {
+              const selectedReportData = reports.find(r => r.id === selectedReport);
+              const IconComponent = selectedReportData?.icon;
+              return IconComponent ? <IconComponent className="h-5 w-5 text-blue-600" /> : null;
+            })()}
+            {reports.find(r => r.id === selectedReport)?.name}
+          </CardTitle>
+          <CardDescription>
+            {reports.find(r => r.id === selectedReport)?.description}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
 
         <div className='space-y-6'>
           {/* Placeholder content for each report type */}
@@ -228,7 +273,9 @@ export default function Reports() {
             </div>
           )}
         </div>
-      </ContentArea>
+        </CardContent>
+      </UnifiedCard>
+      </div>
     </div>
   );
 }

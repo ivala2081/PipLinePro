@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import { 
   Menu, 
   X, 
@@ -21,6 +22,7 @@ import {
   Globe
 } from 'lucide-react';
 import MobileBottomNavigation from './MobileBottomNavigation';
+import WorldClocks from './WorldClock';
 
 interface LayoutProps {
   children?: React.ReactNode;
@@ -30,6 +32,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const { logout } = useAuth();
   const [notifications, setNotifications] = useState([
     {
       id: 1,
@@ -69,9 +72,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { name: 'Settings', href: '/settings', icon: Settings, current: location.pathname === '/settings' },
   ];
 
-  const handleLogout = () => {
-    // Handle logout logic
-    navigate('/login');
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Fallback: clear local state and redirect
+      navigate('/login');
+    }
   };
 
   const markNotificationAsRead = (id: number) => {
@@ -109,10 +117,47 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [notificationsOpen, userMenuOpen]);
 
+  // Update mobile clock times
+  useEffect(() => {
+    const updateMobileClocks = () => {
+      const now = new Date();
+      
+      // Turkey time
+      const turkeyTime = now.toLocaleTimeString('en-US', {
+        timeZone: 'Europe/Istanbul',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      });
+      
+      // New York time
+      const nyTime = now.toLocaleTimeString('en-US', {
+        timeZone: 'America/New_York',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      });
+
+      const turkeyElement = document.getElementById('mobile-turkey-time');
+      const nyElement = document.getElementById('mobile-ny-time');
+      
+      if (turkeyElement) turkeyElement.textContent = turkeyTime;
+      if (nyElement) nyElement.textContent = nyTime;
+    };
+
+    // Update immediately
+    updateMobileClocks();
+    
+    // Update every second
+    const interval = setInterval(updateMobileClocks, 1000);
+    
+    return () => clearInterval(interval);
+  }, []);
+
   const closeSidebar = () => setSidebarOpen(false);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-slate-50">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div 
@@ -129,7 +174,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       }`}>
         <div className="bg-white border-b" style={{ borderColor: 'var(--border-light)', padding: 'var(--space-4)' }}>
           <div className="flex items-center justify-between">
-            <h1 className="enterprise-section-header">PipLinePro</h1>
+            <div className="flex items-center gap-3">
+              <img 
+                src="/plogo.png" 
+                alt="PipeLine Pro Logo" 
+                className="w-10 h-10 object-contain"
+              />
+              <h1 className="enterprise-section-header">PipLinePro</h1>
+            </div>
             <button
               onClick={closeSidebar}
               className="enterprise-btn-secondary enterprise-btn-sm"
@@ -195,7 +247,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-56 lg:flex-col">
         <div className="flex flex-col flex-grow enterprise-nav shadow-xl">
           <div className="bg-white border-b" style={{ borderColor: 'var(--border-light)', padding: 'var(--space-4)' }}>
-            <h1 className="enterprise-section-header">PipLinePro</h1>
+            <div className="flex items-center gap-3">
+              <img 
+                src="/plogo.png" 
+                alt="PipeLine Pro Logo" 
+                className="w-10 h-10 object-contain"
+              />
+              <h1 className="enterprise-section-header">PipLinePro</h1>
+            </div>
           </div>
           
           <nav className="flex-1" style={{ padding: 'var(--space-3)' }}>
@@ -250,13 +309,66 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       <div className="lg:pl-56">
         {/* Top header */}
         <header className="business-container flex items-center justify-between h-12">
-          <div className="flex items-center">
+          <div className="flex items-center gap-3">
             <button
               onClick={() => setSidebarOpen(true)}
               className="lg:hidden p-2.5 rounded-xl text-gray-500 hover:text-gray-700 hover:bg-gradient-to-r hover:from-gray-50 hover:to-blue-50/30 border border-gray-200/50 hover:border-gray-300/70 transition-all duration-300 hover:shadow-md hover:shadow-gray-200/50 hover:-translate-y-0.5 group mobile-menu-button"
             >
               <Menu className="h-6 w-6 group-hover:scale-110 transition-transform duration-300" />
             </button>
+            
+            {/* Logo for mobile header */}
+            <div className="lg:hidden flex items-center gap-2">
+              <img 
+                src="/plogo.png" 
+                alt="PipeLine Pro Logo" 
+                className="w-8 h-8 object-contain"
+              />
+              <span className="font-semibold text-gray-800">PipLinePro</span>
+            </div>
+          </div>
+
+          {/* World Clocks - Desktop */}
+          <div className="hidden lg:flex items-center">
+            <WorldClocks />
+          </div>
+
+          {/* World Clocks - Mobile */}
+          <div className="lg:hidden flex items-center">
+            <div className="relative flex items-center gap-3 px-4 py-2.5 bg-gradient-to-r from-white/95 to-blue-50/90 backdrop-blur-md rounded-xl border border-gray-200/60 shadow-lg hover:shadow-xl transition-all duration-300 group">
+              {/* Animated background */}
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-purple-500/5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              
+              {/* Turkey Clock */}
+              <div className="relative flex items-center gap-2">
+                <div className="relative">
+                  <span className="text-xl drop-shadow-sm group-hover:scale-110 transition-transform duration-300">🇹🇷</span>
+                  <div className="absolute -inset-1 bg-gradient-to-r from-red-400/20 to-yellow-400/20 rounded-full blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-xs font-bold text-gray-800 group-hover:text-red-600 transition-colors duration-300">Istanbul</span>
+                  <span className="text-xs font-mono font-semibold text-gray-600 group-hover:text-red-500 transition-colors duration-300 animate-pulse" id="mobile-turkey-time">--:--</span>
+                </div>
+              </div>
+              
+              {/* Divider with gradient */}
+              <div className="w-px h-8 bg-gradient-to-b from-gray-200 via-blue-200 to-gray-200 group-hover:from-blue-300 group-hover:via-purple-300 group-hover:to-blue-300 transition-colors duration-300"></div>
+              
+              {/* New York Clock */}
+              <div className="relative flex items-center gap-2">
+                <div className="relative">
+                  <span className="text-xl drop-shadow-sm group-hover:scale-110 transition-transform duration-300">🇺🇸</span>
+                  <div className="absolute -inset-1 bg-gradient-to-r from-blue-400/20 to-red-400/20 rounded-full blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-xs font-bold text-gray-800 group-hover:text-blue-600 transition-colors duration-300">New York</span>
+                  <span className="text-xs font-mono font-semibold text-gray-600 group-hover:text-blue-500 transition-colors duration-300 animate-pulse" id="mobile-ny-time">--:--</span>
+                </div>
+              </div>
+              
+              {/* Subtle glow effect */}
+              <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+            </div>
           </div>
 
           <div className="flex items-center space-business-x-md">

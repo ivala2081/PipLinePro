@@ -85,7 +85,7 @@ class QueryService:
             raise
     
     @staticmethod
-    @cache_query("daily_summary", ttl=600)  # 10 minutes cache for summaries
+    @cache_query("daily_summary", ttl=60)  # 1 minute cache for summaries (reduced for real-time data)
     def get_daily_summary(target_date: date, psp: str = None) -> Dict[str, Any]:
         """Get daily summary with caching"""
         start_time = time.time()

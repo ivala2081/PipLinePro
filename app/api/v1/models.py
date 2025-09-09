@@ -19,11 +19,11 @@ class CategoryEnum(str, Enum):
 class TransactionCreate(BaseModel):
     """Model for creating a new transaction"""
     client_name: str = Field(..., min_length=1, max_length=100, description="Client name")
-    amount: Decimal = Field(..., gt=0, description="Transaction amount")
+    amount: Decimal = Field(..., gt=0, description="Transaction amount (always positive)")
     commission: Optional[Decimal] = Field(None, ge=0, description="Commission amount")
     currency: CurrencyEnum = Field(CurrencyEnum.TL, description="Currency")
     psp: Optional[str] = Field(None, max_length=50, description="Payment Service Provider")
-    category: Optional[CategoryEnum] = Field(None, description="Transaction category")
+    category: Optional[CategoryEnum] = Field(None, description="Transaction category (DEP=positive, WD=negative)")
     transaction_date: date = Field(..., description="Transaction date")
     notes: Optional[str] = Field(None, max_length=500, description="Additional notes")
     
@@ -60,13 +60,23 @@ class TransactionCreate(BaseModel):
 class TransactionUpdate(BaseModel):
     """Model for updating a transaction"""
     client_name: Optional[str] = Field(None, min_length=1, max_length=100)
-    amount: Optional[Decimal] = Field(None, gt=0)
+    amount: Optional[Decimal] = Field(None, gt=0, description="Transaction amount (always positive)")
     commission: Optional[Decimal] = Field(None, ge=0)
     currency: Optional[CurrencyEnum] = None
     psp: Optional[str] = Field(None, max_length=50)
     category: Optional[CategoryEnum] = None
     transaction_date: Optional[date] = None
     notes: Optional[str] = Field(None, max_length=500)
+    
+    @field_validator('amount')
+    @classmethod
+    def validate_amount(cls, v):
+        if v is not None:
+            if v <= 0:
+                raise ValueError('Amount must be positive')
+            if v > 999999999.99:
+                raise ValueError('Amount too large')
+        return v
 
 class TransactionResponse(BaseModel):
     """Model for transaction response"""

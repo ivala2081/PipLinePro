@@ -1,6 +1,6 @@
 import React from 'react';
 import { Calendar, DollarSign, User, Building, CreditCard, FileText } from 'lucide-react';
-import { formatCurrency } from '../utils/currencyUtils';
+import { formatCurrency, formatCurrencyPositive } from '../utils/currencyUtils';
 
 interface Transaction {
   id: number;
@@ -156,11 +156,11 @@ const TransactionDetailView: React.FC<TransactionDetailViewProps> = ({ transacti
               Amount
             </label>
             <p className="text-lg font-bold text-blue-900">
-              {formatCurrency(transaction.amount, transaction.currency)}
+              {formatCurrencyPositive(transaction.amount, transaction.currency)}
             </p>
             {transaction.amount_tl && (
               <p className="text-xs text-blue-600">
-                ({formatCurrency(transaction.amount_tl, '₺')})
+                ({formatCurrencyPositive(transaction.amount_tl, '₺')})
               </p>
             )}
           </div>
@@ -182,11 +182,11 @@ const TransactionDetailView: React.FC<TransactionDetailViewProps> = ({ transacti
               Net Amount
             </label>
             <p className="text-lg font-bold text-blue-900">
-              {formatCurrency(transaction.net_amount, transaction.currency || '₺')}
+              {formatCurrencyPositive(transaction.net_amount, transaction.currency || '₺')}
             </p>
             {transaction.net_amount_tl && (
               <p className="text-xs text-blue-600">
-                ({formatCurrency(transaction.net_amount_tl, '₺')})
+                ({formatCurrencyPositive(transaction.net_amount_tl, '₺')})
               </p>
             )}
           </div>

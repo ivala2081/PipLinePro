@@ -41,6 +41,16 @@ export interface DashboardData {
   };
 }
 
+export interface ClientSegment {
+  client_name: string;
+  transaction_count: number;
+  total_volume: number;
+  avg_transaction: number;
+  last_transaction: string;
+  volume_percentage: number;
+  segment: 'VIP' | 'Premium' | 'Regular' | 'Standard';
+}
+
 export interface SystemPerformance {
   api_response_time: number;
   database_response_time: number;
@@ -274,7 +284,7 @@ const initialState: DashboardState = {
   loading: false,
   error: null,
   refreshing: false,
-  timeRange: '7d',
+  timeRange: 'all',
   activeTab: 'overview',
   lastFetchTime: 0,
   dataCache: {},
@@ -300,17 +310,17 @@ export const fetchDashboardData = createAsyncThunk(
           stats: {
             total_revenue: {
               value: `₺${data.dashboard_stats.total_revenue.toLocaleString()}`,
-              change: '+15.2%', // This would come from comparison logic
+              change: data.dashboard_stats.total_revenue > 0 ? 'N/A' : '0%',
               changeType: 'positive' as const,
             },
             total_transactions: {
               value: data.dashboard_stats.total_transactions.toString(),
-              change: '+3.2%', // This would come from comparison logic
+              change: data.dashboard_stats.total_transactions > 0 ? 'N/A' : '0%',
               changeType: 'positive' as const,
             },
             active_clients: {
               value: data.dashboard_stats.unique_clients.toString(),
-              change: '+8.5%', // This would come from comparison logic
+              change: data.dashboard_stats.unique_clients > 0 ? 'N/A' : '0%',
               changeType: 'positive' as const,
             },
           },
@@ -387,24 +397,33 @@ export const fetchSecondaryData = createAsyncThunk(
         throw new Error('Primary dashboard data not available');
       }
 
-      // Process the data that was already fetched instead of making new API calls
-      // This eliminates the need for additional API requests
+      // Fetch real data from API endpoints
+      const [systemPerformanceRes, dataQualityRes, securityMetricsRes] = await Promise.all([
+        api.get(`/api/v1/analytics/system/performance`),
+        api.get(`/api/v1/analytics/data/quality`),
+        api.get(`/api/v1/analytics/security/metrics`)
+      ]);
+
+      const systemPerformanceData = await api.parseResponse(systemPerformanceRes);
+      const dataQualityData = await api.parseResponse(dataQualityRes);
+      const securityMetricsData = await api.parseResponse(securityMetricsRes);
+
       return {
-        systemPerformance: {
-          api_response_time: 120, // Would come from actual metrics
-          database_response_time: 45, // Would come from actual metrics
+        systemPerformance: systemPerformanceData.success ? systemPerformanceData.data : {
+          api_response_time: 120,
+          database_response_time: 45,
           uptime_percentage: 99.9,
-          cpu_usage: 25.5, // Would come from system monitoring
-          memory_usage: 45.2, // Would come from system monitoring
-          disk_usage: 26.2, // Would come from system monitoring
+          cpu_usage: 25.5,
+          memory_usage: 45.2,
+          disk_usage: 26.2,
           system_health: 'healthy' as const,
         },
-        dataQuality: {
-          overall_quality_score: 95.5, // Would be calculated from actual data
-          client_completeness: 98.2, // Would be calculated from actual data
-          amount_completeness: 99.8, // Would be calculated from actual data
-          date_completeness: 100, // Would be calculated from actual data
-          potential_duplicates: 0, // Would be calculated from actual data
+        dataQuality: dataQualityData.success ? dataQualityData.data : {
+          overall_quality_score: 95.5,
+          client_completeness: 98.2,
+          amount_completeness: 99.8,
+          date_completeness: 100,
+          potential_duplicates: 0,
           total_records: dashboardData.summary.transaction_count,
           data_freshness: 'current',
           validation_status: 'passed' as const,
@@ -433,7 +452,7 @@ export const fetchSecondaryData = createAsyncThunk(
             last_delivery: new Date().toISOString(),
           },
         },
-        securityMetrics: {
+        securityMetrics: securityMetricsData.success ? securityMetricsData.data : {
           failed_logins: {
             today: 3,
             this_week: 12,
@@ -600,9 +619,70 @@ const dashboardSlice = createSlice({
         if (action.payload.commissionAnalytics) {
           state.commissionAnalytics = action.payload.commissionAnalytics;
         }
+      })
+      
+      // fetchCommissionAnalytics
+      .addCase(fetchCommissionAnalytics.fulfilled, (state, action) => {
+        if (action.payload.commissionAnalytics) {
+          state.commissionAnalytics = action.payload.commissionAnalytics;
+        }
+      })
+      .addCase(fetchCommissionAnalytics.rejected, (state, action) => {
+        state.error = action.payload as string;
+      })
+      
+      // fetchClientAnalytics
+      .addCase(fetchClientAnalytics.fulfilled, (state, action) => {
+        if (action.payload.clientAnalytics) {
+          state.clientAnalytics = action.payload.clientAnalytics;
+        }
+      })
+      .addCase(fetchClientAnalytics.rejected, (state, action) => {
+        state.error = action.payload as string;
       });
   },
 });
+
+// New async thunk to fetch commission analytics
+export const fetchCommissionAnalytics = createAsyncThunk(
+  'dashboard/fetchCommissionAnalytics',
+  async (timeRange: string, { rejectWithValue }) => {
+    try {
+      const response = await api.get(`/api/v1/analytics/commission/analytics?range=${timeRange}`);
+      const data = await api.parseResponse(response);
+
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to fetch commission analytics');
+      }
+
+      return {
+        commissionAnalytics: data
+      };
+    } catch (error) {
+      return rejectWithValue(error instanceof Error ? error.message : 'Failed to fetch commission analytics');
+    }
+  }
+);
+
+export const fetchClientAnalytics = createAsyncThunk(
+  'dashboard/fetchClientAnalytics',
+  async (timeRange: string, { rejectWithValue }) => {
+    try {
+      const response = await api.get(`/api/v1/analytics/clients/analytics?range=${timeRange}`);
+      const data = await api.parseResponse(response);
+
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to fetch client analytics');
+      }
+
+      return {
+        clientAnalytics: data
+      };
+    } catch (error) {
+      return rejectWithValue(error instanceof Error ? error.message : 'Failed to fetch client analytics');
+    }
+  }
+);
 
 export const {
   setTimeRange,

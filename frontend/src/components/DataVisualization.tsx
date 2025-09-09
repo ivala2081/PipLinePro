@@ -15,7 +15,7 @@ interface MetricCardProps {
 interface ProgressRingProps {
   percentage: number;
   size?: 'sm' | 'md' | 'lg';
-  color?: 'blue' | 'green' | 'red' | 'purple';
+  color?: 'blue' | 'green' | 'red' | 'slate';
   strokeWidth?: number;
   showLabel?: boolean;
   label?: string;
@@ -57,7 +57,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
       case 'down':
         return <TrendingDown className="h-4 w-4 text-red-600" />;
       default:
-        return <Minus className="h-4 w-4 text-gray-400" />;
+        return <Minus className="h-4 w-4 text-slate-400" />;
     }
   };
 
@@ -68,27 +68,27 @@ export const MetricCard: React.FC<MetricCardProps> = ({
       case 'down':
         return 'text-red-600 bg-red-50';
       default:
-        return 'text-gray-600 bg-gray-50';
+        return 'text-slate-600 bg-slate-50';
     }
   };
 
   return (
     <div className={`
       bg-white 
-      rounded-2xl 
+      rounded-xl 
       p-6 
       border 
-      border-gray-200/60 
+      border-slate-200 
       shadow-sm 
-      hover:shadow-lg 
+      hover:shadow-md 
       transition-all 
-      duration-300 
+      duration-200 
       group
       ${className}
     `}>
       {/* Title */}
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-medium text-gray-600 tracking-wide">
+        <h3 className="professional-label">
           {title}
         </h3>
         {trend && (
@@ -104,19 +104,19 @@ export const MetricCard: React.FC<MetricCardProps> = ({
 
       {/* Main Value */}
       <div className="mb-2">
-        <div className="text-3xl font-bold text-gray-900 mb-1 tracking-tight">
+        <div className="professional-metric-value">
           {formatValue(value)}
         </div>
         {previousValue && (
-          <div className="text-sm text-gray-500">
+          <div className="professional-body-small text-slate-500">
             Previous: {formatValue(previousValue)}
           </div>
         )}
       </div>
 
       {/* Progress Bar */}
-      <div className="h-1 bg-gray-100 rounded-full overflow-hidden">
-        <div className="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transform scale-x-0 group-hover:scale-x-100 transition-transform duration-1000 origin-left" />
+      <div className="h-1 bg-slate-100 rounded-full overflow-hidden">
+        <div className="h-full bg-slate-600 rounded-full transform scale-x-0 group-hover:scale-x-100 transition-transform duration-1000 origin-left" />
       </div>
     </div>
   );
@@ -139,9 +139,9 @@ export const ProgressRing: React.FC<ProgressRingProps> = ({
 
   const colorMap = {
     blue: '#3b82f6',
-    green: '#10b981',
-    red: '#ef4444',
-    purple: '#8b5cf6'
+    green: '#059669',
+    red: '#dc2626',
+    slate: '#64748b'
   };
 
   const { width, height, radius } = sizeMap[size];

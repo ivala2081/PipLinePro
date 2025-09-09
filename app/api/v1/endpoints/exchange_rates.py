@@ -12,7 +12,7 @@ import logging
 from app.models.exchange_rate import ExchangeRate
 from app.models.transaction import Transaction
 from app.services.exchange_rate_service import exchange_rate_service
-from app import db
+from app import db, limiter
 import uuid
 from datetime import datetime, timezone, timedelta
 
@@ -56,6 +56,57 @@ def get_current_rate():
         return jsonify({
             'success': False,
             'message': f'Error fetching current rate: {str(e)}'
+        }), 500
+
+
+@exchange_rates_bp.route('/rates', methods=['GET'])
+@limiter.limit("60 per minute, 1000 per hour")  # More generous rate limits for exchange rates
+def get_exchange_rates():
+    """
+    Get current exchange rates for multiple currencies
+    
+    Returns:
+        JSON: Current rates for USD/TRY and EUR/TRY
+    """
+    try:
+        # Get USD/TRY rate
+        usd_rate = exchange_rate_service.get_current_rate()
+        
+        # Get EUR/TRY rate (we'll need to implement this)
+        eur_rate = exchange_rate_service.get_eur_rate()
+        
+        rates = {}
+        
+        if usd_rate:
+            rates['USD_TRY'] = {
+                'rate': float(usd_rate.rate),
+                'currency_pair': 'USD/TRY',
+                'last_updated': usd_rate.updated_at.isoformat() if usd_rate.updated_at else usd_rate.created_at.isoformat(),
+                'is_stale': usd_rate.is_stale(max_age_minutes=15),
+                'age_minutes': usd_rate.age_in_minutes()
+            }
+        
+        if eur_rate:
+            rates['EUR_TRY'] = {
+                'rate': float(eur_rate.rate),
+                'currency_pair': 'EUR/TRY',
+                'last_updated': eur_rate.updated_at.isoformat() if eur_rate.updated_at else eur_rate.created_at.isoformat(),
+                'is_stale': eur_rate.is_stale(max_age_minutes=15),
+                'age_minutes': eur_rate.age_in_minutes()
+            }
+        
+        return jsonify({
+            'success': True,
+            'rates': rates,
+            'timestamp': datetime.now(timezone.utc).isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting exchange rates: {e}")
+        return jsonify({
+            'success': False,
+            'message': 'Failed to get exchange rates',
+            'error': str(e)
         }), 500
 
 

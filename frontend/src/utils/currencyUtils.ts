@@ -4,7 +4,8 @@
 
 // Map internal currency codes to valid ISO 4217 codes
 const CURRENCY_MAP: { [key: string]: string } = {
-  'TL': 'TL',  // Turkish Lira
+  'TL': 'TRY',  // Turkish Lira
+  'TRY': 'TRY', // Turkish Lira (ISO 4217)
   'USD': 'USD', // US Dollar
   'EUR': 'EUR', // Euro
 };
@@ -23,12 +24,13 @@ export const formatCurrency = (
 ): string => {
   // Map internal currency codes to valid ISO 4217 codes for Intl.NumberFormat
   const CURRENCY_MAP: { [key: string]: string } = {
-    '₺': 'TL',  // Turkish Lira symbol → TL
+    '₺': 'TRY',  // Turkish Lira symbol → TRY
     '$': 'USD',  // US Dollar symbol → USD
     '€': 'EUR',  // Euro symbol → EUR
     '£': 'GBP',  // British Pound symbol → GBP
     // Legacy support for text codes
-    'TL': 'TL',
+    'TL': 'TRY',
+    'TRY': 'TRY',
     'USD': 'USD',
     'EUR': 'EUR',
     'GBP': 'GBP',
@@ -114,4 +116,37 @@ export const formatAmountWithSymbol = (
   currency: string = '₺'
 ): string => {
   return `${currency}${amount.toLocaleString()}`;
+};
+
+/**
+ * Format currency amount ensuring it's always displayed as positive
+ * This is used for the new positive amount + category-based logic
+ * @param amount - The amount to format (can be negative from database)
+ * @param currency - The currency code
+ * @param locale - The locale for formatting (default: 'en-US')
+ * @returns Formatted currency string (always positive)
+ */
+export const formatCurrencyPositive = (
+  amount: number,
+  currency: string = '₺',
+  locale: string = 'en-US'
+): string => {
+  // Always display as positive value
+  const positiveAmount = Math.abs(amount);
+  return formatCurrency(positiveAmount, currency, locale);
+};
+
+/**
+ * Format amount ensuring it's always displayed as positive (without currency symbol)
+ * @param amount - The amount to format (can be negative from database)
+ * @param locale - The locale for formatting (default: 'en-US')
+ * @returns Formatted number string (always positive)
+ */
+export const formatAmountPositive = (
+  amount: number,
+  locale: string = 'en-US'
+): string => {
+  // Always display as positive value
+  const positiveAmount = Math.abs(amount);
+  return formatAmount(positiveAmount, locale);
 };

@@ -18,7 +18,7 @@
               <label for="field_name" class="form-label">Field</label>
               <select name="field_name" id="field_name" class="form-select pill-input" required onchange="toggleCommissionRate()">
                 {% for field in fields %}
-                  {% if field != 'category' %}
+                  {% if field != 'category' and field != 'psp' %}
                     <option value="{{ field }}">{{ field.upper() }}</option>
                   {% endif %}
                 {% endfor %}
@@ -51,7 +51,7 @@
         </div>
         <div class="card-body">
           {% for field, opts in grouped_options.items() %}
-            {% if field != 'category' %}
+            {% if field != 'category' and field != 'psp' and field != 'company' %}
               <div class="mb-4">
                 <h5 class="fw-bold text-primary mb-2">{{ field.upper() }}</h5>
                 <div class="table-responsive">

@@ -24,8 +24,17 @@ import {
   MoreHorizontal,
   RefreshCw,
 } from 'lucide-react';
-import { PageHeader, Section, ContentArea, CardGrid } from '../components/ProfessionalLayout';
-import { Button } from '../components/ProfessionalButtons';
+import { 
+  UnifiedCard, 
+  UnifiedButton, 
+  UnifiedBadge, 
+  UnifiedSection, 
+  UnifiedGrid 
+} from '../design-system';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+import { Badge } from '../components/ui/badge';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
 
 interface Agent {
   id: number;
@@ -243,29 +252,43 @@ export default function Agents() {
   };
 
   return (
-    <div className='space-y-8'>
-      {/* Enhanced Header */}
-      <PageHeader
-        title="Agent Management"
-        subtitle="Team management"
-        actions={
-          <div className='flex items-center gap-3'>
-            <Button variant="outline" size="sm" className="flex items-center gap-2" onClick={handleExportAgents}>
-              <Download className='h-4 w-4' />
-              Export
-            </Button>
-            <Button 
-              variant="primary"
-              size="sm"
-              onClick={handleAddAgent}
-              className="flex items-center gap-2"
-            >
-              <Plus className='h-4 w-4' />
-              Add Agent
-            </Button>
+    <div className="min-h-screen bg-slate-50">
+      {/* Modern Header */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="px-6 py-6">
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+                <Users className="h-8 w-8 text-blue-600" />
+                Agent Management
+              </h1>
+              <p className="text-gray-600">Team management</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <UnifiedButton
+                variant="outline"
+                size="sm"
+                onClick={handleExportAgents}
+                icon={<Download className="h-4 w-4" />}
+                iconPosition="left"
+              >
+                Export
+              </UnifiedButton>
+              <UnifiedButton
+                variant="primary"
+                size="sm"
+                onClick={handleAddAgent}
+                icon={<Plus className="h-4 w-4" />}
+                iconPosition="left"
+              >
+                Add Agent
+              </UnifiedButton>
+            </div>
           </div>
-        }
-      />
+        </div>
+      </div>
+
+      <div className="p-6 space-y-6">
 
       {/* Status Indicators */}
       <div className="bg-blue-50/50 border border-blue-200/60 rounded-xl p-4">
@@ -366,10 +389,20 @@ export default function Agents() {
 
       {/* Tab Content */}
       {activeTab === 'overview' && (
-        <ContentArea>
+        <div>
           {/* Enhanced Stats Cards Section */}
-          <Section title="Performance Overview" subtitle="Key metrics and performance indicators for your agent team">
-            <CardGrid cols={4} gap="lg">
+          <UnifiedCard variant="elevated" className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BarChart3 className="h-5 w-5 text-blue-600" />
+                Performance Overview
+              </CardTitle>
+              <CardDescription>
+                Key metrics and performance indicators for your agent team
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <StandardMetricsCard
                 title="Total Agents"
                 value={totalAgents}
@@ -405,15 +438,26 @@ export default function Agents() {
                 color="purple"
                 variant="default"
               />
-            </CardGrid>
-          </Section>
-        </ContentArea>
+              </div>
+            </CardContent>
+          </UnifiedCard>
+        </div>
       )}
 
       {activeTab === 'agents' && (
-        <ContentArea>
+        <div>
           {/* Enhanced Filters and Search Section */}
-          <Section title="Agent Management" subtitle="Search, filter, and manage your agent team">
+          <UnifiedCard variant="elevated" className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5 text-blue-600" />
+                Agent Management
+              </CardTitle>
+              <CardDescription>
+                Search, filter, and manage your agent team
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
             {/* Enhanced Filters and Search */}
             <div className='bg-white rounded-xl shadow-sm border border-gray-100'>
               <div className='p-4 border-b border-gray-100'>
@@ -766,8 +810,9 @@ export default function Agents() {
               </div>
             )}
           </div>
-        </Section>
-        </ContentArea>
+        </CardContent>
+      </UnifiedCard>
+        </div>
       )}
 
       {activeTab === 'analytics' && (
@@ -987,9 +1032,10 @@ export default function Agents() {
               </button>
               </div>
             </div>
-            </div>
           </div>
+        </div>
         )}
+      </div>
     </div>
   );
 }

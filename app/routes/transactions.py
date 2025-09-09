@@ -383,8 +383,13 @@ def add_transaction():
     category_options = Option.query.filter_by(field_name='category', is_active=True).order_by(Option.value).all()
     categories = [option.value for option in category_options]
     
-    psp_options = Option.query.filter_by(field_name='psp', is_active=True).order_by(Option.value).all()
-    psps = [option.value for option in psp_options]
+    # Get PSP options from database transactions (fixed values)
+    from app.services.psp_options_service import PspOptionsService
+    from app.services.company_options_service import CompanyOptionsService
+    psps = PspOptionsService.get_psps_from_database()
+    
+    # Get Company options from database transactions (fixed values)
+    companies = CompanyOptionsService.get_companies_from_database()
     
     # Fallback to existing transaction data if no options are configured
     if not ibans:
@@ -516,8 +521,13 @@ def edit_transaction(id):
     category_options = Option.query.filter_by(field_name='category', is_active=True).order_by(Option.value).all()
     categories = [option.value for option in category_options]
     
-    psp_options = Option.query.filter_by(field_name='psp', is_active=True).order_by(Option.value).all()
-    psps = [option.value for option in psp_options]
+    # Get PSP options from database transactions (fixed values)
+    from app.services.psp_options_service import PspOptionsService
+    from app.services.company_options_service import CompanyOptionsService
+    psps = PspOptionsService.get_psps_from_database()
+    
+    # Get Company options from database transactions (fixed values)
+    companies = CompanyOptionsService.get_companies_from_database()
     
     # Fallback to existing transaction data if no options are configured
     if not ibans:
@@ -1078,6 +1088,14 @@ def import_transactions():
             
             db.session.commit()
             
+            # Invalidate cache after bulk import
+            try:
+                from app.services.query_service import QueryService
+                QueryService.invalidate_transaction_cache()
+                logger.info("Cache invalidated after bulk transaction import")
+            except Exception as cache_error:
+                logger.warning(f"Failed to invalidate cache after import: {cache_error}")
+            
             flash(f'Import completed! {success_count} transactions imported, {error_count} errors.', 'success')
             return redirect(url_for('transactions.clients'))
             
@@ -1177,6 +1195,17 @@ def daily_summary(date):
             flash('Invalid date format. Please use YYYY-MM-DD format.', 'error')
             return redirect(url_for('transactions.clients'))
         
+        # Check for force refresh parameter
+        force_refresh = request.args.get('refresh', 'false').lower() == 'true'
+        if force_refresh:
+            # Clear cache for this specific date
+            try:
+                from app.services.query_service import QueryService
+                QueryService.invalidate_transaction_cache()
+                logger.info(f"Cache cleared for daily summary refresh on {date}")
+            except Exception as cache_error:
+                logger.warning(f"Failed to clear cache for daily summary refresh: {cache_error}")
+        
         # Handle USD rate update
         if request.method == 'POST':
             usd_rate = request.form.get('usd_rate')
@@ -1199,6 +1228,15 @@ def daily_summary(date):
                             db.session.add(exchange_rate)
                         
                         db.session.commit()
+                        
+                        # Invalidate cache after exchange rate update
+                        try:
+                            from app.services.query_service import QueryService
+                            QueryService.invalidate_transaction_cache()
+                            logger.info("Cache invalidated after USD rate update")
+                        except Exception as cache_error:
+                            logger.warning(f"Failed to invalidate cache after USD rate update: {cache_error}")
+                        
                         flash('USD rate updated successfully!', 'success')
                         
                         # Redirect back to the same daily summary page to show updated data
@@ -1244,39 +1282,81 @@ def daily_summary(date):
         usd_rate = decimal_float_service.safe_decimal(exchange_rate.usd_to_tl) if exchange_rate and exchange_rate.usd_to_tl else None
         
         # Calculate summary statistics with USD conversion
-        total_amount_tl = Decimal('0')
-        total_amount_usd = Decimal('0')
+        # Separate deposits and withdrawals for proper calculation
+        total_deposits_tl = Decimal('0')
+        total_withdrawals_tl = Decimal('0')
+        total_deposits_usd = Decimal('0')
+        total_withdrawals_usd = Decimal('0')
         total_commission_tl = Decimal('0')
         total_commission_usd = Decimal('0')
         total_net_tl = Decimal('0')
         total_net_usd = Decimal('0')
         
         for transaction in transactions:
+            amount = decimal_float_service.safe_decimal(transaction.amount)
+            commission = decimal_float_service.safe_decimal(transaction.commission)
+            net_amount = decimal_float_service.safe_decimal(transaction.net_amount)
+            
+            # Determine if this is a deposit or withdrawal based on category only
+            # All amounts are positive, category determines the sign
+            is_withdrawal = (
+                transaction.category and transaction.category.upper() in ['WD', 'WITHDRAW', 'WITHDRAWAL']
+            )
+            
             if transaction.currency and transaction.currency.upper() == 'USD':
-                total_amount_usd += decimal_float_service.safe_decimal(transaction.amount)
-                total_commission_usd += decimal_float_service.safe_decimal(transaction.commission)
-                total_net_usd += decimal_float_service.safe_decimal(transaction.net_amount)
+                if is_withdrawal:
+                    # WD: subtract from withdrawals (amount is positive, but we treat it as negative)
+                    total_withdrawals_usd += amount
+                else:
+                    # DEP: add to deposits (amount is positive)
+                    total_deposits_usd += amount
+                total_commission_usd += commission
+                total_net_usd += net_amount
+                
                 # Convert USD to TL for total calculations
                 if usd_rate and usd_rate != Decimal('0'):
-                    total_amount_tl += decimal_float_service.safe_multiply(transaction.amount, usd_rate, 'decimal')
-                    total_commission_tl += decimal_float_service.safe_multiply(transaction.commission, usd_rate, 'decimal')
-                    total_net_tl += decimal_float_service.safe_multiply(transaction.net_amount, usd_rate, 'decimal')
+                    amount_tl = decimal_float_service.safe_multiply(amount, usd_rate, 'decimal')
+                    commission_tl = decimal_float_service.safe_multiply(commission, usd_rate, 'decimal')
+                    net_amount_tl = decimal_float_service.safe_multiply(net_amount, usd_rate, 'decimal')
+                    
+                    if is_withdrawal:
+                        total_withdrawals_tl += amount_tl
+                    else:
+                        total_deposits_tl += amount_tl
+                    total_commission_tl += commission_tl
+                    total_net_tl += net_amount_tl
                 else:
-                    total_amount_tl += decimal_float_service.safe_decimal(transaction.amount)  # Fallback to USD amount
-                    total_commission_tl += decimal_float_service.safe_decimal(transaction.commission)
-                    total_net_tl += decimal_float_service.safe_decimal(transaction.net_amount)
+                    # Fallback to USD amount
+                    if is_withdrawal:
+                        total_withdrawals_tl += amount
+                    else:
+                        total_deposits_tl += amount
+                    total_commission_tl += commission
+                    total_net_tl += net_amount
             else:
                 # TL transactions
-                total_amount_tl += decimal_float_service.safe_decimal(transaction.amount)
-                total_commission_tl += decimal_float_service.safe_decimal(transaction.commission)
-                total_net_tl += decimal_float_service.safe_decimal(transaction.net_amount)
+                if is_withdrawal:
+                    total_withdrawals_tl += amount
+                else:
+                    total_deposits_tl += amount
+                total_commission_tl += commission
+                total_net_tl += net_amount
+        
+        # Calculate totals using DEP + (-WD) formula
+        # Withdrawals are stored as positive amounts, but we treat them as negative in calculations
+        total_amount_tl = total_deposits_tl - total_withdrawals_tl  # DEP + (-WD)
+        total_amount_usd = total_deposits_usd - total_withdrawals_usd  # DEP + (-WD)
         
         transaction_count = len(transactions)
         
         # Group by PSP
         psp_data = defaultdict(lambda: {
-            'amount_tl': Decimal('0'),
-            'amount_usd': Decimal('0'),
+            'deposits_tl': Decimal('0'),
+            'withdrawals_tl': Decimal('0'),
+            'deposits_usd': Decimal('0'),
+            'withdrawals_usd': Decimal('0'),
+            'amount_tl': Decimal('0'),  # Total (deposits + withdrawals)
+            'amount_usd': Decimal('0'),  # Total (deposits + withdrawals)
             'commission_tl': Decimal('0'),
             'commission_usd': Decimal('0'),
             'net_tl': Decimal('0'),
@@ -1287,23 +1367,56 @@ def daily_summary(date):
         
         for transaction in transactions:
             psp = transaction.psp or 'Unknown'
+            amount = decimal_float_service.safe_decimal(transaction.amount)
+            commission = decimal_float_service.safe_decimal(transaction.commission)
+            net_amount = decimal_float_service.safe_decimal(transaction.net_amount)
+            
+            # Determine if this is a deposit or withdrawal based on category only
+            # All amounts are positive, category determines the sign
+            is_withdrawal = (
+                transaction.category and transaction.category.upper() in ['WD', 'WITHDRAW', 'WITHDRAWAL']
+            )
+            
             if transaction.currency and transaction.currency.upper() == 'USD':
-                psp_data[psp]['amount_usd'] += decimal_float_service.safe_decimal(transaction.amount)
-                psp_data[psp]['commission_usd'] += decimal_float_service.safe_decimal(transaction.commission)
-                psp_data[psp]['net_usd'] += decimal_float_service.safe_decimal(transaction.net_amount)
+                if is_withdrawal:
+                    psp_data[psp]['withdrawals_usd'] += amount
+                else:
+                    psp_data[psp]['deposits_usd'] += amount
+                psp_data[psp]['amount_usd'] += amount
+                psp_data[psp]['commission_usd'] += commission
+                psp_data[psp]['net_usd'] += net_amount
+                
                 # Convert to TL for total calculations
                 if usd_rate and usd_rate != Decimal('0'):
-                    psp_data[psp]['amount_tl'] += decimal_float_service.safe_multiply(transaction.amount, usd_rate, 'decimal')
-                    psp_data[psp]['commission_tl'] += decimal_float_service.safe_multiply(transaction.commission, usd_rate, 'decimal')
-                    psp_data[psp]['net_tl'] += decimal_float_service.safe_multiply(transaction.net_amount, usd_rate, 'decimal')
+                    amount_tl = decimal_float_service.safe_multiply(amount, usd_rate, 'decimal')
+                    commission_tl = decimal_float_service.safe_multiply(commission, usd_rate, 'decimal')
+                    net_amount_tl = decimal_float_service.safe_multiply(net_amount, usd_rate, 'decimal')
+                    
+                    if is_withdrawal:
+                        psp_data[psp]['withdrawals_tl'] += amount_tl
+                    else:
+                        psp_data[psp]['deposits_tl'] += amount_tl
+                    psp_data[psp]['amount_tl'] += amount_tl
+                    psp_data[psp]['commission_tl'] += commission_tl
+                    psp_data[psp]['net_tl'] += net_amount_tl
                 else:
-                    psp_data[psp]['amount_tl'] += decimal_float_service.safe_decimal(transaction.amount)
-                    psp_data[psp]['commission_tl'] += decimal_float_service.safe_decimal(transaction.commission)
-                    psp_data[psp]['net_tl'] += decimal_float_service.safe_decimal(transaction.net_amount)
+                    # Fallback to USD amount
+                    if is_withdrawal:
+                        psp_data[psp]['withdrawals_tl'] += amount
+                    else:
+                        psp_data[psp]['deposits_tl'] += amount
+                    psp_data[psp]['amount_tl'] += amount
+                    psp_data[psp]['commission_tl'] += commission
+                    psp_data[psp]['net_tl'] += net_amount
             else:
-                psp_data[psp]['amount_tl'] += decimal_float_service.safe_decimal(transaction.amount)
-                psp_data[psp]['commission_tl'] += decimal_float_service.safe_decimal(transaction.commission)
-                psp_data[psp]['net_tl'] += decimal_float_service.safe_decimal(transaction.net_amount)
+                # TL transactions
+                if is_withdrawal:
+                    psp_data[psp]['withdrawals_tl'] += amount
+                else:
+                    psp_data[psp]['deposits_tl'] += amount
+                psp_data[psp]['amount_tl'] += amount
+                psp_data[psp]['commission_tl'] += commission
+                psp_data[psp]['net_tl'] += net_amount
             psp_data[psp]['count'] += 1
             psp_data[psp]['transactions'].append(transaction)
         
@@ -1379,8 +1492,12 @@ def daily_summary(date):
         for psp, data in psp_data.items():
             psp_summary.append({
                 'name': psp,
-                'amount_tl': float(data['amount_tl']),
-                'amount_usd': float(data['amount_usd']),
+                'deposits_tl': float(data['deposits_tl']),
+                'withdrawals_tl': float(data['withdrawals_tl']),
+                'deposits_usd': float(data['deposits_usd']),
+                'withdrawals_usd': float(data['withdrawals_usd']),
+                'amount_tl': float(data['amount_tl']),  # Total (deposits + withdrawals)
+                'amount_usd': float(data['amount_usd']),  # Total (deposits + withdrawals)
                 'commission_tl': float(data['commission_tl']),
                 'commission_usd': float(data['commission_usd']),
                 'net_tl': float(data['net_tl']),
@@ -1425,8 +1542,12 @@ def daily_summary(date):
             'date': date_obj,
             'date_str': date_obj.strftime('%A, %B %d, %Y'),
             'usd_rate': float(usd_rate) if usd_rate else None,
-            'total_amount_tl': float(total_amount_tl),
-            'total_amount_usd': float(total_amount_usd),
+            'total_deposits_tl': float(total_deposits_tl),
+            'total_withdrawals_tl': float(total_withdrawals_tl),
+            'total_deposits_usd': float(total_deposits_usd),
+            'total_withdrawals_usd': float(total_withdrawals_usd),
+            'total_amount_tl': float(total_amount_tl),  # Net total (deposits + withdrawals)
+            'total_amount_usd': float(total_amount_usd),  # Net total (deposits + withdrawals)
             'total_commission_tl': float(total_commission_tl),
             'total_commission_usd': float(total_commission_usd),
             'total_net_tl': float(total_net_tl),
@@ -1450,6 +1571,10 @@ def daily_summary(date):
                              date_str=date,
                              error_message=str(e),
                              transactions=[],
+                             total_deposits_tl=0.0,
+                             total_withdrawals_tl=0.0,
+                             total_deposits_usd=0.0,
+                             total_withdrawals_usd=0.0,
                              total_amount_tl=0.0,
                              total_amount_usd=0.0,
                              total_commission_tl=0.0,
@@ -1500,6 +1625,10 @@ def summary_view(date):
                              date_str=date,
                              error_message=str(e),
                              transactions=[],
+                             total_deposits_tl=0.0,
+                             total_withdrawals_tl=0.0,
+                             total_deposits_usd=0.0,
+                             total_withdrawals_usd=0.0,
                              total_amount_tl=0.0,
                              total_amount_usd=0.0,
                              total_commission_tl=0.0,
@@ -1531,31 +1660,78 @@ def api_summary(date):
         exchange_rate = ExchangeRate.query.filter_by(date=date_obj).first()
         usd_rate = decimal_float_service.safe_decimal(exchange_rate.usd_to_tl) if exchange_rate and exchange_rate.usd_to_tl else None
         
-        # Calculate summary statistics
-        total_amount_tl = Decimal('0')
-        total_amount_usd = Decimal('0')
+        # Calculate summary statistics with proper deposit/withdrawal separation
+        total_deposits_tl = Decimal('0')
+        total_withdrawals_tl = Decimal('0')
+        total_deposits_usd = Decimal('0')
+        total_withdrawals_usd = Decimal('0')
         total_commission_tl = Decimal('0')
         total_commission_usd = Decimal('0')
         total_net_tl = Decimal('0')
         total_net_usd = Decimal('0')
         
         for transaction in transactions:
+            amount = decimal_float_service.safe_decimal(transaction.amount)
+            commission = decimal_float_service.safe_decimal(transaction.commission)
+            net_amount = decimal_float_service.safe_decimal(transaction.net_amount)
+            
+            # Determine if this is a deposit or withdrawal based on category only
+            # All amounts are positive, category determines the sign
+            is_withdrawal = (
+                transaction.category and transaction.category.upper() in ['WD', 'WITHDRAW', 'WITHDRAWAL']
+            )
+            
             if transaction.currency and transaction.currency.upper() == 'USD':
-                total_amount_usd += decimal_float_service.safe_decimal(transaction.amount)
-                total_commission_usd += decimal_float_service.safe_decimal(transaction.commission)
-                total_net_usd += decimal_float_service.safe_decimal(transaction.net_amount)
-                if usd_rate:
-                    total_amount_tl += decimal_float_service.safe_multiply(transaction.amount, usd_rate, 'decimal')
-                    total_commission_tl += decimal_float_service.safe_multiply(transaction.commission, usd_rate, 'decimal')
-                    total_net_tl += decimal_float_service.safe_multiply(transaction.net_amount, usd_rate, 'decimal')
+                if is_withdrawal:
+                    total_withdrawals_usd += amount
                 else:
-                    total_amount_tl += decimal_float_service.safe_decimal(transaction.amount)
-                    total_commission_tl += decimal_float_service.safe_decimal(transaction.commission)
-                    total_net_tl += decimal_float_service.safe_decimal(transaction.net_amount)
+                    total_deposits_usd += amount
+                total_commission_usd += commission
+                total_net_usd += net_amount
+                
+                # Convert USD to TL for total calculations
+                transaction_rate = transaction.exchange_rate if transaction.exchange_rate else usd_rate
+                
+                if transaction_rate and transaction_rate != Decimal('0'):
+                    amount_tl = decimal_float_service.safe_multiply(amount, transaction_rate, 'decimal')
+                    commission_tl = decimal_float_service.safe_multiply(commission, transaction_rate, 'decimal')
+                    net_amount_tl = decimal_float_service.safe_multiply(net_amount, transaction_rate, 'decimal')
+                    
+                    if is_withdrawal:
+                        total_withdrawals_tl += amount_tl
+                    else:
+                        total_deposits_tl += amount_tl
+                    total_commission_tl += commission_tl
+                    total_net_tl += net_amount_tl
+                else:
+                    # Fallback to USD amount
+                    if is_withdrawal:
+                        total_withdrawals_tl += amount
+                    else:
+                        total_deposits_tl += amount
+                    total_commission_tl += commission
+                    total_net_tl += net_amount
             else:
-                total_amount_tl += decimal_float_service.safe_decimal(transaction.amount)
-                total_commission_tl += decimal_float_service.safe_decimal(transaction.commission)
-                total_net_tl += decimal_float_service.safe_decimal(transaction.net_amount)
+                # TL transactions
+                if is_withdrawal:
+                    total_withdrawals_tl += amount
+                else:
+                    total_deposits_tl += amount
+                total_commission_tl += commission
+                total_net_tl += net_amount
+        
+        # Calculate totals using DEP + (-WD) formula
+        # Withdrawals are stored as positive amounts, but we treat them as negative in calculations
+        total_amount_tl = total_deposits_tl - total_withdrawals_tl  # DEP + (-WD)
+        total_amount_usd = total_deposits_usd - total_withdrawals_usd  # DEP + (-WD)
+        
+        # Debug logging (disabled for cleaner output)
+        # print(f"🔍 Daily Summary Debug for {date}:")
+        # print(f"  Deposits TL: {total_deposits_tl}")
+        # print(f"  Withdrawals TL: {total_withdrawals_tl} (raw)")
+        # print(f"  Withdrawals TL: {abs(total_withdrawals_tl)} (absolute)")
+        # print(f"  Net TL: {total_net_tl} (Deposits - |Withdrawals|)")
+        # print(f"  Expected: {total_deposits_tl} - {abs(total_withdrawals_tl)} = {total_deposits_tl - abs(total_withdrawals_tl)}")
         
         # Group by PSP
         psp_data = defaultdict(lambda: {
@@ -1656,6 +1832,10 @@ def api_summary(date):
             'total_commission_usd': float(total_commission_usd),
             'total_net_tl': float(total_net_tl),
             'total_net_usd': float(total_net_usd),
+            'total_deposits_tl': float(total_deposits_tl),
+            'total_deposits_usd': float(total_deposits_usd),
+            'total_withdrawals_tl': float(total_withdrawals_tl),
+            'total_withdrawals_usd': float(total_withdrawals_usd),
             'transaction_count': len(transactions),
             'unique_clients': len(set(t.client_name for t in transactions if t.client_name)),
             'psp_summary': [

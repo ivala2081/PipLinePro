@@ -37,21 +37,23 @@ class LoginForm(FlaskForm):
     ])
     password = PasswordField('Password', validators=[
         DataRequired(message='Password is required'),
-        Length(min=1, message='Password is required')
+        Length(min=12, message='Password must be at least 12 characters long')
     ])
     remember_me = StringField('Remember Me')  # Will be handled as checkbox
     submit = SubmitField('Login')
 
 def validate_password_strength(password):
-    """Validate password strength"""
-    if len(password) < 8:
-        return False, "Password must be at least 8 characters long"
+    """Validate password strength according to security requirements"""
+    if len(password) < 12:
+        return False, "Password must be at least 12 characters long"
     if not any(c.isupper() for c in password):
         return False, "Password must contain at least one uppercase letter"
     if not any(c.islower() for c in password):
         return False, "Password must contain at least one lowercase letter"
     if not any(c.isdigit() for c in password):
         return False, "Password must contain at least one number"
+    if not any(c in "!@#$%^&*()_+-=[]{}|;:,.<>?" for c in password):
+        return False, "Password must contain at least one special character"
     return True, "Password is strong"
 
 def check_account_lockout(user):

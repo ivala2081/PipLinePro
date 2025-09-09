@@ -8,6 +8,7 @@ interface Transaction {
   date?: string;
   amount: number;
   currency?: string;
+  category?: string;
   exchange_rate?: number;
   amount_try?: number;
   commission_try?: number;
@@ -18,6 +19,7 @@ interface DailyGroup {
   date: string;
   transactions: Transaction[];
   totalTRY: number;
+  netBalanceTRY: number; // Net balance from daily summary API
   hasUSDTransactions: boolean;
   hasEURTransactions: boolean;
   avgExchangeRate?: number;
@@ -45,7 +47,7 @@ const DailyTransactionSummary: React.FC<DailyTransactionSummaryProps> = ({
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
 
-  // Group transactions by date
+  // Group transactions by date and fetch daily summary data
   useEffect(() => {
     const groupedByDate = transactions
       .filter(transaction => transaction.date) // Filter out transactions without dates
@@ -58,61 +60,98 @@ const DailyTransactionSummary: React.FC<DailyTransactionSummaryProps> = ({
         return groups;
       }, {});
 
-    const dailyData: DailyGroup[] = Object.entries(groupedByDate)
-      .map(([date, txns]) => {
-        const usdTransactions = txns.filter(t => t.currency === 'USD');
-        const eurTransactions = txns.filter(t => t.currency === 'EUR');
-        const tryTransactions = txns.filter(t => t.currency === 'TRY' || t.currency === 'TL');
-        
-        // Get all non-TRY currencies
-        const nonUSDCurrencies = [...new Set(
-          txns
-            .filter(t => t.currency && !['TRY', 'TL', 'USD'].includes(t.currency))
-            .map(t => t.currency!)
-        )];
-        
-        // Calculate total TRY: ALL transactions converted to TRY
-        const nativeTRY = tryTransactions.reduce((sum, t) => sum + t.amount, 0);
-        
-        const convertedTRY = txns
-          .filter(t => t.currency && !['TRY', 'TL'].includes(t.currency))
-          .reduce((sum, t) => {
-            // Use amount_try if available, otherwise fallback to amount * exchange_rate
-            if (t.amount_try && t.amount_try > 0) {
-              return sum + t.amount_try;
-            } else if (t.exchange_rate && t.exchange_rate > 0) {
-              return sum + (t.amount * t.exchange_rate);
-            }
-            return sum; // Don't include foreign amounts without conversion
-          }, 0);
-        
-        const totalTRY = nativeTRY + convertedTRY;
-        
-        // Calculate average exchange rates for different currencies
-        const usdWithRate = usdTransactions.filter(t => t.exchange_rate && t.exchange_rate > 0);
-        const avgExchangeRate = usdWithRate.length > 0 
-          ? usdWithRate.reduce((sum, t) => sum + (t.exchange_rate || 0), 0) / usdWithRate.length
-          : undefined;
+    const fetchDailySummaryData = async () => {
+      const dailyData: DailyGroup[] = await Promise.all(
+        Object.entries(groupedByDate).map(async ([date, txns]) => {
+          const usdTransactions = txns.filter(t => t.currency === 'USD');
+          const eurTransactions = txns.filter(t => t.currency === 'EUR');
+          const tryTransactions = txns.filter(t => t.currency === 'TRY' || t.currency === 'TL');
           
-        const eurWithRate = eurTransactions.filter(t => t.exchange_rate && t.exchange_rate > 0);
-        const avgEURRate = eurWithRate.length > 0 
-          ? eurWithRate.reduce((sum, t) => sum + (t.exchange_rate || 0), 0) / eurWithRate.length
-          : undefined;
+          // Get all non-TRY currencies
+          const nonUSDCurrencies = [...new Set(
+            txns
+              .filter(t => t.currency && !['TRY', 'TL', 'USD'].includes(t.currency))
+              .map(t => t.currency!)
+          )];
+          
+          // Calculate total TRY using DEP + (-WD) logic
+          // All amounts are positive, category determines the sign
+          const nativeTRY = tryTransactions.reduce((sum, t) => {
+            const isWithdrawal = t.category && t.category.toUpperCase() === 'WD';
+            return sum + (isWithdrawal ? -t.amount : t.amount);
+          }, 0);
+          
+          const convertedTRY = txns
+            .filter(t => t.currency && !['TRY', 'TL'].includes(t.currency))
+            .reduce((sum, t) => {
+              const isWithdrawal = t.category && t.category.toUpperCase() === 'WD';
+              let amountTRY = 0;
+              
+              // Use amount_try if available, otherwise fallback to amount * exchange_rate
+              if (t.amount_try && t.amount_try > 0) {
+                amountTRY = t.amount_try;
+              } else if (t.exchange_rate && t.exchange_rate > 0) {
+                amountTRY = t.amount * t.exchange_rate;
+              }
+              
+              // Apply DEP + (-WD) logic
+              return sum + (isWithdrawal ? -amountTRY : amountTRY);
+            }, 0);
+          
+          const totalTRY = nativeTRY + convertedTRY;
+          
+          // Calculate average exchange rates for different currencies
+          const usdWithRate = usdTransactions.filter(t => t.exchange_rate && t.exchange_rate > 0);
+          const avgExchangeRate = usdWithRate.length > 0 
+            ? usdWithRate.reduce((sum, t) => sum + (t.exchange_rate || 0), 0) / usdWithRate.length
+            : undefined;
+            
+          const eurWithRate = eurTransactions.filter(t => t.exchange_rate && t.exchange_rate > 0);
+          const avgEURRate = eurWithRate.length > 0 
+            ? eurWithRate.reduce((sum, t) => sum + (t.exchange_rate || 0), 0) / eurWithRate.length
+            : undefined;
 
-        return {
-          date,
-          transactions: txns,
-          totalTRY,
-          hasUSDTransactions: usdTransactions.length > 0,
-          hasEURTransactions: eurTransactions.length > 0,
-          avgExchangeRate,
-          avgEURRate,
-          nonUSDCurrencies,
-        };
-      })
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()); // Sort by date descending
+          // Fetch daily summary data for net balance
+          let netBalanceTRY = totalTRY; // Fallback to total if API fails
+          try {
+            const response = await api.get(`/api/summary/${date}`);
+            if (response.ok) {
+              const data = await api.parseResponse(response);
+              if (data && data.total_net_tl !== undefined) {
+                netBalanceTRY = data.total_net_tl || totalTRY;
+                console.log(`Daily summary for ${date}:`, {
+                  total_net_tl: data.total_net_tl,
+                  total_deposits_tl: data.total_deposits_tl,
+                  total_withdrawals_tl: data.total_withdrawals_tl,
+                  frontend_calc: totalTRY
+                });
+              }
+            }
+          } catch (error) {
+            console.warn(`Failed to fetch daily summary for ${date}:`, error);
+            // Keep fallback value
+          }
 
-    setDailyGroups(dailyData);
+          return {
+            date,
+            transactions: txns,
+            totalTRY,
+            netBalanceTRY,
+            hasUSDTransactions: usdTransactions.length > 0,
+            hasEURTransactions: eurTransactions.length > 0,
+            avgExchangeRate,
+            avgEURRate,
+            nonUSDCurrencies,
+          };
+        })
+      );
+
+      // Sort by date descending
+      dailyData.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      setDailyGroups(dailyData);
+    };
+
+    fetchDailySummaryData();
   }, [transactions]);
 
   const handleEditRate = (date: string, currency: 'USD' | 'EUR' | 'BULK', currentRate?: number, eurRate?: number) => {
@@ -356,9 +395,9 @@ const DailyTransactionSummary: React.FC<DailyTransactionSummaryProps> = ({
                 </div>
                 <div className="flex items-center space-x-4">
                   <div className="text-right">
-                    <p className="text-sm text-gray-600">Total Volume (TRY)</p>
+                    <p className="text-sm text-gray-600">Net Balance (TRY)</p>
                     <p className="text-lg font-semibold text-gray-900">
-                      ₺{group.totalTRY.toFixed(2)}
+                      ₺{group.netBalanceTRY.toFixed(2)}
                     </p>
                   </div>
                 </div>
@@ -444,6 +483,10 @@ const DailyTransactionSummary: React.FC<DailyTransactionSummaryProps> = ({
                         <div className="flex items-center justify-between">
                           <span className="text-sm font-semibold text-blue-800">Total (All Converted to TRY)</span>
                           <span className="text-lg font-bold text-blue-900">₺{group.totalTRY.toFixed(2)}</span>
+                        </div>
+                        <div className="flex items-center justify-between mt-1">
+                          <span className="text-sm font-semibold text-green-800">Net Balance (Daily Summary)</span>
+                          <span className="text-lg font-bold text-green-900">₺{group.netBalanceTRY.toFixed(2)}</span>
                         </div>
                       </div>
                     </div>

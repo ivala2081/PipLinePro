@@ -47,7 +47,7 @@ migrate = Migrate()
 socketio = SocketIO()
 limiter = Limiter(
     key_func=get_remote_address,
-    default_limits=["2000 per day", "200 per hour", "50 per minute"],
+    default_limits=["5000 per day", "1000 per hour", "200 per minute"],
     storage_uri="memory://",  # Use in-memory storage by default
     storage_options={"cluster": False}
 )

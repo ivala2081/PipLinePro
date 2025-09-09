@@ -306,9 +306,7 @@
                   </p>
                   <ul class="list-unstyled small text-muted mb-3">
                     <li><i class="bi bi-check-circle text-success me-2"></i>Payment Methods</li>
-                    <li><i class="bi bi-check-circle text-success me-2"></i>Companies</li>
                     <li><i class="bi bi-check-circle text-success me-2"></i>Currencies</li>
-                    <li><i class="bi bi-check-circle text-success me-2"></i>PSP/KASA (with commission rates)</li>
                     <li><i class="bi bi-check-circle text-success me-2"></i>IBAN Numbers</li>
                   </ul>
                 </div>
@@ -316,6 +314,105 @@
                   <i class="bi bi-gear me-2"></i>
                   Manage Dropdown Options
                 </a>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Fixed PSP Options Section -->
+          <div class="col-lg-6">
+            <div class="settings-card">
+              <div class="settings-card-header">
+                <div class="d-flex align-items-center">
+                  <div class="me-2"><i class="bi bi-credit-card fs-3 text-success"></i></div>
+                  <div>
+                    <h5 class="mb-0 fw-semibold">PSP Options (Fixed)</h5>
+                    <small class="text-muted">Payment Service Providers from database</small>
+                  </div>
+                </div>
+              </div>
+              <div class="settings-card-content">
+                <div class="mb-3">
+                  <p class="text-muted small mb-3">
+                    <i class="bi bi-info-circle me-1"></i>
+                    PSP options are automatically generated from your transaction data with default commission rates:
+                  </p>
+                  {% if fixed_psp_options %}
+                    <div class="psp-options-list">
+                      {% set seen_psps = [] %}
+                      {% for psp in fixed_psp_options %}
+                        {% if psp.value not in seen_psps %}
+                          {% set _ = seen_psps.append(psp.value) %}
+                          <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                            <div>
+                              <span class="fw-semibold">{{ psp.value }}</span>
+                              <small class="text-muted d-block">Commission: {{ "%.1f"|format(psp.commission_rate * 100) }}%</small>
+                            </div>
+                            <span class="badge bg-success">Fixed</span>
+                          </div>
+                        {% endif %}
+                      {% endfor %}
+                    </div>
+                  {% else %}
+                    <div class="text-center py-3">
+                      <i class="bi bi-inbox text-muted fs-1"></i>
+                      <p class="text-muted mb-0">No PSP data found in transactions</p>
+                    </div>
+                  {% endif %}
+                </div>
+                <div class="alert alert-info small mb-0">
+                  <i class="bi bi-lightbulb me-1"></i>
+                  <strong>Note:</strong> PSP options are automatically managed based on your transaction history. Commission rates can be adjusted in the dropdown management section.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Fixed Company Options Section -->
+      <div class="row">
+        <div class="col-lg-6">
+          <div class="settings-card">
+            <div class="settings-card-header">
+              <div class="d-flex align-items-center">
+                <div class="me-2"><i class="bi bi-building fs-3 text-primary"></i></div>
+                <div>
+                  <h5 class="mb-0 fw-semibold">Company Options (Fixed)</h5>
+                  <small class="text-muted">Companies from database</small>
+                </div>
+              </div>
+            </div>
+            <div class="settings-card-content">
+              <div class="mb-3">
+                <p class="text-muted small mb-3">
+                  <i class="bi bi-info-circle me-1"></i>
+                  Company options are automatically generated from your transaction data:
+                </p>
+                {% if fixed_company_options %}
+                  <div class="company-options-list">
+                    {% set seen_companies = [] %}
+                    {% for company in fixed_company_options %}
+                      {% if company.value not in seen_companies %}
+                        {% set _ = seen_companies.append(company.value) %}
+                        <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                          <div>
+                            <span class="fw-semibold">{{ company.value }}</span>
+                          </div>
+                          <span class="badge bg-primary">Fixed</span>
+                        </div>
+                      {% endif %}
+                    {% endfor %}
+                  </div>
+                {% else %}
+                  <div class="text-center py-3">
+                    <i class="bi bi-inbox text-muted fs-1"></i>
+                    <p class="text-muted mb-0">No company data found in transactions</p>
+                  </div>
+                {% endif %}
+              </div>
+              <div class="alert alert-info small mb-0">
+                <i class="bi bi-lightbulb me-1"></i>
+                <strong>Note:</strong> Company options are automatically managed based on your transaction history.
               </div>
             </div>
           </div>

@@ -77,14 +77,13 @@ class Transaction(db.Model):
     
     @validates('amount')
     def validate_amount(self, key, value):
-        """Validate amount - allow negative for WD transactions"""
+        """Validate amount - only allow positive amounts"""
         try:
             amount = Decimal(str(value))
-            # Allow negative amounts (they will be validated in business logic)
+            if amount <= 0:
+                raise ValueError('Amount must be positive')
             if amount > 999999999.99:
                 raise ValueError('Amount too large')
-            if amount < -999999999.99:
-                raise ValueError('Amount too negative')
             return amount
         except (InvalidOperation, ValueError) as e:
             raise ValueError(f'Invalid amount: {e}')

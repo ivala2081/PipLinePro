@@ -648,7 +648,7 @@ export function DemoNavigationSystem() {
         <div className="bg-gray-50 p-6 rounded-lg">
           <h4 className="text-lg font-semibold text-gray-900 mb-4">Navigation Bar</h4>
           <NavigationBar
-            logo={<div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">P</div>}
+            logo={<img src="/plogo.png" alt="PipeLine Pro Logo" className="w-10 h-10 object-contain" />}
             title="PipLine Pro"
             leftItems={
               <div className="flex items-center space-x-2">

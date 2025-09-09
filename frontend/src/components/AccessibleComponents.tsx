@@ -193,6 +193,7 @@ export const AccessibleToast: React.FC<AccessibleToastProps> = ({
 
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [duration, onClose]);
 
   if (!isVisible) return null;

@@ -19,6 +19,9 @@ try:
 except ImportError:
     SYNC_AVAILABLE = False
 
+# Import PSP options service
+from app.services.psp_options_service import PspOptionsService
+
 logger = logging.getLogger(__name__)
 
 def safe_float(value, default=0.0):
@@ -105,6 +108,14 @@ class TransactionService:
                 except Exception as sync_error:
                     logger.warning(f'PSP Track sync failed after transaction creation: {sync_error}')
             
+            # Invalidate relevant caches after transaction creation
+            try:
+                from app.services.query_service import QueryService
+                QueryService.invalidate_transaction_cache()
+                logger.info("Cache invalidated after transaction creation")
+            except Exception as cache_error:
+                logger.warning(f"Failed to invalidate cache after transaction creation: {cache_error}")
+            
             return transaction
             
         except Exception as e:
@@ -178,6 +189,14 @@ class TransactionService:
                 except Exception as sync_error:
                     logger.warning(f'PSP Track sync failed after transaction update: {sync_error}')
             
+            # Invalidate relevant caches after transaction update
+            try:
+                from app.services.query_service import QueryService
+                QueryService.invalidate_transaction_cache()
+                logger.info("Cache invalidated after transaction update")
+            except Exception as cache_error:
+                logger.warning(f"Failed to invalidate cache after transaction update: {cache_error}")
+            
             return transaction
             
         except Exception as e:
@@ -210,6 +229,14 @@ class TransactionService:
                 except Exception as sync_error:
                     logger.warning(f'PSP Track sync failed after transaction deletion: {sync_error}')
             
+            # Invalidate relevant caches after transaction deletion
+            try:
+                from app.services.query_service import QueryService
+                QueryService.invalidate_transaction_cache()
+                logger.info("Cache invalidated after transaction deletion")
+            except Exception as cache_error:
+                logger.warning(f"Failed to invalidate cache after transaction deletion: {cache_error}")
+            
             return True
             
         except Exception as e:
@@ -225,24 +252,17 @@ class TransactionService:
         if category and category.upper() == 'WD':
             return Decimal('0')
         
-        # Get commission rate from PSP options for DEP transactions
+        # Get commission rate from PSP service for DEP transactions
         try:
-            from app.models.config import Option
             if psp:
-                option = Option.query.filter_by(
-                    field_name='psp',
-                    value=psp,
-                    is_active=True
-                ).first()
-                
-                if option and option.commission_rate:
-                    commission = amount * option.commission_rate
-                    return round(commission, 2)
+                commission_rate = PspOptionsService.get_psp_commission_rate(psp)
+                commission = amount * commission_rate
+                return round(commission, 2)
         except Exception as e:
             logger.warning(f"Error getting PSP commission rate: {e}")
         
-        # Default commission rate of 2.9% for DEP transactions if no PSP rate found
-        default_rate = Decimal('0.029')
+        # Default commission rate of 2.5% for DEP transactions if no PSP rate found
+        default_rate = Decimal('0.025')
         commission = amount * default_rate
         return round(commission, 2)
 

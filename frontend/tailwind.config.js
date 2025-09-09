@@ -7,22 +7,42 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Professional Corporate Colors - More Serious and Business-like
+        // shadcn/ui Design System Colors
+        border: "hsl(var(--border))",
+        input: "hsl(var(--input))",
+        ring: "hsl(var(--ring))",
+        background: "hsl(var(--background))",
+        foreground: "hsl(var(--foreground))",
         primary: {
-          50: '#f8fafc',
-          100: '#f1f5f9',
-          200: '#e2e8f0',
-          300: '#cbd5e1',
-          400: '#94a3b8',
-          500: '#64748b',
-          600: '#475569',
-          700: '#334155',
-          800: '#1e293b',
-          900: '#0f172a',
-          950: '#020617',
+          DEFAULT: "hsl(var(--primary))",
+          foreground: "hsl(var(--primary-foreground))",
         },
-        // Professional Accent Colors - Muted and Corporate
+        secondary: {
+          DEFAULT: "hsl(var(--secondary))",
+          foreground: "hsl(var(--secondary-foreground))",
+        },
+        destructive: {
+          DEFAULT: "hsl(var(--destructive))",
+          foreground: "hsl(var(--destructive-foreground))",
+        },
+        muted: {
+          DEFAULT: "hsl(var(--muted))",
+          foreground: "hsl(var(--muted-foreground))",
+        },
         accent: {
+          DEFAULT: "hsl(var(--accent))",
+          foreground: "hsl(var(--accent-foreground))",
+        },
+        popover: {
+          DEFAULT: "hsl(var(--popover))",
+          foreground: "hsl(var(--popover-foreground))",
+        },
+        card: {
+          DEFAULT: "hsl(var(--card))",
+          foreground: "hsl(var(--card-foreground))",
+        },
+        // Professional Business Colors - Serious & Corporate
+        business: {
           50: '#f8fafc',
           100: '#f1f5f9',
           200: '#e2e8f0',
@@ -35,21 +55,49 @@ export default {
           900: '#0f172a',
           950: '#020617',
         },
-        // Professional Success Colors - Subtle and Trustworthy
+        // Professional Navy - Primary Brand Color
+        navy: {
+          50: '#f8fafc',
+          100: '#f1f5f9',
+          200: '#e2e8f0',
+          300: '#cbd5e1',
+          400: '#94a3b8',
+          500: '#64748b',
+          600: '#475569',
+          700: '#334155',
+          800: '#1e293b',
+          900: '#0f172a',
+          950: '#020617',
+        },
+        // Professional Slate - Secondary Color
+        slate: {
+          50: '#f8fafc',
+          100: '#f1f5f9',
+          200: '#e2e8f0',
+          300: '#cbd5e1',
+          400: '#94a3b8',
+          500: '#64748b',
+          600: '#475569',
+          700: '#334155',
+          800: '#1e293b',
+          900: '#0f172a',
+          950: '#020617',
+        },
+        // Professional Success - Muted Green
         success: {
-          50: '#f0fdf4',
-          100: '#dcfce7',
-          200: '#bbf7d0',
-          300: '#86efac',
-          400: '#4ade80',
-          500: '#16a34a',
-          600: '#15803d',
-          700: '#166534',
-          800: '#14532d',
-          900: '#052e16',
+          50: '#ecfdf5',
+          100: '#d1fae5',
+          200: '#a7f3d0',
+          300: '#6ee7b7',
+          400: '#34d399',
+          500: '#059669',
+          600: '#047857',
+          700: '#065f46',
+          800: '#064e3b',
+          900: '#064e3b',
           950: '#022c22',
         },
-        // Professional Warning Colors - Muted and Professional
+        // Professional Warning - Muted Amber
         warning: {
           50: '#fffbeb',
           100: '#fef3c7',
@@ -61,9 +109,9 @@ export default {
           700: '#92400e',
           800: '#78350f',
           900: '#451a03',
-          950: '#451a03',
+          950: '#292524',
         },
-        // Professional Danger Colors - Serious and Corporate
+        // Professional Danger - Muted Red
         danger: {
           50: '#fef2f2',
           100: '#fee2e2',
@@ -75,21 +123,7 @@ export default {
           700: '#991b1b',
           800: '#7f1d1d',
           900: '#450a0a',
-          950: '#450a0a',
-        },
-        // Professional Gray Scale - Corporate and Serious
-        gray: {
-          50: '#f8fafc',
-          100: '#f1f5f9',
-          200: '#e2e8f0',
-          300: '#cbd5e1',
-          400: '#94a3b8',
-          500: '#64748b',
-          600: '#475569',
-          700: '#334155',
-          800: '#1e293b',
-          900: '#0f172a',
-          950: '#020617',
+          950: '#2d1b1b',
         },
         // Professional Blue Scale - Corporate and Trustworthy
         blue: {
@@ -239,10 +273,10 @@ export default {
         'modal-lg': '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
       },
       borderRadius: {
+        lg: "var(--radius)",
+        md: "calc(var(--radius) - 2px)",
+        sm: "calc(var(--radius) - 4px)",
         'xs': '0.25rem',    // 4px
-        'sm': '0.375rem',   // 6px
-        'md': '0.5rem',     // 8px
-        'lg': '0.75rem',    // 12px
         'xl': '1rem',       // 16px
         '2xl': '1.5rem',    // 24px
         '3xl': '2rem',      // 32px

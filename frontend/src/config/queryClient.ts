@@ -80,7 +80,7 @@ export const queryKeys = {
 // Prefetch functions for critical data
 export const prefetchQueries = {
   // Prefetch dashboard data
-  dashboard: async (range: string = '7d') => {
+  dashboard: async (range: string = 'all') => {
     await Promise.all([
       queryClient.prefetchQuery({
         queryKey: queryKeys.dashboard.stats(range),

@@ -21,7 +21,7 @@ def simple_login():
         
         user = User.query.filter_by(username=username).first()
         
-        if user and check_password_hash(user.password_hash, password):
+        if user and check_password_hash(user.password, password):
             if not user.is_active:
                 flash('Account is deactivated', 'error')
                 return render_template('simple_login.html')

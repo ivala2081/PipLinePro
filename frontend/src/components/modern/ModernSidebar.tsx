@@ -1,0 +1,194 @@
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Button } from '../ui/button';
+import { Badge } from '../ui/badge';
+import { 
+  Home, 
+  BarChart3, 
+  FileText, 
+  Settings, 
+  LogOut, 
+  User,
+  Calculator,
+  ClipboardList,
+  Building2,
+  Shield,
+  Clock,
+  Server,
+  ChevronDown,
+  Bell,
+  HelpCircle,
+  Activity
+} from 'lucide-react';
+
+interface ModernSidebarProps {
+  currentPage: string;
+  onPageChange: (page: string) => void;
+  onLogout: () => void;
+}
+
+export const ModernSidebar: React.FC<ModernSidebarProps> = ({ 
+  currentPage, 
+  onPageChange, 
+  onLogout 
+}) => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [systemStatus, setSystemStatus] = useState('online');
+  const [notifications, setNotifications] = useState(3);
+
+  // Real-time clock
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  // System status simulation
+  useEffect(() => {
+    const statusTimer = setInterval(() => {
+      setSystemStatus(Math.random() > 0.1 ? 'online' : 'maintenance');
+    }, 30000); // Check every 30 seconds
+
+    return () => clearInterval(statusTimer);
+  }, []);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userMenuOpen) {
+        const target = event.target as Element;
+        if (!target.closest('[data-user-menu]')) {
+          setUserMenuOpen(false);
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [userMenuOpen]);
+
+  const navigation = [
+    { name: 'Dashboard', href: '/dashboard', icon: Home, current: location.pathname === '/dashboard' || location.pathname === '/' },
+    { name: 'Transactions', href: '/transactions', icon: FileText, current: location.pathname === '/transactions' },
+    { name: 'Accounting', href: '/accounting', icon: Calculator, current: location.pathname === '/accounting' },
+    { name: 'Ledger', href: '/ledger', icon: ClipboardList, current: location.pathname === '/ledger' },
+    { name: 'Analytics', href: '/analytics', icon: BarChart3, current: location.pathname === '/analytics' },
+    { name: 'Settings', href: '/settings', icon: Settings, current: location.pathname === '/settings' },
+  ];
+
+  return (
+    <div className="flex flex-col h-full bg-white border-r border-slate-200">
+      {/* Logo Section */}
+      <div className="p-6 border-b border-slate-200">
+        <div className="flex items-center gap-3">
+          <img 
+            src="/plogo.png" 
+            alt="PipeLine Pro Logo" 
+            className="w-10 h-10 object-contain"
+          />
+          <div>
+            <h1 className="professional-heading-4">PipLinePro</h1>
+            <p className="professional-caption">Treasury System</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Navigation */}
+      <nav className="flex-1 p-4 space-y-1">
+        {navigation.map((item) => (
+          <Link
+            key={item.name}
+            to={item.href}
+            onClick={() => onPageChange(item.name.toLowerCase())}
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+              item.current
+                ? 'bg-slate-800 text-white shadow-sm'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+            }`}
+          >
+            <item.icon className="w-4 h-4" />
+            {item.name}
+          </Link>
+        ))}
+      </nav>
+
+      {/* Minimal User Footer */}
+      <div className="p-4 border-t border-slate-200 bg-slate-50">
+        {/* User Profile */}
+        <div className="bg-white border border-slate-200 rounded-lg p-3">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-slate-600 rounded-md flex items-center justify-center">
+                <User className="w-4 h-4 text-white" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-slate-900">Admin User</p>
+                <p className="text-xs text-slate-500">Administrator</p>
+              </div>
+            </div>
+            
+            <div className="relative" data-user-menu>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setUserMenuOpen(!userMenuOpen)}
+                className="h-6 w-6 p-0 hover:bg-slate-100"
+              >
+                <ChevronDown className={`w-3 h-3 ${userMenuOpen ? 'rotate-180' : ''}`} />
+              </Button>
+              
+              {/* User Menu Dropdown */}
+              {userMenuOpen && (
+                <div className="absolute bottom-full right-0 mb-2 w-40 bg-white rounded-md shadow-lg border border-slate-200 py-1 z-50">
+                  <button
+                    onClick={() => {
+                      navigate('/settings');
+                      setUserMenuOpen(false);
+                    }}
+                    className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                  >
+                    <Settings className="w-3 h-3" />
+                    Settings
+                  </button>
+                  <button
+                    onClick={() => {
+                      onLogout();
+                      setUserMenuOpen(false);
+                    }}
+                    className="flex items-center gap-2 w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+                  >
+                    <LogOut className="w-3 h-3" />
+                    Sign Out
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          {/* System Status */}
+          <div className="flex items-center justify-between text-xs text-slate-500 pt-2 border-t border-slate-100">
+            <div className="flex items-center gap-1">
+              <div className={`w-2 h-2 rounded-full ${
+                systemStatus === 'online' ? 'bg-green-500' : 'bg-amber-500'
+              }`}></div>
+              <span>{systemStatus === 'online' ? 'Online' : 'Maintenance'}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Clock className="w-3 h-3" />
+              <span>{currentTime.toLocaleTimeString('en-US', { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                hour12: false 
+              })}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};

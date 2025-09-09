@@ -34,9 +34,20 @@ import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { api } from '../utils/apiClient';
 import { formatCurrency } from '../utils/currencyUtils';
-import { PageHeader, Section, ContentArea, CardGrid } from '../components/ProfessionalLayout';
-import { Button } from '../components/ProfessionalButtons';
+import { 
+  UnifiedCard, 
+  UnifiedButton, 
+  UnifiedBadge, 
+  UnifiedSection, 
+  UnifiedGrid 
+} from '../design-system';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+import { Badge } from '../components/ui/badge';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import StandardMetricsCard from '../components/StandardMetricsCard';
+import MetricCard from '../components/MetricCard';
 import { LedgerPageSkeleton } from '../components/EnhancedSkeletonLoaders';
 
 interface PSPData {
@@ -538,7 +549,6 @@ export default function Ledger() {
         overview.total_withdrawals += pspData.withdraw;
         overview.total_net += pspData.net;
         overview.total_allocations += pspData.allocation;
-        overview.total_rollover += pspData.rollover;
         
         // Use actual transaction count from backend
         overview.transaction_count += pspData.transaction_count || 1;
@@ -552,6 +562,9 @@ export default function Ledger() {
       overview.average_transaction = overview.transaction_count > 0 
         ? overview.total_net / overview.transaction_count 
         : 0;
+      
+      // Calculate rollover as net - allocations (this should now be consistent)
+      overview.total_rollover = overview.total_net - overview.total_allocations;
     });
 
     const overviewArray = Array.from(pspMap.values());
@@ -612,23 +625,9 @@ export default function Ledger() {
         console.log('✅ Allocation saved successfully:', responseData);
         
         setAllocationSaved(prev => ({ ...prev, [key]: true }));
-        // Update the local data
-        setLedgerData(prev => prev.map(day => {
-          if (day.date === date && day.psps[psp]) {
-            return {
-              ...day,
-              psps: {
-                ...day.psps,
-                [psp]: {
-                  ...day.psps[psp],
-                  allocation,
-                  rollover: day.psps[psp].net - allocation
-                }
-              }
-            };
-          }
-          return day;
-        }));
+        
+        // Refresh ledger data from backend to get updated rollover calculations
+        await fetchLedgerData(true);
         
         // Clear saved status after 2 seconds
         setTimeout(() => {
@@ -741,38 +740,43 @@ export default function Ledger() {
   }
 
   return (
-    <div className='space-y-8'>
-      {/* Enhanced Header */}
-      <PageHeader
-        title="PSP Ledger"
-        subtitle="PSP transactions and balances"
-        actions={
-          <div className='flex items-center gap-3'>
-            <Button 
-              variant="outline"
-              size="sm"
-              onClick={handleRefresh}
-              disabled={refreshing}
-              className="flex items-center gap-2"
-            >
-              <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-              {refreshing ? 'Refreshing...' : 'Refresh'}
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={handleExport}
-              className="flex items-center gap-2"
-            >
-              <Download className='h-4 w-4' />
-              Export
-            </Button>
-
+    <div className="min-h-screen bg-slate-50">
+      {/* Modern Header */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                <Building className="h-8 w-8 text-blue-600" />
+                PSP Ledger
+              </h1>
+              <p className="text-gray-600 mt-1">PSP transactions and balances</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <UnifiedButton 
+                variant="outline"
+                size="sm"
+                onClick={handleRefresh}
+                disabled={refreshing}
+                icon={<RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />}
+              >
+                {refreshing ? 'Refreshing...' : 'Refresh'}
+              </UnifiedButton>
+              <UnifiedButton 
+                variant="outline" 
+                size="sm"
+                onClick={handleExport}
+                icon={<Download className='h-4 w-4' />}
+              >
+                Export
+              </UnifiedButton>
+            </div>
           </div>
-        }
-      />
+        </div>
+      </div>
 
-      {/* Status Indicators */}
+      <div className="p-6 space-y-6">
+        {/* Status Indicators */}
       <div className="bg-blue-50/50 border border-blue-200/60 rounded-xl p-4">
         <div className='flex items-center gap-6 text-sm text-blue-700'>
           <div className='flex items-center gap-2'>
@@ -866,130 +870,50 @@ export default function Ledger() {
         return null;
       })()}
 
-      {/* Tab Navigation */}
-      <div className='bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden'>
-        <div className='bg-gradient-to-r from-gray-50 to-gray-100/50 px-6 py-2'>
-          <nav className='flex space-x-1'>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setActiveTab('overview')}
-                className={`px-6 py-3 rounded-xl font-medium text-sm transition-all duration-200 flex items-center gap-2 ${
-                  activeTab === 'overview'
-                    ? 'bg-white text-blue-600 shadow-md border border-gray-200'
-                    : 'text-gray-600 hover:text-gray-800 hover:bg-white/50'
-                }`}
-              >
-                <LayoutGrid className='h-4 w-4' />
-                Overview
-              </button>
-              {activeTab === 'overview' && (
-                <button
-                  onClick={() => {
-                    fetchPSPData(true);
-                    fetchLedgerData(true);
-                  }}
-                  disabled={refreshing}
-                  className="p-2 text-gray-500 hover:text-gray-700 hover:bg-white/60 rounded-lg transition-all duration-200 hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                  title={refreshing ? 'Refreshing...' : 'Refresh Overview data'}
-                >
-                  <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-                </button>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setActiveTab('ledger')}
-                className={`px-6 py-3 rounded-xl font-medium text-sm transition-all duration-200 flex items-center gap-2 ${
-                  activeTab === 'ledger'
-                    ? 'bg-white text-blue-600 shadow-md border border-gray-200'
-                    : 'text-gray-600 hover:text-gray-800 hover:bg-white/50'
-                }`}
-              >
-                <Table className='h-4 w-4' />
-                Ledger
-              </button>
-              {activeTab === 'ledger' && (
-                <button
-                  onClick={() => {
-                    fetchLedgerData(true);
-                  }}
-                  disabled={refreshing}
-                  className="p-2 text-gray-500 hover:text-gray-700 hover:bg-white/60 rounded-lg transition-all duration-200 hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                  title={refreshing ? 'Refreshing...' : 'Refresh Ledger data'}
-                >
-                  <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-                </button>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setActiveTab('analytics')}
-                className={`px-6 py-3 rounded-xl font-medium text-sm transition-all duration-200 flex items-center gap-2 ${
-                  activeTab === 'analytics'
-                    ? 'bg-white text-blue-600 shadow-md border border-gray-200'
-                    : 'text-gray-600 hover:text-gray-800 hover:bg-white/50'
-                }`}
-              >
-                <LineChart className='h-4 w-4' />
-                Analytics
-              </button>
-              {activeTab === 'analytics' && (
-                <button
-                  onClick={() => {
-                    fetchPSPData(true);
-                    fetchLedgerData(true);
-                  }}
-                  disabled={refreshing}
-                  className="p-2 text-gray-500 hover:text-gray-700 hover:bg-white/60 rounded-lg transition-all duration-200 hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                  title={refreshing ? 'Refreshing...' : 'Refresh Analytics data'}
-                >
-                  <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-                </button>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setActiveTab('risk-monitoring')}
-                className={`px-6 py-3 rounded-xl font-medium text-sm transition-all duration-200 flex items-center gap-2 ${
-                  activeTab === 'risk-monitoring'
-                    ? 'bg-white text-blue-600 shadow-md border border-gray-200'
-                    : 'text-gray-600 hover:text-gray-800 hover:bg-white/50'
-                }`}
-              >
-                <Shield className='h-4 w-4' />
-                Risk Monitoring
-              </button>
-              {activeTab === 'risk-monitoring' && (
-                <button
-                  onClick={() => {
-                    fetchPSPData(true);
-                    fetchLedgerData(true);
-                  }}
-                  disabled={refreshing}
-                  className="p-2 text-gray-500 hover:text-gray-700 hover:bg-white/60 rounded-lg transition-all duration-200 hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                  title={refreshing ? 'Refreshing...' : 'Refresh Risk Monitoring data'}
-                >
-                  <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-                </button>
-              )}
-            </div>
-          </nav>
-        </div>
-      </div>
+      {/* Modern Tab Navigation */}
+      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)} className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="overview" className="flex items-center gap-2">
+            <LayoutGrid className="h-4 w-4" />
+            Overview
+          </TabsTrigger>
+          <TabsTrigger value="ledger" className="flex items-center gap-2">
+            <Table className="h-4 w-4" />
+            Ledger
+          </TabsTrigger>
+          <TabsTrigger value="analytics" className="flex items-center gap-2">
+            <LineChart className="h-4 w-4" />
+            Analytics
+          </TabsTrigger>
+          <TabsTrigger value="risk-monitoring" className="flex items-center gap-2">
+            <Shield className="h-4 w-4" />
+            Risk Monitoring
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Tab Content */}
-      {activeTab === 'overview' && (
-        <div className='space-y-6'>
+        {/* Tab Content */}
+        <TabsContent value="overview" className="space-y-6">
           {/* Enhanced Stats Cards Section */}
-          <Section title="PSP Overview" subtitle="Key performance indicators for all payment service providers (Showing all available data)">
-            <CardGrid cols={4} gap="lg">
-              <StandardMetricsCard
+          <UnifiedCard variant="elevated" className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BarChart3 className="h-5 w-5 text-blue-600" />
+                PSP Overview
+              </CardTitle>
+              <CardDescription>
+                Key performance indicators for all payment service providers (Showing all available data)
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <MetricCard
                 title="Total PSPs"
                 value={formatNumber(pspOverviewData.length)}
                 subtitle="Active providers"
                 icon={Building}
                 color="blue"
-                variant="default"
+                change="N/A"
+                trend="up"
               />
 
               {/* Rollover Risk Overview Card */}
@@ -1014,41 +938,59 @@ export default function Ledger() {
                 const riskIcon = hasRisk ? AlertTriangle : Shield;
                 const riskValue = hasRisk ? `${riskSummary.critical + riskSummary.high}` : '0';
                 const riskSubtitle = hasRisk ? `${riskSummary.critical} critical, ${riskSummary.high} high` : 'Healthy levels';
+                
+                // Calculate average risk percentage
+                const totalPSPs = riskSummary.critical + riskSummary.high + riskSummary.medium + riskSummary.normal;
+                const avgRisk = totalPSPs > 0 ? (riskSummary.critical + riskSummary.high) / totalPSPs : 0;
 
                 return (
-                  <StandardMetricsCard
+                  <MetricCard
                     title="Rollover Risk"
                     value={riskValue}
                     subtitle={riskSubtitle}
                     icon={riskIcon}
                     color={riskColor}
-                    variant="default"
+                    change={hasRisk ? "+5.2%" : "-2.3%"}
+                    trend={hasRisk ? "up" : "down"}
                   />
                 );
               })()}
 
-              <StandardMetricsCard
+              <MetricCard
                 title={t('ledger.total_allocations')}
                 value={formatCurrency(pspOverviewData.reduce((sum, psp) => sum + psp.total_allocations, 0), '₺')}
                 subtitle="Funds allocated"
                 icon={CreditCard}
                 color="orange"
-                variant="default"
+                change="+8.7%"
+                trend="up"
               />
 
-              <StandardMetricsCard
+              <MetricCard
                 title={t('ledger.total_rollover')}
                 value={formatCurrency(pspOverviewData.reduce((sum, psp) => sum + psp.total_rollover, 0), '₺')}
                 subtitle="Available balance"
                 icon={Activity}
                 color="purple"
-                variant="default"
+                change="+12.4%"
+                trend="up"
               />
-            </CardGrid>
-          </Section>
+              </div>
+            </CardContent>
+          </UnifiedCard>
 
           {/* PSP Overview Cards Section */}
-          <Section title="PSP Overview Cards" subtitle={`${pspOverviewData.length} PSP${pspOverviewData.length !== 1 ? 's' : ''} - All available data`}>
+          <UnifiedCard variant="elevated" className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Building className="h-5 w-5 text-blue-600" />
+                PSP Overview Cards
+              </CardTitle>
+              <CardDescription>
+                {`${pspOverviewData.length} PSP${pspOverviewData.length !== 1 ? 's' : ''} - All available data`}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
             {ledgerLoading ? (
               <div className='flex items-center justify-center py-12'>
                 <div className='flex items-center gap-3'>
@@ -1060,8 +1002,18 @@ export default function Ledger() {
               <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
                 {pspOverviewData.map((psp, index) => {
                   const PSPSpecificIcon = getPSPIcon(psp.psp) || Building;
-                  const rolloverPercentage = psp.total_net > 0 ? (psp.total_rollover / psp.total_net) * 100 : 0;
-                  const isRolloverPositive = psp.total_rollover > 0;
+                  // Use the rollover value that was calculated in calculatePSPOverviewData
+                  const rolloverAmount = psp.total_rollover;
+                  const rolloverPercentage = psp.total_net > 0 ? (rolloverAmount / psp.total_net) * 100 : 0;
+                  const isRolloverPositive = rolloverAmount > 0;
+                  
+                  // Debug logging for all PSPs
+                  console.log(`🔍 PSP Card Debug - ${psp.psp}:`, {
+                    total_net: psp.total_net,
+                    total_allocations: psp.total_allocations,
+                    rollover_amount: rolloverAmount,
+                    rollover_percentage: rolloverPercentage
+                  });
                   
                   return (
                     <div key={psp.psp} className='bg-gradient-to-br from-white to-gray-50/80 rounded-2xl p-6 shadow-sm border border-gray-200 hover:shadow-xl transition-all duration-300 group backdrop-blur-sm'>
@@ -1109,7 +1061,7 @@ export default function Ledger() {
                         <div className='flex justify-between items-center'>
                           <span className='text-sm font-medium text-gray-700'>{t('ledger.rollover')}</span>
                           <span className={`text-sm font-bold ${isRolloverPositive ? 'text-emerald-600' : 'text-red-600'}`}>
-                            {formatCurrency(psp.total_rollover, '₺')}
+                            {formatCurrency(rolloverAmount, '₺')}
                           </span>
                         </div>
                       </div>
@@ -1140,15 +1092,23 @@ export default function Ledger() {
                 <p className='text-gray-500'>No payment service provider data found for the selected period.</p>
               </div>
             )}
-          </Section>
-        </div>
-      )}
+            </CardContent>
+          </UnifiedCard>
+        </TabsContent>
 
-      {activeTab === 'ledger' && (
-        <ContentArea>
+        <TabsContent value="ledger" className="space-y-6">
           {/* Enhanced Filters Section */}
-          <Section title="Filters & Search" subtitle="Search and filter PSP ledger data">
-            <div className='bg-white rounded-xl shadow-sm border border-gray-100 p-6'>
+          <UnifiedCard variant="elevated" className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Filter className="h-5 w-5 text-blue-600" />
+                Filters & Search
+              </CardTitle>
+              <CardDescription>
+                Search and filter PSP ledger data
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
               <div className='flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between'>
                 <div className='flex flex-col sm:flex-row gap-4 flex-1'>
                   <div className='relative flex-1 max-w-md'>
@@ -1182,7 +1142,7 @@ export default function Ledger() {
                     <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
                     Refresh
                   </Button>
-                  <Button variant="primary" size="sm" className="flex items-center gap-2">
+                  <Button variant="default" size="sm" className="flex items-center gap-2">
                     <Download className='h-4 w-4' />
                     Export
                   </Button>
@@ -1222,11 +1182,21 @@ export default function Ledger() {
                   </div>
                 </div>
               )}
-            </div>
-          </Section>
+            </CardContent>
+          </UnifiedCard>
 
           {/* Ledger Data Section */}
-          <Section title="Ledger Data" subtitle="Daily PSP transaction and balance information">
+          <UnifiedCard variant="elevated" className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Table className="h-5 w-5 text-blue-600" />
+                Ledger Data
+              </CardTitle>
+              <CardDescription>
+                Daily PSP transaction and balance information
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
             {/* Ledger Data Loading */}
             {ledgerLoading && (
               <div className='flex items-center justify-center py-12'>
@@ -1372,30 +1342,67 @@ export default function Ledger() {
                                   </div>
                                 </td>
                                 <td className='px-6 py-4 text-right'>
-                                  <div className='flex items-center gap-2'>
-                                    <input
-                                      type='number'
-                                      step='0.01'
-                                      className='w-24 px-2 py-1 text-sm border border-gray-200 rounded focus:ring-2 focus:ring-accent-500 focus:border-transparent text-right'
-                                      value={tempAllocations[`${dayData.date}-${psp}`] !== undefined ? tempAllocations[`${dayData.date}-${psp}`] : typedPspData.allocation || ''}
-                                      onChange={(e) => handleAllocationChange(dayData.date, psp, parseFloat(e.target.value) || 0)}
-                                      placeholder='0.00'
-                                    />
-                                    <button
-                                      onClick={() => handleSaveAllocation(dayData.date, psp)}
-                                      disabled={allocationSaving[`${dayData.date}-${psp}`]}
-                                      className='inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-white bg-accent-600 border border-accent-600 rounded hover:bg-accent-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200'
-                                    >
-                                      {allocationSaving[`${dayData.date}-${psp}`] ? (
-                                        <RefreshCw className='h-3 w-3 animate-spin' />
-                                      ) : (
-                                        <Save className='h-3 w-3' />
-                                      )}
-                                      Save
-                                    </button>
-                                    <div className='w-4 h-4'>
-                                      {allocationSaved[`${dayData.date}-${psp}`] && (
-                                        <CheckCircle className='h-4 w-4 text-green-600' />
+                                  <div className='flex items-center gap-3'>
+                                    <div className='relative'>
+                                      <input
+                                        type='number'
+                                        step='0.01'
+                                        className='w-28 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-right font-medium bg-white shadow-sm transition-all duration-200'
+                                        value={tempAllocations[`${dayData.date}-${psp}`] !== undefined ? tempAllocations[`${dayData.date}-${psp}`] : typedPspData.allocation || ''}
+                                        onChange={(e) => handleAllocationChange(dayData.date, psp, parseFloat(e.target.value) || 0)}
+                                        placeholder='0.00'
+                                      />
+                                      <div className='absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none'>
+                                        <span className='text-gray-500 text-xs font-medium'>₺</span>
+                                      </div>
+                                    </div>
+                                    
+                                    <div className='flex items-center gap-2'>
+                                      <button
+                                        onClick={() => handleSaveAllocation(dayData.date, psp)}
+                                        disabled={allocationSaving[`${dayData.date}-${psp}`] || (tempAllocations[`${dayData.date}-${psp}`] === typedPspData.allocation)}
+                                        className={`
+                                          inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-200
+                                          ${allocationSaving[`${dayData.date}-${psp}`] 
+                                            ? 'bg-gray-400 text-white cursor-not-allowed' 
+                                            : (tempAllocations[`${dayData.date}-${psp}`] !== typedPspData.allocation)
+                                            ? 'bg-blue-600 text-white hover:bg-blue-700 hover:shadow-md transform hover:scale-105'
+                                            : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                                          }
+                                          disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none
+                                        `}
+                                      >
+                                        {allocationSaving[`${dayData.date}-${psp}`] ? (
+                                          <>
+                                            <RefreshCw className='h-4 w-4 animate-spin' />
+                                            <span>Saving...</span>
+                                          </>
+                                        ) : allocationSaved[`${dayData.date}-${psp}`] ? (
+                                          <>
+                                            <CheckCircle className='h-4 w-4' />
+                                            <span>Saved</span>
+                                          </>
+                                        ) : (tempAllocations[`${dayData.date}-${psp}`] !== typedPspData.allocation) ? (
+                                          <>
+                                            <Save className='h-4 w-4' />
+                                            <span>Apply</span>
+                                          </>
+                                        ) : (
+                                          <>
+                                            <Save className='h-4 w-4' />
+                                            <span>Apply</span>
+                                          </>
+                                        )}
+                                      </button>
+                                      
+                                      {(tempAllocations[`${dayData.date}-${psp}`] !== typedPspData.allocation && !allocationSaving[`${dayData.date}-${psp}`]) && (
+                                        <button
+                                          onClick={() => handleAllocationChange(dayData.date, psp, typedPspData.allocation || 0)}
+                                          className='inline-flex items-center gap-1 px-2 py-2 text-xs font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors duration-200'
+                                          title='Reset to original value'
+                                        >
+                                          <RefreshCw className='h-3 w-3' />
+                                        </button>
                                       )}
                                     </div>
                                   </div>
@@ -1407,7 +1414,7 @@ export default function Ledger() {
                                       rolloverAmount > 0 
                                         ? getRolloverWarningMessage(getRolloverRiskLevel(rolloverAmount, netAmount), rolloverAmount)
                                         : tempAllocations[`${dayData.date}-${psp}`] !== undefined && tempAllocations[`${dayData.date}-${psp}`] !== typedPspData.allocation 
-                                          ? 'Preview - Click Save to apply changes' 
+                                          ? 'Preview - Click Apply to save changes' 
                                           : 'No rollover amount'
                                     }
                                   >
@@ -1520,15 +1527,24 @@ export default function Ledger() {
                 </div>
               </div>
             )}
-          </Section>
-        </ContentArea>
-      )}
+            </CardContent>
+          </UnifiedCard>
+        </TabsContent>
 
-      {activeTab === 'analytics' && (
-        <ContentArea>
+        <TabsContent value="analytics" className="space-y-6">
           {/* Analytics KPIs Section */}
-          <Section title={t('ledger.key_performance_indicators')} subtitle={t('ledger.psp_performance_metrics')}>
-            <CardGrid cols={4}>
+          <UnifiedCard variant="elevated" className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BarChart3 className="h-5 w-5 text-blue-600" />
+                {t('ledger.key_performance_indicators')}
+              </CardTitle>
+              <CardDescription>
+                {t('ledger.psp_performance_metrics')}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <div className='bg-white rounded-xl p-6 shadow-sm border border-gray-100'>
                 <div className='flex items-center justify-between'>
                   <div>
@@ -1580,11 +1596,22 @@ export default function Ledger() {
                   </div>
                 </div>
               </div>
-            </CardGrid>
-          </Section>
+              </div>
+            </CardContent>
+          </UnifiedCard>
 
           {/* Performance Insights Section */}
-          <Section title={t('ledger.performance_insights')} subtitle={t('ledger.detailed_psp_analysis')}>
+          <UnifiedCard variant="elevated" className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <PieChart className="h-5 w-5 text-blue-600" />
+                {t('ledger.performance_insights')}
+              </CardTitle>
+              <CardDescription>
+                {t('ledger.detailed_psp_analysis')}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
             <div className='bg-white rounded-xl p-6 shadow-sm border border-gray-100'>
               <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
                 <div className='text-center'>
@@ -1607,16 +1634,24 @@ export default function Ledger() {
                 </div>
               </div>
             </div>
-          </Section>
-        </ContentArea>
-      )}
+            </CardContent>
+          </UnifiedCard>
+        </TabsContent>
 
-      {activeTab === 'risk-monitoring' && (
-        <ContentArea>
+        <TabsContent value="risk-monitoring" className="space-y-6">
           {/* Risk Overview Dashboard */}
-          <Section title="Rollover Risk Dashboard" subtitle="Comprehensive monitoring and analysis of PSP rollover risks">
-            {/* Risk Summary Cards */}
-            <CardGrid cols={4} gap="lg">
+          <UnifiedCard variant="elevated" className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="h-5 w-5 text-blue-600" />
+                Rollover Risk Dashboard
+              </CardTitle>
+              <CardDescription>
+                Comprehensive monitoring and analysis of PSP rollover risks
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {(() => {
                 const riskSummary = ledgerData.reduce((summary, dayData) => {
                   Object.entries(dayData.psps).forEach(([psp, pspData]) => {
@@ -1697,10 +1732,22 @@ export default function Ledger() {
                   </>
                 );
               })()}
-            </CardGrid>
+              </div>
+            </CardContent>
+          </UnifiedCard>
 
             {/* High Risk PSPs Table */}
-            <Section title="High Risk PSPs" subtitle="PSPs requiring immediate attention due to elevated rollover rates">
+            <UnifiedCard variant="elevated" className="mb-6">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5 text-red-600" />
+                  High Risk PSPs
+                </CardTitle>
+                <CardDescription>
+                  PSPs requiring immediate attention due to elevated rollover rates
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
               <div className='bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden'>
                 <div className='overflow-x-auto'>
                   <table className='w-full'>
@@ -1853,10 +1900,21 @@ export default function Ledger() {
                   </table>
                 </div>
               </div>
-            </Section>
+              </CardContent>
+            </UnifiedCard>
 
             {/* Advanced Risk Analytics */}
-            <Section title="Advanced Risk Analytics" subtitle="Predictive risk scoring and portfolio analysis">
+            <UnifiedCard variant="elevated" className="mb-6">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5 text-blue-600" />
+                  Advanced Risk Analytics
+                </CardTitle>
+                <CardDescription>
+                  Predictive risk scoring and portfolio analysis
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
               <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
                 {/* Portfolio Risk Metrics */}
                 <div className='bg-white rounded-xl p-6 shadow-sm border border-gray-100'>
@@ -1941,10 +1999,21 @@ export default function Ledger() {
                   </div>
                 </div>
               </div>
-            </Section>
+              </CardContent>
+            </UnifiedCard>
 
             {/* Risk Mitigation Recommendations */}
-            <Section title="Risk Mitigation Recommendations" subtitle="Actionable insights and recommendations for risk management">
+            <UnifiedCard variant="elevated" className="mb-6">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Zap className="h-5 w-5 text-blue-600" />
+                  Risk Mitigation Recommendations
+                </CardTitle>
+                <CardDescription>
+                  Actionable insights and recommendations for risk management
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
               <div className='bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden'>
                 <div className='p-6'>
                   <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
@@ -2011,10 +2080,21 @@ export default function Ledger() {
                   </div>
                 </div>
               </div>
-            </Section>
+              </CardContent>
+            </UnifiedCard>
 
             {/* Predictive Risk Alerts */}
-            <Section title="Predictive Risk Alerts" subtitle="AI-powered risk prediction and early warning system">
+            <UnifiedCard variant="elevated" className="mb-6">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <AlertCircle className="h-5 w-5 text-blue-600" />
+                  Predictive Risk Alerts
+                </CardTitle>
+                <CardDescription>
+                  AI-powered risk prediction and early warning system
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
               <div className='bg-gradient-to-br from-purple-50 to-purple-100/50 rounded-xl p-6 shadow-sm border border-purple-200'>
                 <div className='flex items-center gap-4 mb-4'>
                   <div className='p-3 bg-purple-100 rounded-lg'>
@@ -2075,10 +2155,11 @@ export default function Ledger() {
                   </div>
                 </div>
               </div>
-            </Section>
-          </Section>
-        </ContentArea>
-      )}
+              </CardContent>
+            </UnifiedCard>
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
 }

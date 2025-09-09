@@ -68,23 +68,8 @@ class Config:
     POSTGRES_PASSWORD = os.environ.get('POSTGRES_PASSWORD', 'pipeline_password')
     POSTGRES_SSL_MODE = os.environ.get('POSTGRES_SSL_MODE', 'prefer')
     
-    # Enhanced Database Security Settings
-    SQLALCHEMY_ENGINE_OPTIONS = {
-        'pool_size': 20,  # Increased from 10 for better concurrency
-        'pool_timeout': 30,  # Increased timeout for better reliability
-        'pool_recycle': 1800,  # Recycle connections after 30 minutes
-        'pool_pre_ping': True,  # Verify connections before use
-        'max_overflow': 30,  # Additional connections for peak loads
-        'echo': False,  # Set to True for SQL query logging
-        'isolation_level': 'SERIALIZABLE',  # SQLite-compatible isolation level
-        'connect_args': {
-            'check_same_thread': False,  # Allow multiple threads for SQLite
-            'timeout': 30,  # Connection timeout
-        },
-        # Advanced pooling options
-        'pool_reset_on_return': 'commit',  # Reset connections on return
-        'pool_use_lifo': True,  # Use LIFO strategy for better performance
-    }
+    # Database engine options will be set per environment
+    # Base configuration - no database-specific settings here
     
     # Database Query Logging
     DB_QUERY_LOGGING = False  # Set to True to log all SQL queries
@@ -184,14 +169,13 @@ class DevelopmentConfig(Config):
     LOG_LEVEL = 'INFO'  # Changed from DEBUG to reduce verbosity
     SQLALCHEMY_ECHO = False  # Changed from True to reduce SQL logging
     
-    # Development database settings
+    # SQLite-specific database settings for development
     SQLALCHEMY_ENGINE_OPTIONS = {
-        'pool_size': 5,
-        'pool_timeout': 10,
-        'pool_recycle': 1800,  # 30 minutes for development
-        'pool_pre_ping': True,
-        'max_overflow': 10,
         'echo': False,  # Disabled SQL query logging to reduce verbosity
+        'connect_args': {
+            'check_same_thread': False,  # Allow multiple threads for SQLite
+            'timeout': 30,  # Connection timeout
+        },
         'isolation_level': 'SERIALIZABLE',  # SQLite-compatible isolation level
     }
     

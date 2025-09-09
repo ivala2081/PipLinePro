@@ -11,6 +11,8 @@ from decimal import Decimal, InvalidOperation
 from app import db
 from app.models.config import Option, UserSettings
 from app.models.user import User
+from app.services.psp_options_service import PspOptionsService
+from app.services.company_options_service import CompanyOptionsService
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -23,8 +25,8 @@ settings_bp = Blueprint('settings', __name__)
 def settings():
     """Main settings page"""
     try:
-        # Get all active options grouped by field name
-        options = Option.query.filter_by(is_active=True).order_by(Option.field_name, Option.value).all()
+        # Get all active options grouped by field name (excluding PSP and Company)
+        options = Option.query.filter_by(is_active=True).filter(Option.field_name != 'psp').filter(Option.field_name != 'company').order_by(Option.field_name, Option.value).all()
         
         # Group by field name
         grouped_options = {}
@@ -33,8 +35,8 @@ def settings():
                 grouped_options[option.field_name] = []
             grouped_options[option.field_name].append(option)
         
-        # Get available field names for dropdown
-        fields = ['psp', 'category', 'payment_method', 'currency']
+        # Get available field names for dropdown (PSP and Company are now fixed from database)
+        fields = ['category', 'payment_method', 'currency']
         
         # Get user sessions for the sessions tab
         from app.models.audit import UserSession
@@ -46,8 +48,16 @@ def settings():
         # Get user settings
         user_settings = UserSettings.query.filter_by(user_id=current_user.id).first()
         
+        # Get fixed PSP options from database
+        fixed_psp_options = PspOptionsService.create_fixed_psp_options()
+        
+        # Get fixed Company options from database
+        fixed_company_options = CompanyOptionsService.create_fixed_company_options()
+        
         return render_template('settings_main.html', 
                             options=grouped_options,
+                            fixed_psp_options=fixed_psp_options,
+                            fixed_company_options=fixed_company_options,
                             fields=fields,
                             sessions=sessions,
                             user_settings=user_settings)
@@ -163,8 +173,8 @@ def settings_dropdowns():
             logger.error(f"Error in settings dropdowns: {str(e)}")
             flash('Error processing request. Please try again.', 'error')
     
-    # Get all active options grouped by field name
-    options = Option.query.filter_by(is_active=True).order_by(Option.field_name, Option.value).all()
+    # Get all active options grouped by field name (excluding PSP and Company)
+    options = Option.query.filter_by(is_active=True).filter(Option.field_name != 'psp').filter(Option.field_name != 'company').order_by(Option.field_name, Option.value).all()
     
     # Group by field name
     grouped_options = {}
@@ -173,8 +183,8 @@ def settings_dropdowns():
             grouped_options[option.field_name] = []
         grouped_options[option.field_name].append(option)
     
-    # Define available fields for the dropdown
-    fields = ['iban', 'payment_method', 'company_order', 'currency', 'psp', 'company']
+    # Define available fields for the dropdown (PSP and Company are now fixed from database)
+    fields = ['iban', 'payment_method', 'company_order', 'currency']
     
     return render_template('settings_dropdowns.html', grouped_options=grouped_options, fields=fields)
 

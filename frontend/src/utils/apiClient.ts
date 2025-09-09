@@ -66,32 +66,48 @@ class ApiClient {
   }
 
   /**
-   * Fetch CSRF token from server with enhanced session handling
+   * Check if user is authenticated before making requests
    */
-  private async fetchCsrfToken(): Promise<string | null> {
+  private async ensureAuthenticated(): Promise<boolean> {
     try {
-
-      // Step 1: Ensure we have a valid session by checking auth
-      const authResponse = await fetch('/api/v1/auth/check', {
+      const response = await fetch('/api/v1/auth/check', {
         method: 'GET',
         credentials: 'include',
         headers: {
           'Cache-Control': 'no-cache',
-          Pragma: 'no-cache',
+          'Pragma': 'no-cache',
         },
       });
+      
+      if (response.ok) {
+        const data = await response.json();
+        return data.authenticated === true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Auth check failed:', error);
+      return false;
+    }
+  }
 
-      if (!authResponse.ok) {
+  /**
+   * Fetch CSRF token from server with enhanced session handling
+   */
+  private async fetchCsrfToken(): Promise<string | null> {
+    try {
+      // First check if user is authenticated
+      const isAuthenticated = await this.ensureAuthenticated();
+      if (!isAuthenticated) {
         return null;
       }
 
-      // Step 2: Get the CSRF token with enhanced handling
+      // Get the CSRF token with enhanced handling
       const response = await fetch('/api/v1/auth/csrf-token', {
         method: 'GET',
         credentials: 'include',
         headers: {
           'Cache-Control': 'no-cache',
-          Pragma: 'no-cache',
+          'Pragma': 'no-cache',
           'X-Requested-With': 'XMLHttpRequest',
         },
       });
@@ -99,8 +115,6 @@ class ApiClient {
       if (response.ok) {
         const data = await response.json();
         const token = data.csrf_token;
-
-        // CSRF token fetched successfully
 
         // Enhanced validation - check if token exists and has reasonable length
         if (token && token.length > 20) {
@@ -112,6 +126,7 @@ class ApiClient {
         return null;
       }
     } catch (error) {
+      console.error('CSRF token fetch failed:', error);
       return null;
     }
   }
@@ -239,10 +254,20 @@ class ApiClient {
       
       // Clone the response for each consumer to avoid "body stream already read" error
       if (originalResponse instanceof Response && typeof originalResponse.clone === 'function') {
-        return originalResponse.clone() as T;
+        const clonedResponse = originalResponse.clone();
+        // Ensure the cloned response has the same properties as the original
+        if (clonedResponse && typeof clonedResponse.text === 'function') {
+          return clonedResponse as T;
+        }
       }
       
-      return originalResponse;
+      // If we can't clone, return the original response if it's a proper Response object
+      if (originalResponse instanceof Response) {
+        return originalResponse as T;
+      }
+      
+      // If it's not a Response object, something went wrong
+      throw new Error('Invalid response object returned from pending request');
     }
 
     // Check throttling for GET requests
@@ -254,7 +279,15 @@ class ApiClient {
         const now = Date.now();
         
         if (now - cached.timestamp < this.CACHE_DURATION) {
-          return cached.data as T;
+          // Create a mock Response object for cached data
+          const mockResponse = new Response(JSON.stringify(cached.data), {
+            status: 200,
+            statusText: 'OK',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          });
+          return mockResponse as T;
         }
       }
       
@@ -286,6 +319,19 @@ class ApiClient {
     options?: RequestInit
   ): Promise<T> {
     try {
+      // For non-auth endpoints, check authentication first
+      if (!url.includes('/auth/')) {
+        const isAuthenticated = await this.ensureAuthenticated();
+        if (!isAuthenticated) {
+          // Return a 401 response to match expected behavior
+          const errorResponse = new Response(
+            JSON.stringify({ error: 'Authentication required', message: 'Please log in to access this endpoint' }),
+            { status: 401, statusText: 'Unauthorized' }
+          );
+          return errorResponse as T;
+        }
+      }
+
       const token = await this.getCsrfToken();
       
       const requestOptions: RequestInit = {
@@ -339,7 +385,29 @@ class ApiClient {
       
       // Return cached data if it's still valid
       if (now - cached.timestamp < this.CACHE_DURATION) {
-        return cached.data as T;
+        // Create a mock Response object for cached data
+        const mockResponse = new Response(JSON.stringify(cached.data), {
+          status: 200,
+          statusText: 'OK',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        // Ensure the mock response has all necessary methods
+        if (typeof mockResponse.clone !== 'function') {
+          mockResponse.clone = function() {
+            return new Response(JSON.stringify(cached.data), {
+              status: 200,
+              statusText: 'OK',
+              headers: {
+                'Content-Type': 'application/json'
+              }
+            });
+          };
+        }
+        
+        return mockResponse as T;
       } else {
         // Remove expired cache entry
         this.authCheckCache.delete(cacheKey);
@@ -351,8 +419,9 @@ class ApiClient {
     // Cache successful GET responses
     if (useCache && response instanceof Response && response.ok) {
       try {
-        const responseToParse = typeof response.clone === 'function' ? response.clone() : response;
-        const data = await responseToParse.json();
+        // Clone the response for caching without consuming the original
+        const responseToCache = response.clone();
+        const data = await responseToCache.json();
         
         // Implement cache size limit
         if (this.authCheckCache.size >= this.MAX_CACHE_SIZE) {
@@ -363,6 +432,7 @@ class ApiClient {
           }
         }
         
+        // Store the parsed data instead of the response object
         this.authCheckCache.set(cacheKey, {
           data: data,
           timestamp: Date.now()
@@ -411,8 +481,18 @@ class ApiClient {
    * Parse response with better error handling and automatic cloning
    */
   async parseResponse<T = any>(response: Response): Promise<T> {
+    // Ensure we have a valid Response object
+    if (!response || typeof response.clone !== 'function') {
+      throw new Error('Invalid response object provided to parseResponse');
+    }
+    
     // Clone the response to avoid "body stream already read" errors
-    const clonedResponse = typeof response.clone === 'function' ? response.clone() : response;
+    const clonedResponse = response.clone();
+    
+    // Validate that the cloned response has the required methods
+    if (!clonedResponse || typeof clonedResponse.text !== 'function') {
+      throw new Error('Cloned response is not a valid Response object');
+    }
     
     if (!clonedResponse.ok) {
       const errorText = await clonedResponse.text();
@@ -498,6 +578,14 @@ class ApiClient {
     this.csrfToken = null;
     this.lastAuthCheck = 0;
     this.lastTokenFetch = 0;
+  }
+
+  /**
+   * Clear cache for PSP data specifically
+   */
+  clearPSPCache(): void {
+    this.clearCacheForUrl('psp_summary_stats');
+    console.log('🧹 PSP cache cleared');
   }
 
   /**

@@ -3,7 +3,7 @@ Transactions API endpoints for Flask
 """
 from flask import Blueprint, jsonify, request
 from flask_login import login_required, current_user
-from sqlalchemy import func
+from sqlalchemy import func, text
 from datetime import datetime, timedelta, timezone
 from app.models.transaction import Transaction
 from app.models.financial import PspTrack
@@ -93,15 +93,10 @@ def create_transaction():
         commission_rate: Decimal | None = None
         if psp:
             try:
-                from app.models.config import Option
-                psp_option = Option.query.filter_by(
-                    field_name='psp',
-                    value=psp,
-                    is_active=True
-                ).first()
-                if psp_option and psp_option.commission_rate is not None:
-                    commission_rate = psp_option.commission_rate
-                    logger.info(f"Using PSP '{psp}' commission rate: {commission_rate}")
+                from app.services.psp_options_service import PspOptionsService
+                from app.services.company_options_service import CompanyOptionsService
+                commission_rate = PspOptionsService.get_psp_commission_rate(psp)
+                logger.info(f"Using PSP '{psp}' commission rate: {commission_rate}")
             except Exception as e:
                 logger.warning(f"Error fetching PSP commission rate for '{psp}': {e}")
 
@@ -170,7 +165,24 @@ def create_transaction():
         )
         
         db.session.add(transaction)
+        db.session.flush()  # Ensure the transaction gets an ID
         db.session.commit()
+        
+        # Force WAL checkpoint to ensure transaction is immediately visible
+        db.session.execute(text("PRAGMA wal_checkpoint(FULL)"))
+        db.session.commit()
+        
+        # Invalidate cache after transaction creation
+        try:
+            from app.services.query_service import QueryService
+            QueryService.invalidate_transaction_cache()
+            logger.info("Cache invalidated after API transaction creation")
+        except Exception as cache_error:
+            logger.warning(f"Failed to invalidate cache after API transaction creation: {cache_error}")
+        
+        # Force a small delay to ensure transaction is fully committed
+        import time
+        time.sleep(0.1)
         
         return jsonify({
             'success': True,
@@ -198,11 +210,13 @@ def create_transaction():
 def get_clients():
     """Get clients data (grouped transactions by client)"""
     try:
-        # Get transactions grouped by client with additional data
+        # Get transactions grouped by client with additional data including commission
         client_stats = db.session.query(
             Transaction.client_name,
             func.count(Transaction.id).label('transaction_count'),
             func.sum(Transaction.amount).label('total_amount'),
+            func.sum(Transaction.commission).label('total_commission'),
+            func.sum(Transaction.net_amount).label('total_net'),
             func.avg(Transaction.amount).label('average_amount'),
             func.min(Transaction.created_at).label('first_transaction'),
             func.max(Transaction.created_at).label('last_transaction')
@@ -219,56 +233,8 @@ def get_clients():
         for client in client_stats:
             # Fix: Ensure proper type conversion and handle NULL values
             total_amount = float(client.total_amount) if client.total_amount is not None else 0.0
-            
-            # Ensure proper type conversion and handle NULL values
-            
-            # Calculate commission based on actual transaction commissions or use weighted average of PSP rates
-            total_commission = 0.0
-            commission_count = 0
-            
-            # Get all transactions for this client to calculate actual commission
-            client_transactions = Transaction.query.filter(
-                Transaction.client_name == client.client_name
-            ).all()
-            
-            for transaction in client_transactions:
-                if transaction.commission is not None:
-                    total_commission += float(transaction.commission)
-                    commission_count += 1
-            
-            # If no commission data, use weighted average of PSP rates (but always 0 for WD)
-            if commission_count == 0:
-                psp_commission_total = 0.0
-                psp_amount_total = 0.0
-                
-                for transaction in client_transactions:
-                    # IMPORTANT: WD transactions have zero commission - don't calculate for them
-                    if transaction.category and transaction.category.upper() == 'WD':
-                        continue  # Skip WD transactions - they have 0 commission
-                    
-                    if transaction.psp:
-                        try:
-                            from app.models.config import Option
-                            psp_option = Option.query.filter_by(
-                                field_name='psp',
-                                value=transaction.psp,
-                                is_active=True
-                            ).first()
-                            
-                            if psp_option and psp_option.commission_rate is not None:
-                                psp_commission_total += float(transaction.amount) * float(psp_option.commission_rate)
-                                psp_amount_total += float(transaction.amount)
-                        except Exception as e:
-                            # Silently handle PSP option processing errors
-                            pass
-                
-                if psp_amount_total > 0:
-                    total_commission = psp_commission_total
-                else:
-                    # No PSP rate information; do not assume any default commission
-                    total_commission = 0.0
-            
-            total_net = total_amount - total_commission
+            total_commission = float(client.total_commission) if client.total_commission is not None else 0.0
+            total_net = float(client.total_net) if client.total_net is not None else 0.0
             
             # Get currencies and PSPs for this client
             client_transactions = Transaction.query.filter(
@@ -381,6 +347,8 @@ def get_clients():
 def get_psp_summary_stats():
     """Get PSP summary statistics"""
     try:
+        logger.info("Starting PSP summary stats query...")
+        
         # Get PSP statistics from actual transactions using TRY amounts
         psp_stats = db.session.query(
             Transaction.psp,
@@ -395,6 +363,8 @@ def get_psp_summary_stats():
             Transaction.psp.isnot(None),
             Transaction.psp != ''
         ).group_by(Transaction.psp).all()
+        
+        logger.info(f"PSP stats query completed, found {len(psp_stats)} PSPs")
         
         psp_data = []
         for psp in psp_stats:
@@ -435,9 +405,24 @@ def get_psp_summary_stats():
         # Sort by total amount descending
         psp_data.sort(key=lambda x: x['total_amount'], reverse=True)
         
+        logger.info(f"PSP summary stats completed successfully, returning {len(psp_data)} PSPs")
+        
+        # Invalidate cache to ensure fresh data
+        try:
+            from app.services.query_service import QueryService
+            QueryService.invalidate_transaction_cache()
+            logger.info("Cache invalidated after PSP summary stats")
+        except Exception as cache_error:
+            logger.warning(f"Failed to invalidate cache after PSP summary stats: {cache_error}")
+        
         return jsonify(psp_data)
         
     except Exception as e:
+        logger.error(f"Error in PSP summary stats: {str(e)}")
+        logger.error(f"Error type: {type(e).__name__}")
+        import traceback
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        
         return jsonify({
             'error': 'Failed to retrieve PSP summary statistics',
             'message': str(e)
@@ -459,30 +444,71 @@ def get_transactions():
         psp = request.args.get('psp')
         currency = request.args.get('currency')
         
+        # Log all query parameters for debugging
+        logger.debug(f"Query parameters: page={page}, per_page={per_page}, category={category}, client={client}, payment_method={payment_method}, psp={psp}, currency={currency}")
+        
         # Build query
         query = Transaction.query
         
+        # Log total transactions before any filters
+        total_before_filters = query.count()
+        logger.debug(f"Total transactions before filters: {total_before_filters}")
+        
         if category:
             query = query.filter(Transaction.category == category)
+            logger.info(f"Applied category filter: {category}")
         
         # Apply additional filters
         if client:
             query = query.filter(Transaction.client_name.ilike(f'%{client}%'))
+            logger.info(f"Applied client filter: {client}")
         
         if payment_method:
             query = query.filter(Transaction.payment_method.ilike(f'%{payment_method}%'))
+            logger.info(f"Applied payment_method filter: {payment_method}")
         
         if psp:
             query = query.filter(Transaction.psp.ilike(f'%{psp}%'))
+            logger.info(f"Applied psp filter: {psp}")
         
         if currency:
             query = query.filter(Transaction.currency == currency)
+            logger.info(f"Applied currency filter: {currency}")
+        
+        # Log total transactions after all filters
+        total_after_filters = query.count()
+        logger.debug(f"Total transactions after filters: {total_after_filters}")
         
         # Paginate
         try:
+            # Force WAL checkpoint to ensure we see latest transactions
+            db.session.execute(text("PRAGMA wal_checkpoint(FULL)"))
+            db.session.commit()
+            
+            # Add debugging to see what transactions are being returned
+            total_count = query.count()
+            logger.debug(f"Total transactions in database: {total_count}")
+            
+            # Check specifically for LEVENT ÇEVİK transactions
+            levents = query.filter(Transaction.client_name.ilike('%LEVENT ÇEVİK%')).order_by(Transaction.created_at.desc()).all()
+            logger.debug(f"LEVENT ÇEVİK transactions found: {len(levents)}")
+            for lev in levents:
+                logger.debug(f"LEVENT: ID={lev.id}, Amount={lev.amount}, Created={lev.created_at}")
+            
+            # Check what's in the pagination results
             pagination = query.order_by(Transaction.created_at.desc()).paginate(
                 page=page, per_page=per_page, error_out=False
             )
+            
+            # Log the first 10 transactions in pagination to see what's being returned
+            logger.debug(f"First 10 transactions in pagination:")
+            for i, trans in enumerate(pagination.items[:10]):
+                logger.debug(f"  {i+1}. ID={trans.id}, Client={trans.client_name}, Amount={trans.amount}, Created={trans.created_at}")
+            
+            logger.debug(f"Returning {len(pagination.items)} transactions for page {page}")
+            if pagination.items:
+                latest_transaction = pagination.items[0]
+                logger.debug(f"Latest transaction: ID={latest_transaction.id}, Client={latest_transaction.client_name}, Amount={latest_transaction.amount}, Created={latest_transaction.created_at}")
         except Exception as pagination_error:
             # Handle pagination error gracefully
             # Fallback to simple query without pagination
@@ -545,7 +571,11 @@ def get_transactions():
                     'psp': transaction.psp,
                     'date': transaction.date.strftime('%Y-%m-%d') if transaction.date else None,
                     'created_at': transaction.created_at.isoformat() if transaction.created_at else None,
-                    'notes': transaction.notes
+                    'notes': transaction.notes,
+                    'exchange_rate': float(transaction.exchange_rate) if transaction.exchange_rate else None,
+                    'amount_tl': float(transaction.amount_try) if transaction.amount_try else None,
+                    'commission_tl': float(transaction.commission_try) if transaction.commission_try else None,
+                    'net_amount_tl': float(transaction.net_amount_try) if transaction.net_amount_try else None
                 })
             except Exception as transaction_error:
                 # Skip problematic transaction
@@ -594,24 +624,30 @@ def get_dropdown_options():
             ]
         }
         
-        # For other fields, still fetch from database (like PSP, company, etc.)
-        from app.models.config import Option
-        dynamic_fields = ['psp', 'company']  # Fields that can still be managed
+        # Get fixed PSP options from database
+        from app.services.psp_options_service import PspOptionsService
+        from app.services.company_options_service import CompanyOptionsService
         
-        options = Option.query.filter(
-            Option.is_active == True,
-            Option.field_name.in_(dynamic_fields)
-        ).order_by(Option.field_name, Option.value).all()
+        # Add PSP options
+        psp_options = PspOptionsService.create_fixed_psp_options()
+        static_options['psp'] = []
+        for i, psp in enumerate(psp_options, 1):
+            static_options['psp'].append({
+                'id': i,
+                'value': psp['value'],
+                'commission_rate': psp['commission_rate'],
+                'created_at': None
+            })
         
-        # Add dynamic options to static options
-        for option in options:
-            if option.field_name not in static_options:
-                static_options[option.field_name] = []
-            static_options[option.field_name].append({
-                'id': option.id,
-                'value': option.value,
-                'commission_rate': float(option.commission_rate) if option.commission_rate else None,
-                'created_at': option.created_at.isoformat() if option.created_at else None
+        # Add Company options
+        company_options = CompanyOptionsService.create_fixed_company_options()
+        static_options['company'] = []
+        for i, company in enumerate(company_options, 1):
+            static_options['company'].append({
+                'id': i,
+                'value': company['value'],
+                'commission_rate': None,
+                'created_at': None
             })
         
         return jsonify(static_options)
@@ -1238,6 +1274,41 @@ def update_transaction(transaction_id):
         # Save to database
         db.session.commit()
         
+        # Save custom exchange rate after transaction update
+        if currency in ['USD', 'EUR'] and custom_rate:
+            try:
+                from app.models.exchange_rate import ExchangeRate
+                currency_pair = 'USDTRY' if currency == 'USD' else 'EURTRY'
+                
+                # Check if rate already exists for this date
+                existing_rate = ExchangeRate.query.filter_by(
+                    date=transaction_date,
+                    currency_pair=currency_pair
+                ).first()
+                
+                if existing_rate:
+                    # Update existing rate
+                    existing_rate.rate = custom_rate
+                    existing_rate.updated_at = datetime.now(timezone.utc)
+                    logger.info(f"Updated existing {currency} rate for {transaction_date} to {custom_rate}")
+                else:
+                    # Create new rate entry
+                    new_rate = ExchangeRate(
+                        currency_pair=currency_pair,
+                        rate=custom_rate,
+                        date=transaction_date,
+                        created_at=datetime.now(timezone.utc),
+                        updated_at=datetime.now(timezone.utc)
+                    )
+                    db.session.add(new_rate)
+                    logger.info(f"Created new {currency} rate for {transaction_date}: {custom_rate}")
+                
+                db.session.commit()
+                logger.info(f"Exchange rate saved successfully for {currency}")
+            except Exception as e:
+                logger.error(f"Error saving custom exchange rate to database: {e}")
+                # Don't fail the transaction update if rate saving fails
+        
         logger.info(f"Transaction {transaction_id} updated successfully by user {current_user.username}")
         
         return jsonify({
@@ -1419,17 +1490,15 @@ def bulk_import_transactions():
                 amount = transaction_data.get('amount', '')
                 date_str = transaction_data.get('date', '')
                 
-                # Create a composite key for duplicate detection
-                if client_name and amount and date_str:
-                    duplicate_key = f"{client_name}_{amount}_{date_str}"
-                else:
-                    duplicate_key = f"row_{i+1}_{client_name}_{amount}"
+                # DISABLED: Duplicate detection for bulk imports
+                # All rows from CSV will be imported without skipping
+                # This ensures complete data import as requested by user
                 
-                # Check if this exact transaction was already processed in this import
-                if duplicate_key in processed_transactions:
-                    skipped_duplicates += 1
-                    warnings.append(f"Row {i+1}: Skipped duplicate transaction for {client_name}")
-                    continue
+                # Get other fields for processing
+                psp = transaction_data.get('psp', '').strip()
+                payment_method = transaction_data.get('payment_method', '').strip()
+                category = transaction_data.get('category', '').strip()
+                company = transaction_data.get('company', '').strip()
                 
                 # Validate required fields with more flexible rules
                 if not client_name:
@@ -1439,10 +1508,6 @@ def bulk_import_transactions():
                 
                 # Get other fields with improved defaults FIRST (before validation)
                 currency = transaction_data.get('currency', 'TL').strip()
-                payment_method = transaction_data.get('payment_method', '').strip()
-                category = transaction_data.get('category', '').strip()
-                psp = transaction_data.get('psp', '').strip()
-                company = transaction_data.get('company', '').strip()
                 notes = transaction_data.get('notes', '').strip()
                 
                 # Improved category handling - accept both DEP and WD
@@ -1622,8 +1687,8 @@ def bulk_import_transactions():
                 successful_imports += 1
                 logger.info(f"Row {i+1}: Transaction added successfully, total successful: {successful_imports}")
                 
-                # Mark this transaction as processed
-                processed_transactions.add(duplicate_key)
+                # DISABLED: No longer tracking processed transactions since duplicate detection is disabled
+                # processed_transactions.add(duplicate_key)
                 
             except Exception as e:
                 logger.error(f"Row {i+1}: Exception during processing: {type(e).__name__}: {str(e)}")
@@ -1641,6 +1706,15 @@ def bulk_import_transactions():
             try:
                 db.session.commit()
                 logger.info(f"Successfully committed {successful_imports} transactions to database")
+                
+                # Invalidate cache after bulk import
+                try:
+                    from app.services.query_service import QueryService
+                    QueryService.invalidate_transaction_cache()
+                    logger.info("Cache invalidated after API bulk import")
+                except Exception as cache_error:
+                    logger.warning(f"Failed to invalidate cache after API bulk import: {cache_error}")
+                    
             except Exception as commit_error:
                 logger.error(f"Database commit failed: {commit_error}")
                 db.session.rollback()
@@ -1652,15 +1726,15 @@ def bulk_import_transactions():
             logger.warning("No transactions to commit - all failed validation")
         
         # Prepare response with detailed information
-        logger.info(f"Preparing response: {successful_imports} successful, {failed_imports} failed, {skipped_duplicates} duplicates")
+        logger.info(f"Preparing response: {successful_imports} successful, {failed_imports} failed, 0 duplicates (duplicate detection disabled)")
         response_data = {
             'success': True,
-            'message': f'Import completed: {successful_imports} successful, {failed_imports} failed, {skipped_duplicates} duplicates skipped',
+            'message': f'Import completed: {successful_imports} successful, {failed_imports} failed (all CSV rows imported)',
             'data': {
                 'total_rows': len(transactions_data),
                 'successful_imports': successful_imports,
                 'failed_imports': failed_imports,
-                'skipped_duplicates': skipped_duplicates,
+                'skipped_duplicates': 0,  # Always 0 since duplicate detection is disabled
                 'errors': errors[:20],  # Limit errors to first 20
                 'warnings': warnings[:20]  # Limit warnings to first 20
             }

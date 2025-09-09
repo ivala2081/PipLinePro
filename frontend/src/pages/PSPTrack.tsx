@@ -14,8 +14,17 @@ import {
   BarChart3,
   Filter,
 } from 'lucide-react';
-import { PageHeader, Section, ContentArea, CardGrid } from '../components/ProfessionalLayout';
-import { Button } from '../components/ProfessionalButtons';
+import { 
+  UnifiedCard, 
+  UnifiedButton, 
+  UnifiedBadge, 
+  UnifiedSection, 
+  UnifiedGrid 
+} from '../design-system';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+import { Badge } from '../components/ui/badge';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
 
 interface PSPTrack {
   id: number;
@@ -106,32 +115,62 @@ export default function PSPTrack() {
   ];
 
   return (
-    <div className='space-y-6'>
-      {/* Enhanced Header */}
-      <PageHeader
-        title="PSP Tracking"
-        subtitle="Monitor Payment Service Provider transactions and commissions"
-        actions={
-          <div className='flex gap-3'>
-            <Button variant="outline" size="sm" className="flex items-center gap-2">
-              <Upload className='h-4 w-4' />
-              Import
-            </Button>
-            <Button variant="outline" size="sm" className="flex items-center gap-2">
-              <Download className='h-4 w-4' />
-              Export
-            </Button>
-            <Button variant="primary" size="sm" className="flex items-center gap-2">
-              <Plus className='h-4 w-4' />
-              Add PSP Track
-            </Button>
+    <div className="min-h-screen bg-slate-50">
+      {/* Modern Header */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="px-6 py-6">
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+                <Building className="h-8 w-8 text-blue-600" />
+                PSP Tracking
+              </h1>
+              <p className="text-gray-600">Monitor Payment Service Provider transactions and commissions</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <UnifiedButton
+                variant="outline"
+                size="sm"
+                icon={<Upload className="h-4 w-4" />}
+                iconPosition="left"
+              >
+                Import
+              </UnifiedButton>
+              <UnifiedButton
+                variant="outline"
+                size="sm"
+                icon={<Download className="h-4 w-4" />}
+                iconPosition="left"
+              >
+                Export
+              </UnifiedButton>
+              <UnifiedButton
+                variant="primary"
+                size="sm"
+                icon={<Plus className="h-4 w-4" />}
+                iconPosition="left"
+              >
+                Add PSP Track
+              </UnifiedButton>
+            </div>
           </div>
-        }
-      />
+        </div>
+      </div>
 
-      {/* Stats Cards Section */}
-      <Section title="Performance Overview" subtitle="Key metrics for PSP operations">
-        <CardGrid cols={4} gap="lg">
+      <div className="p-6 space-y-6">
+        {/* Stats Cards Section */}
+        <UnifiedCard variant="elevated" className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BarChart3 className="h-5 w-5 text-blue-600" />
+              Performance Overview
+            </CardTitle>
+            <CardDescription>
+              Key metrics for PSP operations
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <div className='card'>
             <div className='flex items-center'>
               <div className='flex-shrink-0'>
@@ -203,12 +242,22 @@ export default function PSPTrack() {
               </div>
             </div>
           </div>
-        </CardGrid>
-      </Section>
+            </div>
+          </CardContent>
+        </UnifiedCard>
 
       {/* Filters and Search Section */}
-      <Section title="Search & Filters" subtitle="Find specific PSP tracks">
-        <div className='card'>
+      <UnifiedCard variant="elevated" className="mb-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Filter className="h-5 w-5 text-blue-600" />
+            Search & Filters
+          </CardTitle>
+          <CardDescription>
+            Find specific PSP tracks
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
           <div className='flex flex-col sm:flex-row gap-4'>
             <div className='flex-1'>
               <div className='relative'>
@@ -251,12 +300,21 @@ export default function PSPTrack() {
               </select>
             </div>
           </div>
-        </div>
-      </Section>
+        </CardContent>
+      </UnifiedCard>
 
       {/* PSP Tracks Table Section */}
-      <Section title="PSP Tracks" subtitle="Detailed view of all PSP transactions">
-        <div className='card'>
+      <UnifiedCard variant="elevated" className="mb-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart3 className="h-5 w-5 text-blue-600" />
+            PSP Tracks
+          </CardTitle>
+          <CardDescription>
+            Detailed view of all PSP transactions
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
           <div className='overflow-x-auto'>
             <table className='min-w-full divide-y divide-gray-200'>
               <thead className='bg-gray-50'>
@@ -374,12 +432,22 @@ export default function PSPTrack() {
               </div>
             </div>
           )}
-        </div>
-      </Section>
+        </CardContent>
+      </UnifiedCard>
 
       {/* PSP Analytics Summary Section */}
-      <Section title="Analytics & Insights" subtitle="Performance overview and recent activity">
-        <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
+      <UnifiedCard variant="elevated" className="mb-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <TrendingUp className="h-5 w-5 text-blue-600" />
+            Analytics & Insights
+          </CardTitle>
+          <CardDescription>
+            Performance overview and recent activity
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
           <div className='card'>
             <h3 className='text-lg font-medium text-gray-900 mb-4'>
               PSP Performance
@@ -463,8 +531,10 @@ export default function PSPTrack() {
               ))}
             </div>
           </div>
-        </div>
-      </Section>
+          </div>
+        </CardContent>
+      </UnifiedCard>
+      </div>
     </div>
   );
 }

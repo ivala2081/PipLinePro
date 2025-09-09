@@ -21,19 +21,19 @@ export const useRevenueTrends = (range: string = '7d') => {
 };
 
 // Analytics hooks
-export const useClientsAnalytics = (range: string = '7d') => {
+export const useClientsAnalytics = (range: string = 'all') => {
   return useSWR(queryKeys.analytics.clients(range), fetcher, {
     refreshInterval: 10 * 60 * 1000, // 10 minutes for client analytics
   });
 };
 
-export const useCommissionAnalytics = (range: string = '7d') => {
+export const useCommissionAnalytics = (range: string = 'all') => {
   return useSWR(queryKeys.analytics.commission(range), fetcher, {
     refreshInterval: 10 * 60 * 1000, // 10 minutes for commission analytics
   });
 };
 
-export const useVolumeAnalysis = (range: string = '7d') => {
+export const useVolumeAnalysis = (range: string = 'all') => {
   return useSWR(queryKeys.analytics.volumeAnalysis(range), fetcher, {
     refreshInterval: 10 * 60 * 1000, // 10 minutes for volume analysis
   });

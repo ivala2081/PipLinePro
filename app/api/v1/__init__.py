@@ -2,7 +2,7 @@
 API v1 Blueprint Registration
 """
 from flask import Blueprint
-from app.api.v1.endpoints import transactions, analytics, users, health, translations, exchange_rates, currency_management, database, performance
+from app.api.v1.endpoints import transactions, analytics, users, health, translations, exchange_rates, currency_management, database, performance, bulk_rates
 
 # Create the main API v1 blueprint
 api_v1 = Blueprint('api_v1', __name__, url_prefix='/api/v1')
@@ -17,6 +17,7 @@ api_v1.register_blueprint(exchange_rates.exchange_rates_bp, url_prefix='/exchang
 api_v1.register_blueprint(currency_management.currency_management_api, url_prefix='/currency')
 api_v1.register_blueprint(database.database_api, url_prefix='/database')
 api_v1.register_blueprint(performance.performance_api, url_prefix='/performance')
+api_v1.register_blueprint(bulk_rates.bulk_rates_bp)
 
 @api_v1.route("/")
 def api_root():

@@ -25,9 +25,9 @@ export const swrConfig: SWRConfiguration = {
 export const queryKeys = {
   // Dashboard queries
   dashboard: {
-    stats: (range: string) => `/api/v1/analytics/dashboard/stats?range=${range}`,
-    topPerformers: (range: string) => `/api/v1/analytics/top-performers?range=${range}`,
-    revenueTrends: (range: string) => `/api/v1/analytics/revenue/trends?range=${range}`,
+    stats: (range: string = 'all') => `/api/v1/analytics/dashboard/stats?range=${range}`,
+    topPerformers: (range: string = 'all') => `/api/v1/analytics/top-performers?range=${range}`,
+    revenueTrends: (range: string = 'all') => `/api/v1/analytics/revenue/trends?range=${range}`,
   },
   
   // Analytics queries

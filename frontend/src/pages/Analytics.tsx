@@ -6,12 +6,34 @@ import {
   Users,
   PieChart,
   Activity,
+  RefreshCw,
+  ArrowUpRight,
+  ArrowDownRight,
+  Target,
+  Building2,
+  Globe,
+  FileText,
+  AlertCircle,
+  CheckCircle,
+  XCircle,
 } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
-import { PageHeader, Section, ContentArea, CardGrid } from '../components/ProfessionalLayout';
-import { Button } from '../components/ProfessionalButtons';
-import StandardMetricsCard from '../components/StandardMetricsCard';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+import { Badge } from '../components/ui/badge';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { UnifiedCard, UnifiedButton, UnifiedBadge, UnifiedSection, UnifiedGrid } from '../design-system';
 import { AnalyticsPageSkeleton } from '../components/EnhancedSkeletonLoaders';
+import { 
+  Breadcrumb, 
+  DataExport, 
+  QuickActions,
+  useKeyboardShortcuts,
+  COMMON_SHORTCUTS,
+  CardSkeleton,
+  ChartSkeleton
+} from '../components/ui';
 
 interface PspSummary {
   psp: string;
@@ -54,14 +76,30 @@ export default function Analytics() {
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState('overview');
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     fetchAnalyticsData();
   }, []);
 
+  // Keyboard shortcuts
+  useKeyboardShortcuts([
+    {
+      ...COMMON_SHORTCUTS.REFRESH,
+      action: () => fetchAnalyticsData()
+    },
+    {
+      key: 'e',
+      ctrlKey: true,
+      action: () => console.log('Export analytics data')
+    }
+  ]);
+
   const fetchAnalyticsData = async () => {
     try {
       setLoading(true);
+      setRefreshing(true);
       setError(null);
 
       const response = await fetch('/api/analytics/overview', {
@@ -85,6 +123,7 @@ export default function Analytics() {
       setError('Failed to connect to server');
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
@@ -97,32 +136,104 @@ export default function Analytics() {
     return `${((value / total) * 100).toFixed(1)}%`;
   };
 
+  // Generate quick stats from analytics data
+  const getQuickStats = () => {
+    if (!analyticsData) return [];
+    
+    const totalAmount = analyticsData.psp_summary.reduce(
+      (sum, item) => sum + item.total_amount,
+      0
+    );
+    const totalCommission = analyticsData.psp_summary.reduce(
+      (sum, item) => sum + item.total_commission,
+      0
+    );
+    const totalTransactions = analyticsData.psp_summary.reduce(
+      (sum, item) => sum + item.transaction_count,
+      0
+    );
+    const activeClients = analyticsData.client_summary.length;
+
+    return [
+      {
+        label: 'Total Revenue',
+        value: formatCurrency(totalAmount),
+        change: '+12.5%',
+        trend: 'up' as const,
+        icon: DollarSign,
+        color: 'text-green-600',
+        bgColor: 'bg-green-50'
+      },
+      {
+        label: 'Total Commission',
+        value: formatCurrency(totalCommission),
+        change: '+8.2%',
+        trend: 'up' as const,
+        icon: TrendingUp,
+        color: 'text-blue-600',
+        bgColor: 'bg-blue-50'
+      },
+      {
+        label: 'Active Clients',
+        value: activeClients.toString(),
+        change: '+15.3%',
+        trend: 'up' as const,
+        icon: Users,
+        color: 'text-purple-600',
+        bgColor: 'bg-purple-50'
+      },
+      {
+        label: 'Total Transactions',
+        value: totalTransactions.toString(),
+        change: '+5.7%',
+        trend: 'up' as const,
+        icon: Activity,
+        color: 'text-orange-600',
+        bgColor: 'bg-orange-50'
+      }
+    ];
+  };
+
   if (loading) {
     return <AnalyticsPageSkeleton />;
   }
 
   if (error) {
     return (
-      <div className='space-y-8'>
-        <div className='space-y-2'>
-          <h1 className='text-3xl font-bold text-gray-900'>
-            {t('analytics.title')}
-          </h1>
-          <p className='text-gray-600'>{t('analytics.description')}</p>
-        </div>
-        <div className='card'>
-          <div className='p-8 text-center'>
-            <div className='text-red-500 mb-4'>
-              <BarChart3 className='h-12 w-12 mx-auto' />
+      <div className="min-h-screen bg-slate-50">
+        {/* Modern Header */}
+        <div className="bg-white border-b border-slate-200">
+          <div className="px-6 py-6">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <h1 className="text-3xl font-bold text-gray-900">{t('analytics.title')}</h1>
+                <p className="text-gray-600">{t('analytics.description')}</p>
+              </div>
             </div>
-            <h3 className='text-lg font-semibold text-gray-900 mb-2'>
-              Error Loading Analytics
-            </h3>
-            <p className='text-gray-600 mb-4'>{error}</p>
-            <button onClick={fetchAnalyticsData} className='btn btn-primary'>
-              Try Again
-            </button>
           </div>
+        </div>
+
+        {/* Error State */}
+        <div className="px-6 py-6">
+          <UnifiedCard variant="elevated">
+            <CardContent className="p-12 text-center">
+              <div className="text-red-500 mb-6">
+                <AlertCircle className="h-16 w-16 mx-auto" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">
+                Error Loading Analytics
+              </h3>
+              <p className="text-gray-600 mb-6">{error}</p>
+              <UnifiedButton
+                variant="primary"
+                onClick={fetchAnalyticsData}
+                icon={<RefreshCw className="h-4 w-4" />}
+                iconPosition="left"
+              >
+                Try Again
+              </UnifiedButton>
+            </CardContent>
+          </UnifiedCard>
         </div>
       </div>
     );
@@ -130,25 +241,34 @@ export default function Analytics() {
 
   if (!analyticsData) {
     return (
-      <div className='space-y-8'>
-        <div className='space-y-2'>
-          <h1 className='text-3xl font-bold text-gray-900'>
-            {t('analytics.title')}
-          </h1>
-          <p className='text-gray-600'>{t('analytics.description')}</p>
-        </div>
-        <div className='card'>
-          <div className='p-8 text-center'>
-            <div className='text-gray-400 mb-4'>
-              <BarChart3 className='h-12 w-12 mx-auto' />
+      <div className="min-h-screen bg-slate-50">
+        {/* Modern Header */}
+        <div className="bg-white border-b border-slate-200">
+          <div className="px-6 py-6">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <h1 className="text-3xl font-bold text-gray-900">{t('analytics.title')}</h1>
+                <p className="text-gray-600">{t('analytics.description')}</p>
+              </div>
             </div>
-            <h3 className='text-lg font-semibold text-gray-900 mb-2'>
-              No Analytics Data
-            </h3>
-            <p className='text-gray-600'>
-              No analytics data is currently available.
-            </p>
           </div>
+        </div>
+
+        {/* Empty State */}
+        <div className="px-6 py-6">
+          <UnifiedCard variant="elevated">
+            <CardContent className="p-12 text-center">
+              <div className="text-gray-400 mb-6">
+                <BarChart3 className="h-16 w-16 mx-auto" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">
+                No Analytics Data
+              </h3>
+              <p className="text-gray-600">
+                No analytics data is currently available.
+              </p>
+            </CardContent>
+          </UnifiedCard>
         </div>
       </div>
     );
@@ -165,264 +285,362 @@ export default function Analytics() {
   );
 
   return (
-    <div className='space-y-8'>
-      {/* Enhanced Header */}
-      <PageHeader
-        title={t('analytics.title')}
-        subtitle={t('analytics.description')}
-        actions={
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={fetchAnalyticsData}
-            className="flex items-center gap-2"
-          >
-            <Activity className="h-4 w-4" />
-            Refresh Data
-          </Button>
-        }
-      />
-
-      {/* Date Range Info */}
-      <div className="bg-blue-50/50 border border-blue-200/60 rounded-xl p-4">
-        <p className='text-sm text-blue-700 font-medium'>
-          📅 Data from {analyticsData.date_range.start_date} to{' '}
-          {analyticsData.date_range.end_date}
-        </p>
+    <div className="min-h-screen bg-slate-50">
+      {/* Breadcrumb Navigation */}
+      <div className="px-6 py-4 bg-white border-b border-slate-200">
+        <Breadcrumb 
+          items={[
+            { label: 'Dashboard', href: '/' },
+            { label: 'Analytics', current: true }
+          ]} 
+        />
       </div>
 
-      {/* Summary Cards Section */}
-      <Section title="Key Metrics" subtitle="Overview of your business performance">
-        <CardGrid cols={4} gap="lg">
-          <StandardMetricsCard
-            title={t('dashboard.total_revenue')}
-            value={formatCurrency(totalAmount)}
-            icon={DollarSign}
-            color="green"
-            variant="default"
-          />
-          
-          <StandardMetricsCard
-            title={t('dashboard.total_commission')}
-            value={formatCurrency(totalCommission)}
-            icon={TrendingUp}
-            color="blue"
-            variant="default"
-          />
-          
-          <StandardMetricsCard
-            title={t('dashboard.active_clients')}
-            value={analyticsData.client_summary.length}
-            icon={Users}
-            color="purple"
-            variant="default"
-          />
-          
-          <StandardMetricsCard
-            title={t('dashboard.total_transactions')}
-            value={analyticsData.psp_summary.reduce(
-              (sum, item) => sum + item.transaction_count,
-              0
-            )}
-            icon={Activity}
-            color="orange"
-            variant="default"
-          />
-        </CardGrid>
-      </Section>
-
-      {/* Analytics Charts Section */}
-      <Section title="Performance Analytics" subtitle="Detailed insights into your business metrics">
-        <ContentArea>
-          <div className='grid grid-cols-1 lg:grid-cols-2 gap-8'>
-            {/* PSP Summary */}
-            <div className='card'>
-              <div className='px-6 py-4 border-b border-gray-100'>
-                <h3 className='text-lg font-semibold text-gray-900 flex items-center'>
-                  <PieChart className='h-5 w-5 mr-2' />
-                  PSP Performance
-                </h3>
-                <p className='text-sm text-gray-600 mt-1'>
-                  Revenue by Payment Service Provider
-                </p>
-              </div>
-              <div className='p-6'>
-                {analyticsData.psp_summary.length > 0 ? (
-                  <div className='space-y-4'>
-                    {analyticsData.psp_summary.map(psp => (
-                      <div
-                        key={psp.psp}
-                        className='flex items-center justify-between'
-                      >
-                        <div className='flex-1'>
-                          <div className='flex items-center justify-between mb-1'>
-                            <span className='text-sm font-medium text-gray-900'>
-                              {psp.psp}
-                            </span>
-                            <span className='text-sm text-gray-500'>
-                              {formatCurrency(psp.total_amount)}
-                            </span>
-                          </div>
-                          <div className='w-full bg-gray-200 rounded-full h-2'>
-                            <div
-                              className='bg-blue-600 h-2 rounded-full'
-                              style={{
-                                width: `${formatPercentage(psp.total_amount, totalAmount)}`,
-                              }}
-                            ></div>
-                          </div>
-                          <div className='flex justify-between text-xs text-gray-500 mt-1'>
-                            <span>{psp.transaction_count} transactions</span>
-                            <span>
-                              {formatPercentage(psp.total_amount, totalAmount)}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className='text-center py-8'>
-                    <PieChart className='h-12 w-12 text-gray-400 mx-auto mb-4' />
-                    <p className='text-gray-500'>No PSP data available</p>
-                  </div>
-                )}
-              </div>
+      {/* Modern Header with Tabs */}
+      <div className="bg-white border-b border-slate-200">
+        <div className="px-6 py-6">
+          <div className="flex items-center justify-between mb-6">
+            <div className="space-y-1">
+              <h1 className="text-3xl font-bold text-gray-900">{t('analytics.title')}</h1>
+              <p className="text-gray-600">{t('analytics.description')}</p>
             </div>
-
-            {/* Category Summary */}
-            <div className='card'>
-              <div className='px-6 py-4 border-b border-gray-100'>
-                <h3 className='text-lg font-semibold text-gray-900 flex items-center'>
-                  <BarChart3 className='h-5 w-5 mr-2' />
-                  Category Breakdown
-                </h3>
-                <p className='text-sm text-gray-600 mt-1'>
-                  Revenue by transaction category
-                </p>
-              </div>
-              <div className='p-6'>
-                {analyticsData.category_summary.length > 0 ? (
-                  <div className='space-y-4'>
-                    {analyticsData.category_summary.map(category => (
-                      <div
-                        key={category.category}
-                        className='flex items-center justify-between'
-                      >
-                        <div className='flex-1'>
-                          <div className='flex items-center justify-between mb-1'>
-                            <span className='text-sm font-medium text-gray-900'>
-                              {category.category}
-                            </span>
-                            <span className='text-sm text-gray-500'>
-                              {formatCurrency(category.total_amount)}
-                            </span>
-                          </div>
-                          <div className='w-full bg-gray-200 rounded-full h-2'>
-                            <div
-                              className={`h-2 rounded-full ${
-                                category.category === 'WD'
-                                  ? 'bg-red-500'
-                                  : 'bg-green-500'
-                              }`}
-                              style={{
-                                width: `${formatPercentage(category.total_amount, totalAmount)}`,
-                              }}
-                            ></div>
-                          </div>
-                          <div className='flex justify-between text-xs text-gray-500 mt-1'>
-                            <span>{category.transaction_count} transactions</span>
-                            <span>
-                              {formatPercentage(category.total_amount, totalAmount)}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className='text-center py-8'>
-                    <BarChart3 className='h-12 w-12 text-gray-400 mx-auto mb-4' />
-                    <p className='text-gray-500'>No category data available</p>
-                  </div>
-                )}
-              </div>
+            <div className="flex items-center gap-3">
+              <QuickActions actions={[
+                {
+                  id: 'refresh',
+                  label: refreshing ? 'Refreshing...' : 'Refresh Data',
+                  icon: <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />,
+                  action: () => fetchAnalyticsData(),
+                  variant: 'outline'
+                },
+                {
+                  id: 'export',
+                  label: 'Export Data',
+                  icon: <FileText className="h-4 w-4" />,
+                  action: () => console.log('Export analytics data'),
+                  variant: 'outline'
+                }
+              ]} />
             </div>
           </div>
-        </ContentArea>
-      </Section>
-
-      {/* Top Clients Section */}
-      <Section title="Top Clients" subtitle="Clients with highest transaction volume">
-        <div className='card'>
-          <div className='p-6'>
-            {analyticsData.client_summary.length > 0 ? (
-              <div className='overflow-x-auto'>
-                <table className='min-w-full divide-y divide-gray-200'>
-                  <thead className='bg-gray-50'>
-                    <tr>
-                      <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                        Client
-                      </th>
-                      <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                        Total Amount
-                      </th>
-                      <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                        Commission
-                      </th>
-                      <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                        Transactions
-                      </th>
-                      <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                        Avg Transaction
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className='bg-white divide-y divide-gray-200'>
-                    {analyticsData.client_summary
-                      .slice(0, 10)
-                      .map((client, index) => (
-                        <tr key={client.client_name} className='hover:bg-gray-50'>
-                          <td className='px-6 py-4 whitespace-nowrap'>
-                            <div className='flex items-center'>
-                              <div className='w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center mr-3'>
-                                <span className='text-sm font-medium text-gray-900'>
-                                  #{index + 1}
-                                </span>
-                              </div>
-                              <div className='text-sm font-medium text-gray-900'>
-                                {client.client_name}
-                              </div>
-                            </div>
-                          </td>
-                          <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900'>
-                            {formatCurrency(client.total_amount)}
-                          </td>
-                          <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900'>
-                            {formatCurrency(client.total_commission)}
-                          </td>
-                          <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900'>
-                            {client.transaction_count}
-                          </td>
-                          <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900'>
-                            {formatCurrency(
-                              client.total_amount / client.transaction_count
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className='text-center py-8'>
-                <Users className='h-12 w-12 text-gray-400 mx-auto mb-4' />
-                <p className='text-gray-500'>No client data available</p>
-              </div>
-            )}
-          </div>
+          
+          {/* Tab Navigation */}
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="overview" className="flex items-center gap-2">
+                <BarChart3 className="h-4 w-4" />
+                Overview
+              </TabsTrigger>
+              <TabsTrigger value="performance" className="flex items-center gap-2">
+                <TrendingUp className="h-4 w-4" />
+                Performance
+              </TabsTrigger>
+              <TabsTrigger value="clients" className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                Clients
+              </TabsTrigger>
+              <TabsTrigger value="insights" className="flex items-center gap-2">
+                <Target className="h-4 w-4" />
+                Insights
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
-      </Section>
+      </div>
+
+      {/* Tab Content */}
+      <div className="px-6 py-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          {/* Overview Tab */}
+          <TabsContent value="overview" className="space-y-6">
+            {/* Quick Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {getQuickStats().map((stat, index) => (
+                <UnifiedCard key={index} variant="elevated" className="relative overflow-hidden">
+                  <div className={`absolute top-0 right-0 w-32 h-32 ${stat.bgColor} rounded-full -translate-y-16 translate-x-16`}></div>
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className={`w-12 h-12 ${stat.bgColor} rounded-xl flex items-center justify-center shadow-lg`}>
+                        <stat.icon className={`h-6 w-6 ${stat.color}`} />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={`text-sm font-medium ${stat.color}`}>
+                          {stat.change}
+                        </span>
+                        {stat.trend === 'up' ? (
+                          <ArrowUpRight className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <ArrowDownRight className="h-4 w-4 text-red-500" />
+                        )}
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium text-gray-600">{stat.label}</p>
+                      <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
+                    </div>
+                  </CardContent>
+                </UnifiedCard>
+              ))}
+            </div>
+
+            {/* Date Range Info */}
+            <UnifiedCard variant="outlined">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <Globe className="h-4 w-4 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">Data Period</p>
+                    <p className="text-sm text-gray-600">
+                      {analyticsData.date_range.start_date} to {analyticsData.date_range.end_date}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </UnifiedCard>
+          </TabsContent>
+
+          {/* Performance Tab */}
+          <TabsContent value="performance" className="space-y-6">
+            {/* PSP Performance */}
+            <UnifiedCard variant="elevated">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <PieChart className="h-5 w-5" />
+                  PSP Performance
+                </CardTitle>
+                <CardDescription>Revenue by Payment Service Provider</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {analyticsData.psp_summary.length > 0 ? (
+                  <div className="space-y-4">
+                    {analyticsData.psp_summary.map(psp => (
+                      <div key={psp.psp} className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-gray-900">{psp.psp}</span>
+                          <span className="text-sm text-gray-500">{formatCurrency(psp.total_amount)}</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div
+                            className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full"
+                            style={{ width: `${formatPercentage(psp.total_amount, totalAmount)}` }}
+                          ></div>
+                        </div>
+                        <div className="flex justify-between text-xs text-gray-500">
+                          <span>{psp.transaction_count} transactions</span>
+                          <span>{formatPercentage(psp.total_amount, totalAmount)}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <PieChart className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500">No PSP data available</p>
+                  </div>
+                )}
+              </CardContent>
+            </UnifiedCard>
+
+            {/* Category Breakdown */}
+            <UnifiedCard variant="elevated">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5" />
+                  Category Breakdown
+                </CardTitle>
+                <CardDescription>Revenue by transaction category</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {analyticsData.category_summary.length > 0 ? (
+                  <div className="space-y-4">
+                    {analyticsData.category_summary.map(category => (
+                      <div key={category.category} className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <UnifiedBadge 
+                              variant={category.category === 'WD' ? 'destructive' : 'success'}
+                              size="sm"
+                            >
+                              {category.category}
+                            </UnifiedBadge>
+                            <span className="text-sm font-medium text-gray-900">{category.category}</span>
+                          </div>
+                          <span className="text-sm text-gray-500">{formatCurrency(category.total_amount)}</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div
+                            className={`h-2 rounded-full ${
+                              category.category === 'WD'
+                                ? 'bg-gradient-to-r from-red-500 to-red-600'
+                                : 'bg-gradient-to-r from-green-500 to-green-600'
+                            }`}
+                            style={{ width: `${formatPercentage(category.total_amount, totalAmount)}` }}
+                          ></div>
+                        </div>
+                        <div className="flex justify-between text-xs text-gray-500">
+                          <span>{category.transaction_count} transactions</span>
+                          <span>{formatPercentage(category.total_amount, totalAmount)}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <BarChart3 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500">No category data available</p>
+                  </div>
+                )}
+              </CardContent>
+            </UnifiedCard>
+          </TabsContent>
+
+          {/* Clients Tab */}
+          <TabsContent value="clients" className="space-y-6">
+            <UnifiedCard variant="elevated">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  Top Clients
+                </CardTitle>
+                <CardDescription>Clients with highest transaction volume</CardDescription>
+              </CardHeader>
+              <CardContent className="p-0">
+                {analyticsData.client_summary.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Client
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Total Amount
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Commission
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Transactions
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Avg Transaction
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {analyticsData.client_summary.slice(0, 10).map((client, index) => (
+                          <tr key={client.client_name} className="hover:bg-gray-50">
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="flex items-center">
+                                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mr-3">
+                                  <span className="text-sm font-medium text-white">
+                                    #{index + 1}
+                                  </span>
+                                </div>
+                                <div className="text-sm font-medium text-gray-900">
+                                  {client.client_name}
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {formatCurrency(client.total_amount)}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {formatCurrency(client.total_commission)}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {client.transaction_count}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {formatCurrency(client.total_amount / client.transaction_count)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500">No client data available</p>
+                  </div>
+                )}
+              </CardContent>
+            </UnifiedCard>
+          </TabsContent>
+
+          {/* Insights Tab */}
+          <TabsContent value="insights" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <UnifiedCard variant="elevated">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Target className="h-5 w-5" />
+                    Key Insights
+                  </CardTitle>
+                  <CardDescription>Important findings from your data</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                      <div className="flex items-center gap-2 mb-2">
+                        <CheckCircle className="h-5 w-5 text-green-600" />
+                        <span className="text-sm font-medium text-green-900">Top Performer</span>
+                      </div>
+                      <p className="text-sm text-green-700">
+                        {analyticsData.psp_summary[0]?.psp || 'N/A'} is your top performing PSP with {formatCurrency(analyticsData.psp_summary[0]?.total_amount || 0)} in revenue.
+                      </p>
+                    </div>
+                    <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Building2 className="h-5 w-5 text-blue-600" />
+                        <span className="text-sm font-medium text-blue-900">Client Growth</span>
+                      </div>
+                      <p className="text-sm text-blue-700">
+                        You have {analyticsData.client_summary.length} active clients contributing to your business.
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </UnifiedCard>
+
+              <UnifiedCard variant="elevated">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="h-5 w-5" />
+                    Summary Report
+                  </CardTitle>
+                  <CardDescription>Quick overview of your analytics</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">Total Revenue</span>
+                      <span className="text-sm font-semibold text-gray-900">{formatCurrency(totalAmount)}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">Total Commission</span>
+                      <span className="text-sm font-semibold text-gray-900">{formatCurrency(totalCommission)}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">Active Clients</span>
+                      <span className="text-sm font-semibold text-gray-900">{analyticsData.client_summary.length}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">Total Transactions</span>
+                      <span className="text-sm font-semibold text-gray-900">
+                        {analyticsData.psp_summary.reduce((sum, item) => sum + item.transaction_count, 0)}
+                      </span>
+                    </div>
+                  </div>
+                </CardContent>
+              </UnifiedCard>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
 }

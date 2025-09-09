@@ -13,16 +13,25 @@ interface PSPData {
 export const usePSPRefresh = () => {
   const refreshPSPData = useCallback(async (): Promise<PSPData[]> => {
     try {
-      const response = await api.get('/api/v1/transactions/psp_summary_stats');
+      console.log('🔄 Starting PSP data refresh...');
+      
+      // Clear PSP cache first
+      api.clearPSPCache();
+      
+      // Force refresh by disabling cache
+      const response = await api.get('/api/v1/transactions/psp_summary_stats', {}, false);
+      console.log('📡 PSP API response:', response);
+      
       if (response.ok) {
         const pspData = await api.parseResponse(response);
-        console.log('PSP data refreshed successfully:', pspData);
+        console.log('✅ PSP data refreshed successfully:', pspData);
         return pspData;
       } else {
+        console.error('❌ PSP API response not OK:', response.status, response.statusText);
         throw new Error('Failed to fetch PSP data');
       }
     } catch (error) {
-      console.error('Error refreshing PSP data:', error);
+      console.error('❌ Error refreshing PSP data:', error);
       throw error;
     }
   }, []);

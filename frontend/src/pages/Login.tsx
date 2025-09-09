@@ -1,34 +1,128 @@
-import { useState, useEffect } from 'react';
-import {
-  Eye,
-  EyeOff,
-  AlertCircle,
-  CheckCircle,
-  ArrowRight,
-  Shield,
-} from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { 
+  Button, 
+  Input, 
+  Label, 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardHeader, 
+  CardTitle,
+  Alert,
+  AlertDescription,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  Checkbox
+} from '../components/ui';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useTheme, type Theme } from '../contexts/ThemeContext';
 import { useNavigate, useLocation } from 'react-router-dom';
-import MobileOptimizedInput from '../components/MobileOptimizedInput';
-import MobileOptimizedButton from '../components/MobileOptimizedButton';
+import { 
+  Banknote, 
+  Eye, 
+  EyeOff, 
+  Shield, 
+  AlertTriangle, 
+  Lock,
+  User,
+  Globe,
+  Sun,
+  Moon,
+  Monitor,
+  KeyRound,
+  Smartphone,
+  Settings,
+  Clock,
+  CheckCircle,
+  Info,
+  Loader2,
+  Server,
+  Wifi,
+  WifiOff
+} from 'lucide-react';
+import { toast, Toaster } from 'sonner';
+
+interface FormErrors {
+  username?: string
+  password?: string
+  general?: string
+}
+
+interface LoginAttempt {
+  timestamp: Date
+  success: boolean
+  ip?: string
+}
 
 export default function Login() {
-  const [showPassword, setShowPassword] = useState(false);
-  const [formData, setFormData] = useState({
-    username: '',
-    password: '',
-  });
-  const [rememberMe, setRememberMe] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const [logoLoaded, setLogoLoaded] = useState(false);
+  // Form state
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [rememberMe, setRememberMe] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [errors, setErrors] = useState<FormErrors>({})
 
+  // Security & validation state
+  const [failedAttempts, setFailedAttempts] = useState(0)
+  const [isLocked, setIsLocked] = useState(false)
+  const [lockoutTime, setLockoutTime] = useState<Date | null>(null)
+  const [remainingTime, setRemainingTime] = useState(0)
+  const [showCapsLockWarning, setShowCapsLockWarning] = useState(false)
+  const [passwordStrength, setPasswordStrength] = useState(0)
+  const [isOnline, setIsOnline] = useState(navigator.onLine)
+  const [lastActivity, setLastActivity] = useState<Date>(new Date())
+
+  // UI state
+  const [showAdvancedOptions, setShowAdvancedOptions] = useState(false)
+  const [currentTime, setCurrentTime] = useState(new Date())
+  const [systemStatus, setSystemStatus] = useState<'operational' | 'maintenance' | 'issues'>('operational')
+
+  // Refs
+  const usernameRef = useRef<HTMLInputElement>(null)
+  const passwordRef = useRef<HTMLInputElement>(null)
+  const loginAttemptsRef = useRef<LoginAttempt[]>([])
+
+  // Contexts
   const { login, isAuthenticated } = useAuth();
-  const { t } = useLanguage();
+  const { t, currentLanguage, setLanguage } = useLanguage();
+  const { theme, setTheme, actualTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Password strength calculation
+  const calculatePasswordStrength = (pass: string): number => {
+    let strength = 0
+    if (pass.length >= 8) strength += 25
+    if (/[A-Z]/.test(pass)) strength += 25
+    if (/[0-9]/.test(pass)) strength += 25
+    if (/[^A-Za-z0-9]/.test(pass)) strength += 25
+    return strength
+  }
+
+  // Form validation
+  const validateForm = (): boolean => {
+    const newErrors: FormErrors = {}
+
+    if (!username.trim()) {
+      newErrors.username = t('login.usernameRequired')
+    } else if (username.length < 3) {
+      newErrors.username = t('login.usernameMinLength')
+    }
+
+    if (!password) {
+      newErrors.password = t('login.passwordRequired')
+    } else if (password.length < 6) {
+      newErrors.password = t('login.passwordMinLength')
+    }
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -38,332 +132,569 @@ export default function Login() {
     }
   }, [isAuthenticated, navigate, location]);
 
-  // Show message from location state (e.g., account locked)
+  // Auto-fill remembered username
   useEffect(() => {
-    if (location.state?.message) {
-      setError(location.state.message);
+    const rememberedUser = localStorage.getItem('pipeline_remember_user')
+    if (rememberedUser) {
+      setUsername(rememberedUser)
+      setRememberMe(true)
     }
-  }, [location]);
+  }, [])
 
+  // Handle lockout timer
+  useEffect(() => {
+    if (!isLocked || !lockoutTime) return
+
+    const interval = setInterval(() => {
+      const now = Date.now()
+      const remaining = Math.max(0, Math.ceil((lockoutTime.getTime() - now) / 1000))
+      
+      setRemainingTime(remaining)
+      
+      if (remaining <= 0) {
+        setIsLocked(false)
+        setLockoutTime(null)
+        setFailedAttempts(0)
+        toast.success(t('login.accountUnlocked'))
+      }
+    }, 1000)
+
+    return () => clearInterval(interval)
+  }, [isLocked, lockoutTime, t])
+
+  // Update current time
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date())
+      setLastActivity(new Date())
+    }, 1000)
+    return () => clearInterval(interval)
+  }, [])
+
+  // Network status monitoring
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true)
+    const handleOffline = () => setIsOnline(false)
+
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+
+    return () => {
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
+    }
+  }, [])
+
+  // Focus management
+  useEffect(() => {
+    if (usernameRef.current) {
+      usernameRef.current.focus()
+    }
+  }, [])
+
+  const getPasswordStrengthColor = (strength: number) => {
+    if (strength < 25) return 'bg-red-500'
+    if (strength < 50) return 'bg-orange-500'
+    if (strength < 75) return 'bg-yellow-500'
+    return 'bg-green-500'
+  }
+
+  const getPasswordStrengthText = (strength: number) => {
+    if (strength < 25) return t('login.passwordWeak')
+    if (strength < 50) return t('login.passwordFair')
+    if (strength < 75) return t('login.passwordGood')
+    return t('login.passwordStrong')
+  }
+
+  // Handle login attempt
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setSuccess('');
-    setIsSubmitting(true);
+    e.preventDefault()
+    
+    if (isLocked) {
+      toast.error(t('login.accountLocked'), {
+        description: t('login.accountLockedDesc', { time: Math.ceil(remainingTime / 60) })
+      })
+      return
+    }
+
+    if (!validateForm()) {
+      return
+    }
+
+    setErrors({})
+    setIsLoading(true)
 
     try {
-      const result = await login(
-        formData.username,
-        formData.password,
-        rememberMe
-      );
+      const startTime = Date.now()
+      const result = await login(username, password, rememberMe)
+      
+      // Record login attempt
+      const attempt: LoginAttempt = {
+        timestamp: new Date(),
+        success: result.success,
+        ip: '192.168.1.100' // Mock IP
+      }
+      loginAttemptsRef.current.push(attempt)
 
       if (result.success) {
-        setSuccess(result.message);
-        // Redirect will be handled by useEffect when isAuthenticated changes
+        // Store remember me preference
+        if (rememberMe) {
+          localStorage.setItem('pipeline_remember_user', username)
+        } else {
+          localStorage.removeItem('pipeline_remember_user')
+        }
+
+        setFailedAttempts(0)
+        
+        toast.success(t('login.welcomeBack'), {
+          description: t('login.loginSuccessDesc'),
+          duration: 3000
+        })
       } else {
-        setError(result.message);
+        throw new Error(result.message || t('login.invalidCredentials'))
       }
     } catch (err) {
-      setError('An unexpected error occurred. Please try again.');
+      const newFailedAttempts = failedAttempts + 1
+      setFailedAttempts(newFailedAttempts)
+
+      // Lock account after 5 failed attempts
+      if (newFailedAttempts >= 5) {
+        const lockTime = new Date(Date.now() + 15 * 60 * 1000) // 15 minutes
+        setIsLocked(true)
+        setLockoutTime(lockTime)
+        setRemainingTime(15 * 60)
+        
+        toast.error(t('login.accountLocked'), {
+          description: t('login.tooManyAttempts'),
+          duration: 5000
+        })
+      } else {
+        const errorMessage = err instanceof Error ? err.message : t('login.loginFailed')
+        setErrors({ general: errorMessage })
+        
+        toast.error(t('login.loginFailed'), {
+          description: t('login.attemptsRemaining', { attempts: 5 - newFailedAttempts }),
+          duration: 4000
+        })
+      }
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false)
     }
-  };
+  }
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    // Clear error when user starts typing
-    if (error) setError('');
-  };
+  // Handle caps lock detection
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    const capsLock = e.getModifierState && e.getModifierState('CapsLock')
+    setShowCapsLockWarning(capsLock)
+  }
 
-  const handleLogoLoad = () => {
-    setLogoLoaded(true);
-  };
+  // Handle password change
+  const handlePasswordChange = (value: string) => {
+    setPassword(value)
+    setPasswordStrength(calculatePasswordStrength(value))
+  }
 
-  const handleLogoError = () => {
-    setLogoLoaded(false);
-    console.log('Logo failed to load, using fallback icon');
-  };
+  // Handle caps lock detection on key down
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.getModifierState) {
+      const capsLock = e.getModifierState('CapsLock')
+      setShowCapsLockWarning(capsLock)
+    }
+  }
 
-  // Minimal username icon component
-  const UsernameIcon = () => (
-    <div className="relative flex items-center justify-center">
-      <div className="w-6 h-6 bg-blue-500 rounded-md flex items-center justify-center">
-        <svg
-          className="w-4 h-4 text-white"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-          <circle cx="12" cy="7" r="4" />
-        </svg>
-      </div>
-    </div>
-  );
-
-  // Minimal password icon component
-  const PasswordIcon = () => (
-    <div className="relative flex items-center justify-center">
-      <div className="w-6 h-6 bg-gray-500 rounded-md flex items-center justify-center">
-        <svg
-          className="w-4 h-4 text-white"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-          <circle cx="12" cy="16" r="1" />
-          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-        </svg>
-      </div>
-    </div>
-  );
 
   return (
-    <div className='min-h-screen flex bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100'>
-      {/* Hidden preload image */}
-      <img
-        src='/plogo.png'
-        alt=''
-        className='hidden'
-        onLoad={handleLogoLoad}
-        onError={handleLogoError}
-      />
-
-      {/* Left Panel - Branding */}
-      <div className='hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-600 to-indigo-700 relative overflow-hidden'>
-        {/* Background Pattern */}
-        <div className='absolute inset-0 opacity-10'>
-          <div className='absolute top-0 left-0 w-72 h-72 bg-white rounded-full -translate-x-1/2 -translate-y-1/2'></div>
-          <div className='absolute bottom-0 right-0 w-96 h-96 bg-white rounded-full translate-x-1/2 translate-y-1/2'></div>
-        </div>
-
-        {/* Content */}
-        <div className='relative z-10 flex flex-col justify-center px-12 py-12'>
-          <div className='max-w-md'>
-            {/* Logo */}
-            <div className='flex items-center space-x-3 mb-8'>
-              <div className='flex items-center justify-center'>
-                {logoLoaded ? (
-                  <img
-                    src='/plogo.png'
-                    alt='PipLine Pro Logo'
-                    className='w-16 h-16 object-contain'
-                    onLoad={handleLogoLoad}
-                    onError={handleLogoError}
-                  />
-                ) : (
-                  <Shield className='w-16 h-16 text-white' />
-                )}
-              </div>
-              <div>
-                <h1 className='text-2xl font-bold text-white'>PipLine Pro</h1>
-                <p className='text-blue-100 text-sm'>
-                  Enterprise Financial Management
-                </p>
-              </div>
-            </div>
-
-            {/* Hero Content */}
-            <h2 className='text-4xl font-bold text-white mb-4 leading-tight'>
-              Secure Financial Management
-            </h2>
-            <p className='text-blue-100 text-lg mb-8 leading-relaxed'>
-              Streamline your business operations with our comprehensive
-              financial management platform. Track transactions, manage PSPs,
-              and gain valuable insights.
-            </p>
-
-            {/* Features */}
-            <div className='space-y-4'>
-              <div className='flex items-center space-x-3'>
-                <div className='w-2 h-2 bg-green-400 rounded-full'></div>
-                <span className='text-blue-100'>
-                  Real-time transaction monitoring
-                </span>
-              </div>
-              <div className='flex items-center space-x-3'>
-                <div className='w-2 h-2 bg-green-400 rounded-full'></div>
-                <span className='text-blue-100'>
-                  Advanced analytics & reporting
-                </span>
-              </div>
-              <div className='flex items-center space-x-3'>
-                <div className='w-2 h-2 bg-green-400 rounded-full'></div>
-                <span className='text-blue-100'>Multi-PSP integration</span>
-              </div>
-            </div>
-          </div>
-        </div>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/30 p-4 relative overflow-hidden">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 opacity-30">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_25%,theme(colors.primary/0.05),transparent_25%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_75%,theme(colors.primary/0.05),transparent_25%)]" />
+      </div>
+      
+      {/* Network Status Indicator */}
+      <div className="absolute top-4 right-4 flex items-center gap-2 bg-card border rounded-lg px-3 py-2 shadow-sm">
+        {isOnline ? (
+          <Wifi className="w-4 h-4 text-green-500" />
+        ) : (
+          <WifiOff className="w-4 h-4 text-red-500" />
+        )}
+        <span className="text-xs text-muted-foreground">
+          {isOnline ? t('login.online') : t('login.offline')}
+        </span>
       </div>
 
-      {/* Right Panel - Login Form */}
-      <div className='flex-1 flex items-center justify-center px-6 py-12'>
-        <div className='w-full max-w-md'>
-          {/* Mobile Logo */}
-          <div className='lg:hidden text-center mb-8'>
-            <div className='inline-flex items-center space-x-3'>
-              <div className='flex items-center justify-center'>
-                {logoLoaded ? (
-                  <img
-                    src='/plogo.png'
-                    alt='PipLine Pro Logo'
-                    className='w-14 h-14 object-contain'
-                    onLoad={handleLogoLoad}
-                    onError={handleLogoError}
-                  />
-                ) : (
-                  <Shield className='w-14 h-14 text-blue-600' />
-                )}
-              </div>
-              <div>
-                <h1 className='text-xl font-bold text-gray-900'>PipLine Pro</h1>
-                <p className='text-gray-500 text-sm'>
-                  Enterprise Financial Management
-                </p>
-              </div>
-            </div>
+      {/* System Status */}
+      <div className="absolute top-4 left-4 flex items-center gap-2 bg-card border rounded-lg px-3 py-2 shadow-sm">
+        <Server className={`w-4 h-4 ${systemStatus === 'operational' ? 'text-green-500' : systemStatus === 'maintenance' ? 'text-yellow-500' : 'text-red-500'}`} />
+        <span className="text-xs text-muted-foreground">
+          {systemStatus === 'operational' && t('login.systemOperational')}
+          {systemStatus === 'maintenance' && t('login.systemMaintenance')}
+          {systemStatus === 'issues' && t('login.systemIssues')}
+        </span>
+      </div>
+
+      <div className="w-full max-w-md space-y-6 relative z-10">
+        {/* Header */}
+        <div className="text-center space-y-4">
+          {/* Logo */}
+          <div className="mx-auto flex items-center justify-center">
+            <img 
+              src="/plogo.png" 
+              alt="PipeLine Pro Logo" 
+              className="w-24 h-24 object-contain"
+            />
+          </div>
+          
+          {/* Branding */}
+          <div className="space-y-2">
+            <h1 className="text-3xl font-semibold tracking-tight">PipeLine Pro</h1>
+            <p className="text-muted-foreground">{t('login.systemTitle')}</p>
           </div>
 
-          {/* Login Form Card */}
-          <div className='bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8'>
-            {/* Header */}
-            <div className='text-center mb-8'>
-              <h2 className='text-2xl font-bold text-gray-900 mb-2'>
-                {t('auth.welcome_back')}
-              </h2>
-              <p className='text-gray-600'>{t('auth.sign_in_to_account')}</p>
+          {/* Time & Date Display */}
+          <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
+            <div className="flex items-center gap-1">
+              <Clock className="w-4 h-4" />
+              <span>{currentTime.toLocaleTimeString(currentLanguage === 'tr' ? 'tr-TR' : 'en-US')}</span>
             </div>
+            <div className="w-px h-4 bg-border" />
+            <span>{currentTime.toLocaleDateString(currentLanguage === 'tr' ? 'tr-TR' : 'en-US')}</span>
+          </div>
+        </div>
 
-            {/* Error Message */}
-            {error && (
-              <div className='mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start space-x-3'>
-                <AlertCircle className='h-5 w-5 text-red-500 flex-shrink-0 mt-0.5' />
-                <div className='flex-1'>
-                  <p className='text-sm font-medium text-red-800'>{error}</p>
+        {/* Quick Settings */}
+        <div className="flex items-center justify-center gap-2">
+          {/* Language Selector */}
+          <Select value={currentLanguage} onValueChange={setLanguage}>
+            <SelectTrigger className="w-auto border-0 bg-transparent hover:bg-muted/50 transition-colors">
+              <Globe className="w-4 h-4 mr-1" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="en">English</SelectItem>
+              <SelectItem value="tr">Türkçe</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {/* Theme Selector */}
+          <Select value={theme} onValueChange={(value: Theme) => setTheme(value)}>
+            <SelectTrigger className="w-auto border-0 bg-transparent hover:bg-muted/50 transition-colors">
+              {actualTheme === 'light' && <Sun className="w-4 h-4 mr-1" />}
+              {actualTheme === 'dark' && <Moon className="w-4 h-4 mr-1" />}
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="light">
+                <div className="flex items-center gap-2">
+                  <Sun className="w-4 h-4" />
+                  {t('settings.lightMode')}
                 </div>
-              </div>
-            )}
-
-            {/* Success Message */}
-            {success && (
-              <div className='mb-6 p-4 bg-green-50 border border-green-200 rounded-xl flex items-start space-x-3'>
-                <CheckCircle className='h-5 w-5 text-green-500 flex-shrink-0 mt-0.5' />
-                <div className='flex-1'>
-                  <p className='text-sm font-medium text-green-800'>
-                    {success}
-                  </p>
+              </SelectItem>
+              <SelectItem value="dark">
+                <div className="flex items-center gap-2">
+                  <Moon className="w-4 h-4" />
+                  {t('settings.darkMode')}
                 </div>
-              </div>
-            )}
+              </SelectItem>
+              <SelectItem value="system">
+                <div className="flex items-center gap-2">
+                  <Monitor className="w-4 h-4" />
+                  {t('settings.systemDefault')}
+                </div>
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
-            {/* Form */}
-            <form className='space-y-6' onSubmit={handleSubmit}>
+        {/* Security Notice */}
+        <Alert className="border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20">
+          <Shield className="h-4 w-4 text-amber-600" />
+          <AlertDescription className="text-amber-800 dark:text-amber-200">
+            {t('login.securityNotice')}
+          </AlertDescription>
+        </Alert>
+
+        {/* Account Lockout Warning */}
+        {isLocked && (
+          <Alert variant="destructive">
+            <Lock className="h-4 w-4" />
+            <AlertDescription>
+              {t('login.accountLockedMessage', { 
+                minutes: Math.ceil(remainingTime / 60),
+                seconds: remainingTime % 60 
+              })}
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Network Status Warning */}
+        {!isOnline && (
+          <Alert className="border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-900/20">
+            <WifiOff className="h-4 w-4 text-orange-600" />
+            <AlertDescription className="text-orange-800 dark:text-orange-200">
+              {t('login.offlineMode')}
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Login Form */}
+        <Card className="shadow-xl border-border/50 backdrop-blur-sm bg-card/95">
+          <CardHeader className="space-y-1 pb-4">
+            <CardTitle className="text-2xl flex items-center gap-2">
+              <KeyRound className="w-5 h-5" />
+              {t('login.signIn')}
+            </CardTitle>
+            <CardDescription>
+              {t('login.signInDescription')}
+            </CardDescription>
+          </CardHeader>
+          
+          <CardContent className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {/* General Error */}
+              {errors.general && (
+                <Alert variant="destructive">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription>{errors.general}</AlertDescription>
+                </Alert>
+              )}
+
               {/* Username Field */}
-              <MobileOptimizedInput
-                label={t('auth.username')}
-                type="text"
-                required
-                leftIcon={<UsernameIcon />}
-                placeholder={t('auth.username')}
-                value={formData.username}
-                onChange={e => handleInputChange('username', e.target.value)}
-                disabled={isSubmitting}
-                inputSize="lg"
-                variant="default"
-              />
+              <div className="space-y-2">
+                <Label htmlFor="username" className="flex items-center gap-1">
+                  <User className="w-4 h-4" />
+                  {t('login.username')}
+                  <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  ref={usernameRef}
+                  id="username"
+                  type="text"
+                  placeholder={t('login.usernamePlaceholder')}
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  disabled={isLoading || isLocked}
+                  className={`bg-input-background transition-all ${
+                    errors.username ? 'border-destructive focus-visible:ring-destructive' : ''
+                  }`}
+                  autoComplete="username"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && passwordRef.current) {
+                      passwordRef.current.focus()
+                    }
+                  }}
+                />
+                {errors.username && (
+                  <p className="text-sm text-destructive flex items-center gap-1">
+                    <AlertTriangle className="w-3 h-3" />
+                    {errors.username}
+                  </p>
+                )}
+              </div>
 
               {/* Password Field */}
-              <MobileOptimizedInput
-                label={t('auth.password')}
-                type={showPassword ? 'text' : 'password'}
-                required
-                leftIcon={<PasswordIcon />}
-                rightIcon={
-                  <button
-                    type='button'
-                    className='text-gray-400 hover:text-emerald-600 transition-colors duration-200 hover:scale-110 transform'
+              <div className="space-y-2">
+                <Label htmlFor="password" className="flex items-center gap-1">
+                  <Lock className="w-4 h-4" />
+                  {t('login.password')}
+                  <span className="text-destructive">*</span>
+                </Label>
+                <div className="relative">
+                  <Input
+                    ref={passwordRef}
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder={t('login.passwordPlaceholder')}
+                    value={password}
+                    onChange={(e) => handlePasswordChange(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    onKeyPress={handleKeyPress}
+                    disabled={isLoading || isLocked}
+                    className={`bg-input-background pr-10 transition-all ${
+                      errors.password ? 'border-destructive focus-visible:ring-destructive' : ''
+                    }`}
+                    autoComplete="current-password"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                     onClick={() => setShowPassword(!showPassword)}
-                    disabled={isSubmitting}
+                    disabled={isLoading || isLocked}
+                    tabIndex={-1}
                   >
                     {showPassword ? (
-                      <EyeOff className='h-5 w-5' />
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
                     ) : (
-                      <Eye className='h-5 w-5' />
+                      <Eye className="h-4 w-4 text-muted-foreground" />
                     )}
-                  </button>
-                }
-                placeholder={t('auth.password')}
-                value={formData.password}
-                onChange={e => handleInputChange('password', e.target.value)}
-                disabled={isSubmitting}
-                inputSize="lg"
-                variant="default"
-              />
+                  </Button>
+                </div>
 
-              {/* Remember Me & Forgot Password */}
-              <div className='flex items-center justify-between'>
-                <div className='flex items-center'>
-                  <input
-                    id='remember-me'
-                    name='remember-me'
-                    type='checkbox'
-                    className='h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded'
-                    checked={rememberMe}
-                    onChange={e => setRememberMe(e.target.checked)}
-                    disabled={isSubmitting}
-                  />
-                  <label
-                    htmlFor='remember-me'
-                    className='ml-2 block text-sm text-gray-700'
-                  >
-                    {t('auth.remember_me')}
-                  </label>
-                </div>
-                <div className='text-sm'>
-                  <a
-                    href='#'
-                    className='font-medium text-blue-600 hover:text-blue-700 transition-colors duration-200 hover:underline'
-                  >
-                    {t('auth.forgot_password')}
-                  </a>
-                </div>
+                {/* Password Strength Indicator */}
+                {password && (
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground">
+                        {t('login.passwordStrength')}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {getPasswordStrengthText(passwordStrength)}
+                      </span>
+                    </div>
+                    <div className="w-full bg-muted rounded-full h-1.5">
+                      <div
+                        className={`h-1.5 rounded-full transition-all duration-300 ${getPasswordStrengthColor(passwordStrength)}`}
+                        style={{ width: `${passwordStrength}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {errors.password && (
+                  <p className="text-sm text-destructive flex items-center gap-1">
+                    <AlertTriangle className="w-3 h-3" />
+                    {errors.password}
+                  </p>
+                )}
+
+                {/* Caps Lock Warning */}
+                {showCapsLockWarning && (
+                  <p className="text-sm text-orange-600 flex items-center gap-1">
+                    <Info className="w-3 h-3" />
+                    {t('login.capsLockOn')}
+                  </p>
+                )}
               </div>
 
-              {/* Submit Button */}
-              <MobileOptimizedButton
-                type='submit'
-                disabled={isSubmitting}
-                loading={isSubmitting}
-                size='lg'
-                className='w-full'
-                icon={isSubmitting ? undefined : <ArrowRight className='h-5 w-5' />}
-                iconPosition='right'
-              >
-                {isSubmitting ? t('auth.signing_in') : t('auth.login')}
-              </MobileOptimizedButton>
-            </form>
-          </div>
+              {/* Remember Me & Failed Attempts */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="remember"
+                    checked={rememberMe}
+                    onCheckedChange={(checked) => setRememberMe(checked === true)}
+                    disabled={isLoading || isLocked}
+                  />
+                  <Label
+                    htmlFor="remember"
+                    className="text-sm cursor-pointer text-muted-foreground"
+                  >
+                    {t('login.rememberMe')}
+                  </Label>
+                </div>
+                {failedAttempts > 0 && (
+                  <span className="text-xs text-orange-600">
+                    {t('login.failedAttempts', { count: failedAttempts })}
+                  </span>
+                )}
+              </div>
 
-          {/* Footer */}
-          <div className='mt-8 text-center'>
-            <p className='text-xs text-gray-500'>
-              &copy; 2025 PipLine Pro. All rights reserved.
-            </p>
-            <p className='text-xs text-gray-400 mt-1'>
-              Enterprise-grade security & compliance
-            </p>
-          </div>
+              {/* Advanced Options Toggle */}
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowAdvancedOptions(!showAdvancedOptions)}
+                className="w-full text-muted-foreground hover:text-foreground"
+              >
+                <Settings className="w-4 h-4 mr-2" />
+                {showAdvancedOptions ? t('login.hideAdvanced') : t('login.showAdvanced')}
+              </Button>
+
+              {/* Advanced Options */}
+              {showAdvancedOptions && (
+                <div className="p-3 bg-muted/30 rounded-lg space-y-3 border">
+                  <div className="text-sm font-medium text-muted-foreground">
+                    {t('login.advancedOptions')}
+                  </div>
+                  
+                  {/* Two-Factor Authentication Placeholder */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Smartphone className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-sm">{t('login.twoFactorAuth')}</span>
+                    </div>
+                    <span className="text-xs text-muted-foreground">{t('login.notConfigured')}</span>
+                  </div>
+
+                  {/* Session Duration */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-sm">{t('login.sessionDuration')}</span>
+                    </div>
+                    <span className="text-xs text-muted-foreground">8 {t('login.hours')}</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Login Button */}
+              <Button 
+                type="submit" 
+                className="w-full h-11" 
+                disabled={isLoading || isLocked || !username || !password || !isOnline}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    {t('login.signingIn')}
+                  </>
+                ) : (
+                  <>
+                    <KeyRound className="w-4 h-4 mr-2" />
+                    {t('login.signIn')}
+                  </>
+                )}
+              </Button>
+            </form>
+
+
+            {/* Recent Login Attempts */}
+            {loginAttemptsRef.current.length > 0 && (
+              <div className="mt-6 p-4 bg-muted/30 rounded-lg border border-border/50">
+                <div className="flex items-center gap-2 mb-2">
+                  <Shield className="w-4 h-4 text-muted-foreground" />
+                  <p className="text-sm font-medium text-muted-foreground">
+                    {t('login.recentActivity')}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  {loginAttemptsRef.current.slice(-3).map((attempt, index) => (
+                    <div key={index} className="flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-2">
+                        {attempt.success ? (
+                          <CheckCircle className="w-3 h-3 text-green-500" />
+                        ) : (
+                          <AlertTriangle className="w-3 h-3 text-red-500" />
+                        )}
+                        <span className="text-muted-foreground">
+                          {attempt.timestamp.toLocaleTimeString()}
+                        </span>
+                      </div>
+                      <span className={attempt.success ? 'text-green-600' : 'text-red-600'}>
+                        {attempt.success ? t('login.success') : t('login.failed')}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Footer */}
+        <div className="text-center space-y-2 text-xs text-muted-foreground">
+          <p>© 2024 PipeLine Pro {t('login.allRightsReserved')}</p>
+          <p>{t('login.secureTreasuryManagement')}</p>
+          <p className="flex items-center justify-center gap-1">
+            <Shield className="w-3 h-3" />
+            {t('login.encryptedConnection')}
+          </p>
         </div>
       </div>
+      <Toaster position="top-right" richColors />
     </div>
-  );
+  )
 }

@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 import { handleApiError, getUserFriendlyMessage } from '../utils/errorHandler';
 import {
@@ -28,13 +28,15 @@ import {
   Activity,
   X,
   Globe,
+  ArrowUpRight,
   RefreshCw,
   CheckCircle,
   Clock,
   PieChart,
   MoreHorizontal,
   Upload,
-  Info
+  Info,
+  Settings
 } from 'lucide-react';
 import {
   BarChart as RechartsBarChart,
@@ -62,14 +64,26 @@ import {
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../utils/apiClient';
-import { formatCurrency as formatCurrencyUtil } from '../utils/currencyUtils';
+import { formatCurrency as formatCurrencyUtil, formatCurrencyPositive } from '../utils/currencyUtils';
 import { usePSPRefresh } from '../hooks/usePSPRefresh';
 import Modal from '../components/Modal';
 import TransactionDetailView from '../components/TransactionDetailView';
 import TransactionEditForm from '../components/TransactionEditForm';
-import { PageHeader, Section, ContentArea, CardGrid } from '../components/ProfessionalLayout';
-import { Button } from '../components/ProfessionalButtons';
+import BulkUSDRates from '../components/BulkUSDRates';
+import { 
+  UnifiedCard, 
+  UnifiedButton, 
+  UnifiedBadge, 
+  UnifiedSection, 
+  UnifiedGrid 
+} from '../design-system';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+import { Badge } from '../components/ui/badge';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import StandardMetricsCard from '../components/StandardMetricsCard';
+import MetricCard from '../components/MetricCard';
 import { ClientsPageSkeleton } from '../components/EnhancedSkeletonLoaders';
 
 interface Client {
@@ -92,6 +106,7 @@ interface Transaction {
   id: number;
   client_name: string;
   company?: string;
+  iban?: string;
   payment_method?: string;
   category: string;
   amount: number;
@@ -109,6 +124,182 @@ interface Transaction {
   exchange_rate?: number;
 }
 
+interface BulkRateManagerProps {
+  transactions: Transaction[];
+  onRateUpdate: (date: string, rate: number) => void;
+}
+
+// BulkRateManager Component
+const BulkRateManager: React.FC<BulkRateManagerProps> = ({ transactions, onRateUpdate }) => {
+  console.log('🔍 BulkRateManager rendered with transactions:', transactions.length);
+  const [localRates, setLocalRates] = useState<Record<string, number>>({});
+  const [editingDate, setEditingDate] = useState<string | null>(null);
+
+  // Get USD transactions grouped by date
+  const usdTransactionsByDate = React.useMemo(() => {
+    const usdTransactions = transactions.filter(t => 
+      t.currency?.toUpperCase() === 'USD' && t.date
+    );
+    
+    const grouped = usdTransactions.reduce((acc, transaction) => {
+      const date = transaction.date!.split('T')[0]; // Get YYYY-MM-DD format
+      if (!acc[date]) {
+        acc[date] = [];
+      }
+      acc[date].push(transaction);
+      return acc;
+    }, {} as Record<string, Transaction[]>);
+
+    // Sort dates in descending order (most recent first)
+    return Object.keys(grouped)
+      .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
+      .reduce((acc, date) => {
+        acc[date] = grouped[date];
+        return acc;
+      }, {} as Record<string, Transaction[]>);
+  }, [transactions]);
+
+  const handleRateChange = (date: string, value: string) => {
+    const numericValue = parseFloat(value) || 0;
+    setLocalRates(prev => ({
+      ...prev,
+      [date]: numericValue
+    }));
+  };
+
+  const handleRateSubmit = (date: string) => {
+    const rate = localRates[date];
+    if (rate && rate > 0) {
+      onRateUpdate(date, rate);
+      setEditingDate(null);
+    }
+  };
+
+  const handleRateEdit = (date: string) => {
+    setEditingDate(date);
+    if (!localRates[date]) {
+      setLocalRates(prev => ({
+        ...prev,
+        [date]: 0
+      }));
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      weekday: 'short'
+    });
+  };
+
+  const calculateTotalUSD = (transactions: Transaction[]) => {
+    return transactions.reduce((sum, t) => sum + (t.amount || 0), 0);
+  };
+
+  if (Object.keys(usdTransactionsByDate).length === 0) {
+    return (
+      <div className="text-center py-8">
+        <div className="text-gray-400 mb-2">
+          <TrendingUp className="h-12 w-12 mx-auto" />
+        </div>
+        <h3 className="text-lg font-medium text-gray-900 mb-2">No USD Transactions Found</h3>
+        <p className="text-gray-500">There are no USD transactions to apply bulk rates to.</p>
+        <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
+          <p className="text-sm text-yellow-700">
+            Total transactions: {transactions.length} | 
+            USD transactions: {transactions.filter(t => t.currency?.toUpperCase() === 'USD').length}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="text-sm text-gray-600 mb-4">
+        Found {Object.keys(usdTransactionsByDate).length} date(s) with USD transactions
+      </div>
+      
+      <div className="space-y-3">
+        {Object.entries(usdTransactionsByDate).map(([date, dateTransactions]) => {
+          const totalUSD = calculateTotalUSD(dateTransactions);
+          const isEditing = editingDate === date;
+          const currentRate = localRates[date] || 0;
+          
+          return (
+            <div key={date} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-3">
+                    <div className="text-sm font-medium text-gray-900">
+                      {formatDate(date)}
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      {dateTransactions.length} transaction(s)
+                    </div>
+                    <div className="text-sm font-semibold text-green-600">
+                      ${totalUSD.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-3">
+                  {isEditing ? (
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        step="0.0001"
+                        min="0"
+                        value={currentRate}
+                        onChange={(e) => handleRateChange(date, e.target.value)}
+                        className="w-24 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="Rate"
+                        autoFocus
+                      />
+                      <button
+                        onClick={() => handleRateSubmit(date)}
+                        className="px-3 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+                      >
+                        Save
+                      </button>
+                      <button
+                        onClick={() => setEditingDate(null)}
+                        className="px-3 py-1 text-xs bg-gray-500 text-white rounded hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <div className="text-sm">
+                        {currentRate > 0 ? (
+                          <span className="font-medium text-blue-600">
+                            {currentRate.toFixed(4)} TRY
+                          </span>
+                        ) : (
+                          <span className="text-gray-400">No rate set</span>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => handleRateEdit(date)}
+                        className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        {currentRate > 0 ? 'Edit' : 'Set Rate'}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
 interface ClientsResponse {
   clients: Client[];
   total_clients: number;
@@ -124,6 +315,10 @@ interface DailySummary {
   total_commission_usd: number;
   total_net_tl: number;
   total_net_usd: number;
+  total_deposits_tl?: number;
+  total_deposits_usd?: number;
+  total_withdrawals_tl?: number;
+  total_withdrawals_usd?: number;
   transaction_count: number;
   unique_clients: number;
   psp_summary: Array<{
@@ -182,15 +377,37 @@ interface DailySummary {
 
 export default function Clients() {
   const { t } = useLanguage();
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { isAuthenticated, isLoading: authLoading, user } = useAuth();
   const navigate = useNavigate();
   const { refreshPSPDataSilent } = usePSPRefresh();
 
-  const [clients, setClients] = useState<Client[]>([]);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Initialize state from localStorage if available
+  const [clients, setClients] = useState<Client[]>(() => {
+    try {
+      const saved = localStorage.getItem('pipeline_clients_data');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [transactions, setTransactions] = useState<Transaction[]>(() => {
+    try {
+      const saved = localStorage.getItem('pipeline_transactions_data');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [clientsError, setClientsError] = useState<string | null>(null);
+  const [dataLoadingState, setDataLoadingState] = useState({
+    clients: false,
+    transactions: false,
+    analytics: false,
+    dropdowns: false,
+    allLoaded: false
+  });
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [selectedTransactions, setSelectedTransactions] = useState<number[]>(
     []
@@ -211,6 +428,9 @@ export default function Clients() {
   const [dailySummaryLoading, setDailySummaryLoading] = useState(false);
   const [selectedDate, setSelectedDate] = useState('');
   
+  // State for daily net balances
+  const [dailyNetBalances, setDailyNetBalances] = useState<Record<string, number>>({});
+  
   // State for exchange rates (removed - no longer needed with automatic yfinance integration)
   // const [showExchangeRateModal, setShowExchangeRateModal] = useState(false);
   // const [exchangeRates, setExchangeRates] = useState<Record<string, number>>({});
@@ -229,11 +449,32 @@ export default function Clients() {
     search: '',
     category: '',
     psp: '',
-    date_from: '',
-    date_to: '',
-    client_name: '',
+    company: '',
     payment_method: '',
     currency: '',
+    status: '',
+    date_from: '',
+    date_to: '',
+    amount_min: '',
+    amount_max: '',
+    commission_min: '',
+    commission_max: '',
+    client_name: '',
+    sort_by: 'created_at',
+    sort_order: 'desc',
+  });
+  const [showFilters, setShowFilters] = useState(false);
+  const [showBulkRates, setShowBulkRates] = useState(true);
+  const [bulkRates, setBulkRates] = useState<Record<string, number>>({});
+  const [rateUpdateLoading, setRateUpdateLoading] = useState(false);
+  
+  // DEBUG: Log the showBulkRates state
+  console.log('🔍 Clients component render - showBulkRates:', showBulkRates);
+  const [expandedFilterSections, setExpandedFilterSections] = useState({
+    basic: true,
+    advanced: false,
+    amounts: false,
+    dates: false,
   });
   const [pagination, setPagination] = useState({
     page: 1,
@@ -241,16 +482,27 @@ export default function Clients() {
     total: 0,
     pages: 0,
   });
-  const [showFilters, setShowFilters] = useState(false);
   const [exporting, setExporting] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'transactions' | 'analytics' | 'clients'>('overview');
+  const location = useLocation();
+  const [activeTab, setActiveTab] = useState<'overview' | 'transactions' | 'analytics' | 'clients' | 'accounting'>(
+    'overview'
+  );
   const [showViewModal, setShowViewModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
   const [showViewTransactionModal, setShowViewTransactionModal] = useState(false);
   const [showEditTransactionModal, setShowEditTransactionModal] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
 
-  const [loadingDropdownOptions, setLoadingDropdownOptions] = useState(false);
+  
+  // Debug initial state
+  console.log('🔍 Component state:', {
+    isAuthenticated,
+    authLoading,
+    activeTab,
+    transactionsLength: transactions.length,
+    loading
+  });
   
   // Import functionality state
   const [importing, setImporting] = useState(false);
@@ -259,60 +511,192 @@ export default function Clients() {
   const [importData, setImportData] = useState<Transaction[]>([]);
   const [importPreview, setImportPreview] = useState<Transaction[]>([]);
 
-  useEffect(() => {
-    if (isAuthenticated && !authLoading) {
-      fetchClients();
-      fetchDropdownOptions();
+  // Unified data loading function
+  const loadAllData = useCallback(async () => {
+    if (!isAuthenticated || authLoading) {
+      console.log('🔄 Clients: Skipping loadAllData - not authenticated or loading');
+      return;
+    }
+    
+    console.log('🔄 Clients: Starting loadAllData...');
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Load all data simultaneously using Promise.all
+      const [clientsResult, dropdownsResult, transactionsResult] = await Promise.allSettled([
+        fetchClientsData(),
+        fetchDropdownOptionsData(),
+        fetchTransactionsData()
+      ]);
+
+      // Debug: Log the results
+      console.log('🔄 Clients: loadAllData results:', {
+        clients: clientsResult.status,
+        dropdowns: dropdownsResult.status,
+        transactions: transactionsResult.status,
+        transactionsData: transactionsResult.status === 'fulfilled' ? transactionsResult.value?.length : 'failed'
+      });
+
+      // Update loading states
+      setDataLoadingState(prev => ({
+        ...prev,
+        clients: clientsResult.status === 'fulfilled',
+        dropdowns: dropdownsResult.status === 'fulfilled',
+        transactions: transactionsResult.status === 'fulfilled',
+        allLoaded: true
+      }));
+
+      // Clear any previous errors if data loaded successfully
+      if (clientsResult.status === 'fulfilled') {
+        setClientsError(null);
+      }
+      if (transactionsResult.status === 'fulfilled') {
+        setError(null);
+      }
+    } catch (error) {
+      console.error('❌ Error loading data:', error);
+      setError('Failed to load data. Please try again.');
+    } finally {
+      setLoading(false);
     }
   }, [isAuthenticated, authLoading]);
 
-  // Fetch transactions when transactions tab is active
+
+  // Fallback: Ensure clients data loads on page load
   useEffect(() => {
-    if (isAuthenticated && !authLoading && activeTab === 'transactions') {
-      fetchTransactions();
-    } else {
-      // Clear selected transactions when switching away from transactions tab
-      setSelectedTransactions([]);
+    if (isAuthenticated && !authLoading && clients.length === 0 && !clientsError) {
+      // Add a small delay to ensure authentication is fully established
+      setTimeout(() => {
+        console.log('🔄 Clients: Fallback loading clients data...');
+        fetchClientsData();
+      }, 100);
+    }
+  }, [isAuthenticated, authLoading, clients.length, clientsError]);
+
+  // Force load clients data when component mounts and we're on overview tab
+  useEffect(() => {
+    if (isAuthenticated && !authLoading && activeTab === 'overview' && clients.length === 0) {
+      console.log('🔄 Clients: Force loading clients data for overview tab...');
+      fetchClientsData();
     }
   }, [isAuthenticated, authLoading, activeTab]);
 
-  // Refetch transactions when pagination changes
+  // Add a refresh mechanism that can be called externally
   useEffect(() => {
-    if (isAuthenticated && !authLoading && activeTab === 'transactions') {
-      fetchTransactions();
-    }
-  }, [pagination.page, pagination.per_page]);
+    const handleRefresh = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      console.log('🔄 Clients page: Received transactionsUpdated event', customEvent?.detail);
+      if (isAuthenticated && !authLoading) {
+        console.log('🔄 Clients page: Refreshing data...');
+        // Reset to page 1 when new transactions are created to show the latest
+        setPagination(prev => ({ ...prev, page: 1 }));
+        fetchTransactionsData();
+        fetchClientsData();
+      } else {
+        console.log('🔄 Clients page: Not authenticated or still loading, skipping refresh');
+      }
+    };
 
-  // Reset pagination to first page when filters change
-  useEffect(() => {
-    if (activeTab === 'transactions') {
-      setPagination(prev => ({ ...prev, page: 1 }));
-    }
-  }, [filters.search, filters.client_name, filters.payment_method, filters.category, filters.psp, filters.currency]);
+    // Listen for transaction updates from other components
+    window.addEventListener('transactionsUpdated', handleRefresh);
+    
+    return () => {
+      window.removeEventListener('transactionsUpdated', handleRefresh);
+    };
+  }, [isAuthenticated, authLoading]);
 
-  const fetchTransactions = async () => {
+  // Retry mechanism for failed clients data
+  const retryClientsData = () => {
+    setClientsError(null);
+    fetchClientsData();
+  };
+
+  const fetchTransactions = useCallback(async () => {
+    console.log('🎯 fetchTransactions called!');
     try {
       setLoading(true);
       setError(null);
 
+      // Check authentication first
+      if (!isAuthenticated) {
+        console.log('🔄 Clients: Not authenticated, skipping transactions fetch');
+        setTransactions([]);
+        return;
+      }
+
       const params = new URLSearchParams();
-      if (filters.category && filters.category.trim() !== '') params.append('category', filters.category);
-      if (filters.client_name && filters.client_name.trim() !== '') params.append('client', filters.client_name);
-      if (filters.payment_method && filters.payment_method.trim() !== '') params.append('payment_method', filters.payment_method);
-      if (filters.psp && filters.psp.trim() !== '') params.append('psp', filters.psp);
-      if (filters.currency && filters.currency.trim() !== '') params.append('currency', filters.currency);
       
-      // Apply filters to transactions
-      
+      // Add pagination parameters
       params.append('page', pagination.page.toString());
       params.append('per_page', pagination.per_page.toString());
+      
+      // Add all filter parameters
+      if (filters.search && filters.search.trim() !== '') params.append('search', filters.search);
+      if (filters.category && filters.category.trim() !== '') params.append('category', filters.category);
+      if (filters.psp && filters.psp.trim() !== '') params.append('psp', filters.psp);
+      if (filters.company && filters.company.trim() !== '') params.append('company', filters.company);
+      if (filters.payment_method && filters.payment_method.trim() !== '') params.append('payment_method', filters.payment_method);
+      if (filters.currency && filters.currency.trim() !== '') params.append('currency', filters.currency);
+      if (filters.status && filters.status.trim() !== '') params.append('status', filters.status);
+      if (filters.date_from && filters.date_from.trim() !== '') params.append('date_from', filters.date_from);
+      if (filters.date_to && filters.date_to.trim() !== '') params.append('date_to', filters.date_to);
+      if (filters.amount_min && filters.amount_min.trim() !== '') params.append('amount_min', filters.amount_min);
+      if (filters.amount_max && filters.amount_max.trim() !== '') params.append('amount_max', filters.amount_max);
+      if (filters.commission_min && filters.commission_min.trim() !== '') params.append('commission_min', filters.commission_min);
+      if (filters.commission_max && filters.commission_max.trim() !== '') params.append('commission_max', filters.commission_max);
+      if (filters.client_name && filters.client_name.trim() !== '') params.append('client', filters.client_name);
+      if (filters.sort_by && filters.sort_by.trim() !== '') params.append('sort_by', filters.sort_by);
+      if (filters.sort_order && filters.sort_order.trim() !== '') params.append('sort_order', filters.sort_order);
 
+      console.log('🔄 Clients: Fetching transactions...');
       const response = await api.get(`/api/v1/transactions/?${params.toString()}`);
 
-      if (response.ok) {
-      const data = await api.parseResponse(response);
-        // Validate response data structure
+      if (response.status === 401) {
+        console.log('🔄 Clients: Authentication failed, clearing transactions data');
+        setTransactions([]);
+        setError('Authentication required. Please log in again.');
+        return;
+      }
+
+      console.log('🔍 Transactions API Response:', response);
+      console.log('🔍 Response Type:', typeof response);
+      console.log('🔍 Is Response Object:', response instanceof Response);
+      console.log('🔍 Response OK:', response.ok);
+      console.log('🔍 Response Status:', response.status);
+
+      // Handle both Response objects and cached plain objects
+      let data: any;
+      let isSuccess = false;
+
+      if (response instanceof Response) {
+        // Fresh API call - response is a Response object
+        if (response.ok) {
+          data = await api.parseResponse(response);
+          isSuccess = true;
+        } else {
+          console.error('❌ API Response not OK:', response.status, response.statusText);
+          const errorData = await api.parseResponse(response).catch(() => ({}));
+          setError(errorData.message || 'Failed to fetch transactions');
+          return;
+        }
+      } else {
+        // Cached response - response is already parsed data
+        data = response;
+        isSuccess = true;
+        console.log('📦 Using cached data');
+      }
+
+      if (isSuccess) {
+        console.log('🔍 Parsed Data:', data);
+        console.log('🔍 Data Structure:', {
+          hasTransactions: !!data?.transactions,
+          transactionsLength: data?.transactions?.length,
+          hasPagination: !!data?.pagination,
+          pagination: data?.pagination
+        });
         
+        // Validate response data structure
         if (data?.transactions) {
           // Process transaction data
           setTransactions(data.transactions);
@@ -322,37 +706,204 @@ export default function Clients() {
             pages: data.pagination?.pages || prev.pages,
             page: data.pagination?.page || prev.page
           }));
+          console.log('✅ Transactions loaded successfully:', data.transactions.length);
         } else {
+          console.error('❌ No transaction data in response:', data);
           setError(`No transaction data received. Response structure: ${JSON.stringify(data)}`);
         }
-      } else {
-        const errorData = await response.json().catch(() => ({}));
-        setError(errorData.message || 'Failed to fetch transactions');
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error('❌ Fetch Transactions Error:', error);
+      console.error('❌ Error Details:', {
+        message: error?.message,
+        stack: error?.stack,
+        name: error?.name
+      });
       const pipLineError = handleApiError(error, 'fetchTransactions');
+      console.error('❌ Processed Error:', pipLineError);
       setError(getUserFriendlyMessage(pipLineError));
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters, pagination]);
 
-  const fetchClients = async () => {
+  // Update active tab based on route
+  useEffect(() => {
+    if (location.pathname === '/transactions') {
+      setActiveTab('overview');
+      // Refresh data when navigating to transactions if we don't have recent data
+      if (isAuthenticated && !authLoading && transactions.length === 0) {
+        console.log('🔄 Clients: Navigating to transactions, refreshing data...');
+        loadAllData();
+      }
+    } else if (location.pathname === '/clients') {
+      setActiveTab('clients');
+    } else if (location.pathname === '/accounting') {
+      setActiveTab('accounting');
+    }
+  }, [location.pathname, isAuthenticated, authLoading, transactions.length]);
+
+  // Main data loading effect - simplified and reliable
+  useEffect(() => {
+    console.log('🔄 Clients: Main data loading effect triggered', {
+      isAuthenticated,
+      authLoading,
+      activeTab,
+      transactionsLength: transactions.length,
+      clientsLength: clients.length
+    });
+
+    if (isAuthenticated && !authLoading) {
+      // Only load data if we have NO data at all (both arrays empty)
+      if (clients.length === 0 && transactions.length === 0) {
+        console.log('🔄 Clients: No data found, loading all data...', {
+          clientsLength: clients.length,
+          transactionsLength: transactions.length
+        });
+        loadAllData();
+      } else {
+        console.log('🔄 Clients: Data exists, skipping load', {
+          clientsLength: clients.length,
+          transactionsLength: transactions.length
+        });
+      }
+    } else if (!isAuthenticated && !authLoading) {
+      // Clear data when not authenticated
+      console.log('🔄 Clients: Clearing data - not authenticated');
+      setClients([]);
+      setTransactions([]);
+      setError(null);
+      // Also clear localStorage when not authenticated
+      try {
+        localStorage.removeItem('pipeline_clients_data');
+        localStorage.removeItem('pipeline_transactions_data');
+      } catch (error) {
+        console.error('Failed to clear localStorage:', error);
+      }
+    }
+  }, [isAuthenticated, authLoading]); // Removed activeTab from dependencies
+
+  // Handle tab changes without clearing data
+  useEffect(() => {
+    console.log('🔄 Clients: Tab changed to:', activeTab);
+    // Don't reload data on tab change, just log it
+    // Data should persist across tab changes
+  }, [activeTab]);
+
+  // Debug: Log transactions state changes
+  useEffect(() => {
+    console.log('🔄 Clients: Transactions state changed:', {
+      transactionsLength: transactions.length,
+      activeTab,
+      isAuthenticated,
+      authLoading
+    });
+  }, [transactions, activeTab, isAuthenticated, authLoading]);
+
+  // Persist clients data to localStorage
+  useEffect(() => {
+    if (clients.length > 0) {
+      try {
+        localStorage.setItem('pipeline_clients_data', JSON.stringify(clients));
+        console.log('🔄 Clients: Saved clients data to localStorage:', clients.length, 'clients');
+      } catch (error) {
+        console.error('Failed to save clients data to localStorage:', error);
+      }
+    }
+  }, [clients]);
+
+  // Persist transactions data to localStorage
+  useEffect(() => {
+    if (transactions.length > 0) {
+      try {
+        localStorage.setItem('pipeline_transactions_data', JSON.stringify(transactions));
+        console.log('🔄 Clients: Saved transactions data to localStorage:', transactions.length, 'transactions');
+      } catch (error) {
+        console.error('Failed to save transactions data to localStorage:', error);
+      }
+    }
+  }, [transactions]);
+
+  // Cleanup localStorage on component unmount (only for logout scenarios)
+  useEffect(() => {
+    return () => {
+      // Only clear localStorage if user is not authenticated
+      if (!isAuthenticated) {
+        try {
+          localStorage.removeItem('pipeline_clients_data');
+          localStorage.removeItem('pipeline_transactions_data');
+        } catch (error) {
+          console.error('Failed to clear localStorage on unmount:', error);
+        }
+      }
+    };
+  }, [isAuthenticated]);
+
+  // Removed force data loading on component mount to prevent conflicts
+
+  // Removed conflicting data loading effects to prevent data clearing
+
+  // Debug: Log transactions state changes
+  useEffect(() => {
+    console.log('🔄 Clients: Transactions state changed:', transactions.length, 'transactions');
+  }, [transactions]);
+
+  // Debug: Log clients state changes
+  useEffect(() => {
+    console.log('🔄 Clients: Clients state changed:', {
+      clientsLength: clients.length,
+      clientsError,
+      isAuthenticated,
+      authLoading,
+      activeTab
+    });
+  }, [clients, clientsError, isAuthenticated, authLoading, activeTab]);
+
+  // Handle filter changes for transactions tab
+  useEffect(() => {
+    if (isAuthenticated && !authLoading && activeTab === 'transactions') {
+      // Debounce filter changes to avoid too many API calls
+      const timeoutId = setTimeout(() => {
+        fetchTransactionsData();
+      }, 300);
+      
+      return () => clearTimeout(timeoutId);
+    }
+    return undefined;
+  }, [filters, pagination.page, pagination.per_page, isAuthenticated, authLoading, activeTab]);
+
+  // Individual data fetching functions (without loading states)
+  const fetchClientsData = async () => {
     try {
-      setLoading(true);
+      console.log('🔄 Clients: Fetching clients data...', {
+        isAuthenticated,
+        authLoading,
+        currentClientsLength: clients.length
+      });
       setClientsError(null);
+      // Check authentication first
+      if (!isAuthenticated) {
+        console.log('🔄 Clients: Not authenticated, skipping clients fetch');
+        setClientsError('Authentication required');
+        return [];
+      }
 
       const response = await api.get('/api/v1/transactions/clients');
 
+      console.log('🔄 Clients: Clients API response:', {
+        status: response.status,
+        ok: response.ok,
+        statusText: response.statusText
+      });
+
       if (response.status === 401) {
-        return;
+        console.log('❌ Unauthorized access');
+        return [];
       }
 
-      const data = await api.parseResponse(response);
-      
-      // Process clients data
-
-      if (response.ok && data) {
+      if (response.ok) {
+        const data = await api.parseResponse(response);
+        console.log('🔄 Clients: Clients data received:', data);
         const clientsData = Array.isArray(data) ? data : [];
 
         const transformedData: Client[] = clientsData.map((item: any) => ({
@@ -371,18 +922,121 @@ export default function Clients() {
           avg_transaction: item.avg_transaction || 0,
         }));
 
+        console.log('🔄 Clients: Transformed clients data:', transformedData.length, 'clients');
         setClients(transformedData);
+        setClientsError(null); // Clear any previous errors
+        return transformedData;
       } else {
-        setClientsError(data?.message || 'Failed to load clients data');
+        console.error('🔄 Clients: Clients API failed:', response.status, response.statusText);
+        setClientsError('Failed to load clients data');
         setClients([]);
+        return [];
       }
     } catch (error) {
-      const pipLineError = handleApiError(error, 'fetchClients');
-      setClientsError(getUserFriendlyMessage(pipLineError));
+      console.error('❌ Clients fetch error:', error);
+      setClientsError('Failed to load clients data. Please try again.');
       setClients([]);
-    } finally {
-      setLoading(false);
+      return [];
     }
+  };
+
+  const fetchDropdownOptionsData = async () => {
+    try {
+      const response = await api.get('/api/v1/transactions/dropdown-options');
+      if (response.ok) {
+        const data = await api.parseResponse(response);
+        if (data) {
+          // Extract just the 'value' property from each option object
+          setDropdownOptions({
+            currencies: (data.currency || []).map((option: any) => option.value),
+            payment_methods: (data.payment_method || []).map((option: any) => option.value),
+            categories: (data.category || []).map((option: any) => option.value),
+            psps: (data.psp || []).map((option: any) => option.value),
+            companies: (data.company || []).map((option: any) => option.value),
+          });
+        }
+        return data;
+      }
+      return {};
+    } catch (error) {
+      console.error('Error fetching dropdown options:', error);
+      return {};
+    }
+  };
+
+  const fetchTransactionsData = async () => {
+    try {
+      // Check authentication first
+      if (!isAuthenticated) {
+        console.log('🔄 Clients: Not authenticated, skipping transactions fetch');
+        return [];
+      }
+
+      console.log('🔄 Clients: Fetching transactions data...');
+
+      const params = new URLSearchParams();
+      
+      // Add pagination parameters
+      params.append('page', pagination.page.toString());
+      params.append('per_page', pagination.per_page.toString());
+      
+      // Add all filter parameters
+      if (filters.search && filters.search.trim() !== '') params.append('search', filters.search);
+      if (filters.category && filters.category.trim() !== '') params.append('category', filters.category);
+      if (filters.psp && filters.psp.trim() !== '') params.append('psp', filters.psp);
+      if (filters.company && filters.company.trim() !== '') params.append('company', filters.company);
+      if (filters.payment_method && filters.payment_method.trim() !== '') params.append('payment_method', filters.payment_method);
+      if (filters.currency && filters.currency.trim() !== '') params.append('currency', filters.currency);
+      if (filters.status && filters.status.trim() !== '') params.append('status', filters.status);
+      if (filters.date_from && filters.date_from.trim() !== '') params.append('date_from', filters.date_from);
+      if (filters.date_to && filters.date_to.trim() !== '') params.append('date_to', filters.date_to);
+      if (filters.amount_min && filters.amount_min.trim() !== '') params.append('amount_min', filters.amount_min);
+      if (filters.amount_max && filters.amount_max.trim() !== '') params.append('amount_max', filters.amount_max);
+      if (filters.commission_min && filters.commission_min.trim() !== '') params.append('commission_min', filters.commission_min);
+      if (filters.commission_max && filters.commission_max.trim() !== '') params.append('commission_max', filters.commission_max);
+      if (filters.client_name && filters.client_name.trim() !== '') params.append('client', filters.client_name);
+      if (filters.sort_by && filters.sort_by.trim() !== '') params.append('sort_by', filters.sort_by);
+      if (filters.sort_order && filters.sort_order.trim() !== '') params.append('sort_order', filters.sort_order);
+
+      console.log('🔄 Clients: Fetching transactions...');
+      const response = await api.get(`/api/v1/transactions/?${params.toString()}`);
+
+      if (response.status === 401) {
+        console.log('🔄 Clients: Authentication failed, clearing transactions data');
+        setTransactions([]);
+        setError('Authentication required. Please log in again.');
+        return [];
+      }
+
+      if (response.ok) {
+        const data = await api.parseResponse(response);
+        const transactionsData = Array.isArray(data.transactions) ? data.transactions : [];
+        console.log('🔄 Clients: Setting transactions data:', transactionsData.length, 'transactions');
+        setTransactions(transactionsData);
+        setPagination(prev => ({
+          ...prev,
+          total: data.total || 0,
+          pages: data.pages || 0,
+        }));
+        
+        // Fetch daily net balances for all dates
+        fetchDailyNetBalances(transactionsData);
+        
+        return transactionsData;
+      }
+      return [];
+    } catch (error) {
+      console.error('Error fetching transactions:', error);
+      setError('Failed to load transactions');
+      return [];
+    }
+  };
+
+  // Legacy function for backward compatibility
+  const fetchClients = async () => {
+    setLoading(true);
+    await fetchClientsData();
+    setLoading(false);
   };
 
 
@@ -399,13 +1053,81 @@ export default function Clients() {
       search: '',
       category: '',
       psp: '',
-      date_from: '',
-      date_to: '',
-      client_name: '',
+      company: '',
       payment_method: '',
       currency: '',
+      status: '',
+      date_from: '',
+      date_to: '',
+      amount_min: '',
+      amount_max: '',
+      commission_min: '',
+      commission_max: '',
+      client_name: '',
+      sort_by: 'created_at',
+      sort_order: 'desc',
     });
     // Reset pagination to first page when filters are reset
+    setPagination(prev => ({ ...prev, page: 1 }));
+  };
+
+  const toggleFilterSection = (section: keyof typeof expandedFilterSections) => {
+    setExpandedFilterSections(prev => ({
+      ...prev,
+      [section]: !prev[section],
+    }));
+  };
+
+  const clearAllFilters = () => {
+    resetFilters();
+  };
+
+  const getActiveFilterCount = () => {
+    return Object.values(filters).filter(value => 
+      value && value !== 'created_at' && value !== 'desc'
+    ).length;
+  };
+
+  const applyQuickFilter = (filterType: string) => {
+    switch (filterType) {
+      case 'today':
+        const today = new Date().toISOString().split('T')[0];
+        setFilters(prev => ({
+          ...prev,
+          date_from: today,
+          date_to: today,
+        }));
+        break;
+      case 'thisWeek':
+        const startOfWeek = new Date();
+        startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+        const endOfWeek = new Date();
+        endOfWeek.setDate(endOfWeek.getDate() + (6 - endOfWeek.getDay()));
+        setFilters(prev => ({
+          ...prev,
+          date_from: startOfWeek.toISOString().split('T')[0],
+          date_to: endOfWeek.toISOString().split('T')[0],
+        }));
+        break;
+      case 'deposits':
+        setFilters(prev => ({
+          ...prev,
+          category: 'DEP',
+        }));
+        break;
+      case 'withdrawals':
+        setFilters(prev => ({
+          ...prev,
+          category: 'WD',
+        }));
+        break;
+      case 'highValue':
+        setFilters(prev => ({
+          ...prev,
+          amount_min: '10000',
+        }));
+        break;
+    }
     setPagination(prev => ({ ...prev, page: 1 }));
   };
 
@@ -452,7 +1174,31 @@ export default function Clients() {
             return dateB - dateA;
           }
         ),
+        netBalance: dailyNetBalances[dateKey] || null, // Add net balance from state
       }));
+  };
+
+  // Fetch daily summary data for all dates
+  const fetchDailyNetBalances = async (transactions: Transaction[]) => {
+    const dates = [...new Set(transactions.map(t => t.date).filter(Boolean))] as string[];
+    const netBalances: Record<string, number> = {};
+    
+    for (const date of dates) {
+      if (!date) continue; // Skip undefined dates
+      try {
+        const response = await api.get(`/api/summary/${date}`);
+        if (response.ok) {
+          const data = await api.parseResponse(response);
+          if (data && data.summary && data.summary.total_net_tl) {
+            netBalances[date] = data.summary.total_net_tl;
+          }
+        }
+      } catch (error) {
+        console.warn(`Failed to fetch daily summary for ${date}:`, error);
+      }
+    }
+    
+    setDailyNetBalances(netBalances);
   };
 
   const handleExport = () => {
@@ -561,25 +1307,58 @@ export default function Clients() {
           return;
         }
         
-        // Process transaction data
+        // Create column mapping based on headers
+        const getColumnIndex = (columnName: string): number => {
+          return headers.findIndex(header => 
+            header.toLowerCase().trim() === columnName.toLowerCase().trim()
+          );
+        };
         
+        const clientNameIndex = getColumnIndex('client_name');
+        const amountIndex = getColumnIndex('amount');
+        const dateIndex = getColumnIndex('date');
+        const ibanIndex = getColumnIndex('iban');
+        const paymentMethodIndex = getColumnIndex('payment_method');
+        const companyOrderIndex = getColumnIndex('company_order');
+        const categoryIndex = getColumnIndex('category');
+        const pspIndex = getColumnIndex('psp');
+        const currencyIndex = getColumnIndex('currency');
+        const notesIndex = getColumnIndex('notes');
+        
+        console.log('📋 Column mapping:', {
+          client_name: clientNameIndex,
+          amount: amountIndex,
+          date: dateIndex,
+          iban: ibanIndex,
+          payment_method: paymentMethodIndex,
+          company_order: companyOrderIndex,
+          category: categoryIndex,
+          psp: pspIndex,
+          currency: currencyIndex,
+          notes: notesIndex
+        });
+        
+        // Process transaction data
         transactions = data.map((line, index) => {
           try {
-            
             const values = line.split(',');
             
-            const amount = parseFloat(values[5]) || 0;
-            
-            // Handle special transaction types
-            if (values[0] && (values[0].includes('TETHER ALIM') || values[0].includes('KUR FARKI MALİYETİ'))) {
-              // Special handling for Tether and currency difference transactions
-            }
+            // Extract values using proper column mapping
+            const client_name = values[clientNameIndex]?.trim() || '';
+            const amount = parseFloat(values[amountIndex]) || 0;
+            const date = values[dateIndex]?.trim() || new Date().toISOString().split('T')[0];
+            const iban = values[ibanIndex]?.trim() || '';
+            const payment_method = values[paymentMethodIndex]?.trim() || '';
+            const company_order = values[companyOrderIndex]?.trim() || '';
+            const category = values[categoryIndex]?.trim() || 'DEP';
+            const psp = values[pspIndex]?.trim() || '';
+            const currency = values[currencyIndex]?.trim() || 'TL';
+            const notes = values[notesIndex]?.trim() || '';
             
             // Process category data
-            
-            let category: string;
-            if (values[4] && values[4].trim()) {
-              const rawCategory = values[4].trim().toUpperCase();
+            let processedCategory: string;
+            if (category && category.trim()) {
+              const rawCategory = category.trim().toUpperCase();
               
               // Map common variations
               const categoryMapping: { [key: string]: string } = {
@@ -592,63 +1371,41 @@ export default function Clients() {
                 'DEP': 'DEP'
               };
               
-              category = categoryMapping[rawCategory] || 'DEP';
+              processedCategory = categoryMapping[rawCategory] || 'DEP';
             } else {
-              category = 'DEP'; // Default value
-            }
-            
-            // Validate and clean data
-            const client_name = values[0]?.trim() || '';
-            const company = values[1]?.trim() || '';
-            const payment_method = values[2]?.trim() || '';
-            const currency = values[6]?.trim() || 'TL';
-            const psp = values[7]?.trim() || '';
-            const date = values[8]?.trim() || new Date().toISOString().split('T')[0];
-            
-            // SAFETY CHECK: Ensure category is defined before validation
-            if (typeof category === 'undefined') {
-              category = 'DEP'; // Emergency fallback
+              processedCategory = 'DEP'; // Default value
             }
             
             // Validate data quality
+            if (!client_name || amount === 0) {
+              console.warn(`⚠️ Skipping invalid transaction at row ${index + 2}: client_name="${client_name}", amount=${amount}`);
+              return null;
+            }
             
             const transaction = {
               id: index + 1,
-              client_name: client_name || `Unknown_Client_${index + 1}`,
-              company: company || 'Unknown',
-              payment_method: payment_method || 'Unknown',
-              category: category,
+              client_name: client_name,
+              company: company_order || undefined,
+              iban: iban || undefined,
+              payment_method: payment_method || undefined,
+              category: processedCategory,
               amount: amount,
               commission: 0, // Will be calculated by backend
               net_amount: amount, // Will be calculated by backend
-              currency: currency,
-              psp: psp || 'Unknown',
+              currency: currency || undefined,
+              psp: psp || undefined,
               date: date,
-              notes: `Imported from CSV - Row ${index + 2}`
+              notes: notes || `Imported from CSV - Row ${index + 2}`
             };
             
             // Transaction created successfully
             
             return transaction;
           } catch (error) {
-            // Return a safe default transaction
-            return {
-              id: index + 1,
-              client_name: `Error_Client_${index + 1}`,
-              company: 'Error',
-              iban: 'Error',
-              payment_method: 'Error',
-              category: 'DEP',
-              amount: 0,
-              commission: 0,
-              net_amount: 0,
-              currency: 'TL',
-              psp: 'Error',
-              date: new Date().toISOString().split('T')[0],
-              notes: `Error processing line ${index + 2}: ${error}`
-            };
+            console.error(`❌ Error processing line ${index + 2}:`, error);
+            return null; // Skip invalid transactions
           }
-        });
+        }).filter((transaction): transaction is NonNullable<typeof transaction> => transaction !== null); // Remove null transactions
       } else if (file.name.toLowerCase().match(/\.(xlsx|xls|xlsm|xlsb)$/)) {
         // Handle Excel files
         const arrayBuffer = await file.arrayBuffer();
@@ -1007,17 +1764,26 @@ export default function Clients() {
   // Function to refresh PSP data
   const refreshPSPData = async () => {
     try {
-      const response = await api.get('/api/v1/transactions/psp_summary_stats');
+      console.log('🔄 Starting PSP data refresh from Clients page...');
+      
+      // Clear PSP cache first
+      api.clearPSPCache();
+      
+      // Force refresh by disabling cache
+      const response = await api.get('/api/v1/transactions/psp_summary_stats', {}, false);
+      console.log('📡 PSP API response from Clients:', response);
+      
       if (response.ok) {
         const pspData = await api.parseResponse(response);
         // Update any PSP-related state if needed
-        console.log('PSP data refreshed:', pspData);
+        console.log('✅ PSP data refreshed from Clients:', pspData);
         return pspData;
       } else {
+        console.error('❌ PSP API response not OK from Clients:', response.status, response.statusText);
         throw new Error('Failed to fetch PSP data');
       }
     } catch (error) {
-      console.error('Error refreshing PSP data:', error);
+      console.error('❌ Error refreshing PSP data from Clients:', error);
       throw error;
     }
   };
@@ -1156,6 +1922,39 @@ export default function Clients() {
     setSelectedClient(null);
   };
 
+  // Handle bulk rate updates
+  const handleBulkRateUpdate = async (date: string, newRate: number) => {
+    try {
+      setRateUpdateLoading(true);
+      
+      // Update local state
+      setBulkRates(prev => ({
+        ...prev,
+        [date]: newRate
+      }));
+
+      // Here you would typically make an API call to update the rates
+      // For now, we'll just log the update
+      console.log(`Updating bulk rate for ${date} to ${newRate}`);
+      
+      // TODO: Implement API call to update bulk rates
+      // await api.post('/api/v1/transactions/bulk-rates', {
+      //   date,
+      //   rate: newRate
+      // });
+      
+    } catch (error) {
+      console.error('Error updating bulk rate:', error);
+      // Revert the change on error
+      setBulkRates(prev => ({
+        ...prev,
+        [date]: prev[date] || 0
+      }));
+    } finally {
+      setRateUpdateLoading(false);
+    }
+  };
+
 
 
   const filteredClients = Array.isArray(clients)
@@ -1218,37 +2017,83 @@ export default function Clients() {
   // Clients are displayed in chronological order (newest transactions first)
   const sortedClients = filteredClients;
 
-  // Calculate summary metrics
-  const totalVolume = Array.isArray(clients)
+  // Calculate summary metrics - use data when available, regardless of loading state
+  const totalVolume = Array.isArray(filteredClients) && filteredClients.length > 0
+    ? filteredClients.reduce((sum, client) => sum + client.total_amount, 0)
+    : Array.isArray(clients) && clients.length > 0
     ? clients.reduce((sum, client) => sum + client.total_amount, 0)
     : 0;
-  const totalCommissions = Array.isArray(clients)
+  
+  const totalCommissions = Array.isArray(filteredClients) && filteredClients.length > 0
+    ? filteredClients.reduce((sum, client) => sum + client.total_commission, 0)
+    : Array.isArray(clients) && clients.length > 0
     ? clients.reduce((sum, client) => sum + client.total_commission, 0)
     : 0;
-  const totalTransactions = Array.isArray(clients)
+    
+  const totalTransactions = Array.isArray(filteredClients) && filteredClients.length > 0
+    ? filteredClients.reduce((sum, client) => sum + client.transaction_count, 0)
+    : Array.isArray(clients) && clients.length > 0
     ? clients.reduce((sum, client) => sum + client.transaction_count, 0)
     : 0;
+
+  // Debug logging for commission calculation
+  console.log('🔍 Commission Debug:', {
+    activeTab,
+    clientsLength: clients.length,
+    filteredClientsLength: filteredClients.length,
+    totalCommissions,
+    sampleClient: filteredClients[0] ? {
+      name: filteredClients[0].client_name,
+      commission: filteredClients[0].total_commission
+    } : 'No clients',
+    allCommissions: filteredClients.map(c => ({ name: c.client_name, commission: c.total_commission }))
+  });
+
   const avgTransactionValue =
     totalTransactions > 0 ? totalVolume / totalTransactions : 0;
 
-  // Calculate deposit and withdrawal metrics from transactions
-  const calculateDepositWithdrawMetrics = () => {
-    if (!Array.isArray(transactions)) return { totalDeposits: 0, totalWithdrawals: 0 };
+  // Calculate deposit and withdrawal metrics from transactions - make it reactive
+  const depositWithdrawMetrics = useMemo(() => {
+    if (!Array.isArray(transactions)) {
+      console.log('🔄 Clients: No transactions array available for deposit/withdrawal calculation');
+      return { totalDeposits: 0, totalWithdrawals: 0 };
+    }
     
-    const deposits = transactions.filter(t => t.category === 'DEP');
-    const withdrawals = transactions.filter(t => t.category === 'WD');
+    console.log('🔄 Clients: Calculating deposit/withdrawal metrics from', transactions.length, 'transactions');
+    
+    // Handle both category formats: 'DEP'/'WD' and 'Deposit'/'Withdraw'
+    const deposits = transactions.filter(t => 
+      t.category === 'DEP' || t.category === 'Deposit' || t.category === 'Investment'
+    );
+    const withdrawals = transactions.filter(t => 
+      t.category === 'WD' || t.category === 'Withdraw' || t.category === 'Withdrawal'
+    );
+    
+    console.log('🔄 Clients: Found', deposits.length, 'deposits and', withdrawals.length, 'withdrawals');
     
     const totalDeposits = deposits.reduce((sum, t) => sum + (t.amount || 0), 0);
     const totalWithdrawals = withdrawals.reduce((sum, t) => sum + (t.amount || 0), 0);
     
+    console.log('🔄 Clients: Calculated totals - Deposits:', totalDeposits, 'Withdrawals:', totalWithdrawals);
+    
     return { totalDeposits, totalWithdrawals };
-  };
+  }, [transactions]); // Make it reactive to transactions changes
 
-  const depositWithdrawMetrics = calculateDepositWithdrawMetrics();
   const { totalDeposits, totalWithdrawals } = depositWithdrawMetrics;
 
-  // Calculate payment method breakdown
-  const calculatePaymentMethodBreakdown = () => {
+  // Debug logging for overview cards
+  console.log('🔄 Clients: Overview cards data:', {
+    transactionsLength: transactions.length,
+    totalDeposits,
+    totalWithdrawals,
+    netCash: totalDeposits - totalWithdrawals,
+    clientsLength: clients.length,
+    totalTransactions,
+    activeTab
+  });
+
+  // Calculate payment method breakdown - make it reactive
+  const paymentMethodBreakdown = useMemo(() => {
     if (!Array.isArray(transactions)) return {};
     
     const breakdown: { [key: string]: { deposits: number; withdrawals: number; total: number } } = {};
@@ -1260,22 +2105,31 @@ export default function Clients() {
         breakdown[method] = { deposits: 0, withdrawals: 0, total: 0 };
       }
       
-      if (transaction.category === 'DEP') {
+      if (transaction.category === 'DEP' || transaction.category === 'Deposit' || transaction.category === 'Investment') {
         breakdown[method].deposits += transaction.amount || 0;
         breakdown[method].total += transaction.amount || 0;
-      } else if (transaction.category === 'WD') {
+      } else if (transaction.category === 'WD' || transaction.category === 'Withdraw' || transaction.category === 'Withdrawal') {
         breakdown[method].withdrawals += transaction.amount || 0;
         breakdown[method].total -= transaction.amount || 0;
       }
     });
     
     return breakdown;
-  };
-
-  const paymentMethodBreakdown = calculatePaymentMethodBreakdown();
+  }, [transactions]); // Make it reactive to transactions changes
 
   // Calculate daily deposit and withdrawal metrics for the selected date
   const calculateDailyDepositWithdrawMetrics = (date: string) => {
+    // Use backend data if available (from Daily Summary API)
+    if (dailySummaryData && dailySummaryData.date === date) {
+      return {
+        totalDeposits: dailySummaryData.total_deposits_tl || 0,
+        totalWithdrawals: dailySummaryData.total_withdrawals_tl || 0,
+        transactionCount: dailySummaryData.transaction_count || 0,
+        uniqueClients: dailySummaryData.unique_clients || 0
+      };
+    }
+    
+    // Fallback to local calculation if backend data not available
     if (!Array.isArray(transactions)) return { totalDeposits: 0, totalWithdrawals: 0, transactionCount: 0, uniqueClients: 0 };
     
     const dateTransactions = transactions.filter(t => {
@@ -1283,8 +2137,13 @@ export default function Clients() {
       return transactionDate === date;
     });
     
-    const deposits = dateTransactions.filter(t => t.category === 'DEP');
-    const withdrawals = dateTransactions.filter(t => t.category === 'WD');
+    // Handle both category formats: 'DEP'/'WD' and 'Deposit'/'Withdraw'
+    const deposits = dateTransactions.filter(t => 
+      t.category === 'DEP' || t.category === 'Deposit' || t.category === 'Investment'
+    );
+    const withdrawals = dateTransactions.filter(t => 
+      t.category === 'WD' || t.category === 'Withdraw' || t.category === 'Withdrawal'
+    );
     
     // Use original amounts since we now have automatic rate conversion from backend
     const totalDeposits = deposits.reduce((sum, t) => sum + (t.amount || 0), 0);
@@ -1316,10 +2175,10 @@ export default function Clients() {
         breakdown[method] = { deposits: 0, withdrawals: 0, total: 0 };
       }
       
-      if (transaction.category === 'DEP') {
+      if (transaction.category === 'DEP' || transaction.category === 'Deposit' || transaction.category === 'Investment') {
         breakdown[method].deposits += amount;
         breakdown[method].total += amount;
-      } else if (transaction.category === 'WD') {
+      } else if (transaction.category === 'WD' || transaction.category === 'Withdraw' || transaction.category === 'Withdrawal') {
         breakdown[method].withdrawals += amount;
         breakdown[method].total -= amount;
       }
@@ -1328,30 +2187,6 @@ export default function Clients() {
     return breakdown;
   };
 
-  // Fetch dropdown options
-  const fetchDropdownOptions = async () => {
-    try {
-      setLoadingDropdownOptions(true);
-      const response = await api.get('/api/v1/transactions/dropdown-options');
-      if (response.ok) {
-        const data = await api.parseResponse(response);
-        if (data) {
-          // Extract just the 'value' property from each option object
-          setDropdownOptions({
-            currencies: (data.currency || []).map((option: any) => option.value),
-            payment_methods: (data.payment_method || []).map((option: any) => option.value),
-            categories: (data.category || []).map((option: any) => option.value),
-            psps: (data.psp || []).map((option: any) => option.value),
-            companies: (data.company || []).map((option: any) => option.value),
-          });
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching dropdown options:', error);
-    } finally {
-      setLoadingDropdownOptions(false);
-    }
-  };
 
   // Daily Summary Functions
   const fetchDailySummary = async (date: string) => {
@@ -1573,6 +2408,31 @@ export default function Clients() {
     return <ClientsPageSkeleton />;
   }
 
+  // Error boundary for critical errors
+  if (error && !clientsError) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-500 mb-4">
+            <AlertCircle className="h-16 w-16 mx-auto" />
+          </div>
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">
+            Application Error
+          </h3>
+          <p className="text-gray-600 mb-6">{error}</p>
+          <Button
+            variant="default"
+            onClick={() => window.location.reload()}
+            className="inline-flex items-center gap-2"
+          >
+            <RefreshCw className="h-4 w-4" />
+            Reload Page
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   const fetchClientTransactions = async (clientName: string) => {
     if (clientTransactions[clientName]) return; // Already loaded
     
@@ -1634,7 +2494,7 @@ export default function Clients() {
                   {formatDateHeader(dateGroup.date)}
                 </h4>
                 <p className='text-xs text-gray-500'>
-                  {dateGroup.transactions.length} transaction{dateGroup.transactions.length !== 1 ? 's' : ''} • {formatCurrency(dateGroup.transactions.reduce((sum, t) => sum + (t.amount || 0), 0), '₺')} total
+                  {dateGroup.transactions.length} transaction{dateGroup.transactions.length !== 1 ? 's' : ''} • {dateGroup.netBalance ? formatCurrency(dateGroup.netBalance, '₺') : formatCurrency(dateGroup.transactions.reduce((sum, t) => sum + (t.amount || 0), 0), '₺')} {dateGroup.netBalance ? 'net balance' : 'total'}
                 </p>
               </div>
             </div>
@@ -1718,13 +2578,13 @@ export default function Clients() {
                     {transaction.category || 'N/A'}
                   </td>
                   <td className='px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900 text-right border-b border-gray-100'>
-                    {formatCurrency(transaction.amount || 0, transaction.currency)}
+                    {formatCurrencyPositive(transaction.amount || 0, transaction.currency)}
                   </td>
                   <td className='px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600 text-right border-b border-gray-100'>
-                    {formatCurrency(transaction.commission || 0, transaction.currency)}
+                    {formatCurrencyPositive(transaction.commission || 0, transaction.currency)}
                   </td>
                   <td className='px-6 py-4 whitespace-nowrap text-sm font-semibold text-blue-600 text-right border-b border-gray-100'>
-                    {formatCurrency(transaction.net_amount || 0, transaction.currency)}
+                    {formatCurrencyPositive(transaction.net_amount || 0, transaction.currency)}
                   </td>
                   <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900 border-b border-gray-100'>
                     {transaction.currency || 'N/A'}
@@ -1832,62 +2692,140 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
   };
 
   return (
-    <div className='space-y-8'>
-      {/* Enhanced Header */}
-      <PageHeader
-        title={t('clients.title')}
-        subtitle={t('clients.description')}
-        actions={
-          <div className='flex items-center gap-3'>
-            <Button 
-              variant="outline"
-              size="sm"
-              onClick={handleExport}
-              className="flex items-center gap-2"
-            >
-              <Download className='h-4 w-4' />
-              {t('clients.export')}
-            </Button>
-            <Button 
-              variant="outline"
-              size="sm"
-              onClick={triggerFileInput}
-              disabled={importing}
-              className="flex items-center gap-2 bg-green-50 border-green-300 text-green-700 hover:bg-green-100"
-            >
-              <Upload className='h-4 w-4' />
-              {importing ? 'Importing...' : 'Import'}
-            </Button>
-            <Button 
-              variant="outline"
-              size="sm"
-              onClick={() => setShowImportGuide(true)}
-              className="flex items-center gap-2 bg-blue-50 border-blue-300 text-blue-700 hover:bg-blue-100"
-            >
-              <Info className='h-4 w-4' />
-              Guide
-            </Button>
-            <Button 
-              variant="outline"
-              size="sm"
-              onClick={() => setShowBulkDeleteModal(true)}
-              className="flex items-center gap-2 bg-red-50 border-red-300 text-red-700 hover:bg-red-100"
-            >
-              <Trash2 className='h-4 w-4' />
-              Bulk
-            </Button>
-            <Button 
-              variant="primary"
-              size="sm"
-              onClick={() => navigate('/transactions/add')}
-              className="flex items-center gap-2"
-            >
-              <Plus className='h-4 w-4' />
-              Add Transaction
-            </Button>
+    <div className="min-h-screen bg-slate-50 relative">
+      {/* Loading Overlay */}
+      {loading && (
+        <div className="fixed inset-0 bg-white bg-opacity-90 flex items-center justify-center z-50">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-6"></div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">Loading Data</h3>
+            <p className="text-gray-600 mb-4">Please wait while we fetch all information</p>
+            <div className="flex items-center justify-center space-x-2">
+              <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce"></div>
+              <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+              <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+            </div>
           </div>
-        }
-      />
+        </div>
+      )}
+      
+      {/* Modern Header */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="px-6 py-6">
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+                <Users className="h-8 w-8 text-blue-600" />
+                {t('clients.title')}
+              </h1>
+              <p className="text-gray-600">{t('clients.description')}</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <UnifiedButton
+                variant="outline"
+                size="sm"
+                onClick={handleExport}
+                icon={<Download className="h-4 w-4" />}
+                iconPosition="left"
+              >
+                {t('clients.export')}
+              </UnifiedButton>
+              <UnifiedButton
+                variant="outline"
+                size="sm"
+                onClick={triggerFileInput}
+                disabled={importing}
+                icon={<Upload className="h-4 w-4" />}
+                iconPosition="left"
+                className="bg-green-50 border-green-300 text-green-700 hover:bg-green-100"
+              >
+                {importing ? 'Importing...' : 'Import'}
+              </UnifiedButton>
+              <UnifiedButton
+                variant="outline"
+                size="sm"
+                onClick={() => setShowImportGuide(true)}
+                icon={<Info className="h-4 w-4" />}
+                iconPosition="left"
+                className="bg-blue-50 border-blue-300 text-blue-700 hover:bg-blue-100"
+              >
+                Guide
+              </UnifiedButton>
+              <UnifiedButton
+                variant="outline"
+                size="sm"
+                onClick={() => setShowBulkDeleteModal(true)}
+                icon={<Trash2 className="h-4 w-4" />}
+                iconPosition="left"
+                className="bg-red-50 border-red-300 text-red-700 hover:bg-red-100"
+              >
+                Bulk
+              </UnifiedButton>
+              <UnifiedButton
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  console.log('BRate clicked! Current:', showBulkRates);
+                  setShowBulkRates(!showBulkRates);
+                  console.log('New value:', !showBulkRates);
+                }}
+                icon={<TrendingUp className="h-4 w-4" />}
+                iconPosition="left"
+                className={`${
+                  showBulkRates 
+                    ? 'bg-green-50 border-green-300 text-green-700 hover:bg-green-100' 
+                    : 'bg-orange-50 border-orange-300 text-orange-700 hover:bg-orange-100'
+                }`}
+              >
+                BRate
+              </UnifiedButton>
+              <UnifiedButton
+                variant="outline"
+                size="sm"
+                onClick={async () => {
+                  try {
+                    console.log('🔄 Starting data refresh...');
+                    
+                    // Refresh all data from database sequentially to avoid conflicts
+                    console.log('📊 Fetching clients...');
+                    await fetchClients();
+                    
+                    console.log('💳 Fetching transactions...');
+                    await fetchTransactions();
+                    
+                    console.log('🏦 Refreshing PSP data...');
+                    await refreshPSPData();
+                    
+                    console.log('✅ Data refreshed successfully');
+                    alert('Data refreshed successfully!');
+                  } catch (error: unknown) {
+                    console.error('❌ Error refreshing data:', error);
+                    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+                    console.error('❌ Error details:', errorMessage);
+                    alert(`Error refreshing data: ${errorMessage}`);
+                  }
+                }}
+                icon={<RefreshCw className="h-4 w-4" />}
+                iconPosition="left"
+                className="bg-blue-50 border-blue-300 text-blue-700 hover:bg-blue-100"
+              >
+                Fetch
+              </UnifiedButton>
+              <UnifiedButton
+                variant="primary"
+                size="sm"
+                onClick={() => navigate('/transactions/add')}
+                icon={<Plus className="h-4 w-4" />}
+                iconPosition="left"
+              >
+                Add Transaction
+              </UnifiedButton>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="p-6 space-y-6">
 
       
 
@@ -1906,188 +2844,136 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
       </div>
 
       {/* Tab Navigation */}
-      {/* Enhanced Tab Navigation */}
-      <div className='bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden'>
-        <div className='bg-gradient-to-r from-gray-50 to-gray-100/50 px-6 py-2'>
-          <nav className='flex space-x-1'>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setActiveTab('overview')}
-                className={`px-6 py-3 rounded-xl font-medium text-sm transition-all duration-200 flex items-center gap-2 ${
-                  activeTab === 'overview'
-                    ? 'bg-white text-blue-600 shadow-md border border-gray-200'
-                    : 'text-gray-600 hover:text-gray-800 hover:bg-white/50'
-                }`}
-              >
-                  <BarChart3 className='h-4 w-4' />
-                  Overview
-              </button>
-              {activeTab === 'overview' && (
-                <button
-                  onClick={() => {
-                    fetchClients();
-                    fetchDropdownOptions();
-                  }}
-                  disabled={loading}
-                  className="p-2 text-gray-500 hover:text-gray-700 hover:bg-white/60 rounded-lg transition-all duration-200 hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                  title={loading ? 'Refreshing...' : 'Refresh Overview data'}
-                >
-                  <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-                </button>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setActiveTab('clients')}
-                className={`px-6 py-3 rounded-xl font-medium text-sm transition-all duration-200 flex items-center gap-2 ${
-                  activeTab === 'clients'
-                    ? 'bg-white text-blue-600 shadow-md border border-gray-200'
-                    : 'text-gray-600 hover:text-gray-800 hover:bg-white/50'
-                }`}
-              >
-                  <Users className='h-4 w-4' />
-                  Clients
-              </button>
-              {activeTab === 'clients' && (
-                <button
-                  onClick={() => {
-                    fetchClients();
-                  }}
-                  disabled={loading}
-                  className="p-2 text-gray-500 hover:text-gray-700 hover:bg-white/60 rounded-lg transition-all duration-200 hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                  title={loading ? 'Refreshing...' : 'Refresh Clients data'}
-                >
-                  <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-                </button>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setActiveTab('transactions')}
-                className={`px-6 py-3 rounded-xl font-medium text-sm transition-all duration-200 flex items-center gap-2 ${
-                  activeTab === 'transactions'
-                    ? 'bg-white text-blue-600 shadow-md border border-gray-200'
-                    : 'text-gray-600 hover:text-gray-800 hover:bg-white/50'
-                }`}
-              >
-                  <FileText className='h-4 w-4' />
-                  Transactions
-              </button>
-              {activeTab === 'transactions' && (
-                <button
-                  onClick={() => {
-                    fetchTransactions();
-                  }}
-                  disabled={loading}
-                  className="p-2 text-gray-500 hover:text-gray-700 hover:bg-white/60 rounded-lg transition-all duration-200 hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                  title={loading ? 'Refreshing...' : 'Refresh Transactions data'}
-                >
-                  <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-                </button>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setActiveTab('analytics')}
-                className={`px-6 py-3 rounded-xl font-medium text-sm transition-all duration-200 flex items-center gap-2 ${
-                  activeTab === 'analytics'
-                    ? 'bg-white text-blue-600 shadow-md border border-gray-200'
-                    : 'text-gray-600 hover:text-gray-800 hover:bg-white/50'
-                }`}
-              >
-                  <LineChart className='h-4 w-4' />
-                  Analytics
-              </button>
-              {activeTab === 'analytics' && (
-                <button
-                  onClick={() => {
-                    fetchClients();
-                    fetchTransactions();
-                  }}
-                  disabled={loading}
-                  className="p-2 text-gray-500 hover:text-gray-700 hover:bg-white/60 rounded-lg transition-all duration-200 hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                  title={loading ? 'Refreshing...' : 'Refresh Analytics data'}
-                >
-                  <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-                </button>
-              )}
-            </div>
-          </nav>
-        </div>
-      </div>
+      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'overview' | 'transactions' | 'analytics' | 'clients' | 'accounting')} className="w-full">
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="overview" className="flex items-center gap-2">
+            <BarChart3 className="h-4 w-4" />
+            Overview
+          </TabsTrigger>
+          <TabsTrigger value="clients" className="flex items-center gap-2">
+            <Users className="h-4 w-4" />
+            Clients
+          </TabsTrigger>
+          <TabsTrigger value="transactions" className="flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            Transactions
+          </TabsTrigger>
+          <TabsTrigger value="analytics" className="flex items-center gap-2">
+            <LineChart className="h-4 w-4" />
+            Analytics
+          </TabsTrigger>
+          <TabsTrigger value="accounting" className="flex items-center gap-2">
+            <DollarSign className="h-4 w-4" />
+            Accounting
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Tab Content */}
-      {activeTab === 'overview' && (
-        <div className='space-y-6'>
+        {/* Tab Content */}
+        <TabsContent value="overview" className="space-y-6">
           {/* Professional Financial Metrics Section */}
-          <Section title="Financial Overview" subtitle="Key financial metrics">
-            <CardGrid cols={4} gap="lg">
-              <StandardMetricsCard
+          <UnifiedCard variant="elevated" className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BarChart3 className="h-5 w-5 text-blue-600" />
+                Financial Overview
+              </CardTitle>
+              <CardDescription>
+                Key financial metrics
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <MetricCard
                 title="Total Deposit"
                 value={formatCurrency(totalDeposits, '₺')}
                 subtitle="DEP Transactions"
                 icon={TrendingUp}
                 color="green"
-                variant="default"
-                changeType="positive"
+                change={totalDeposits > 0 ? "N/A" : "0%"}
+                trend={totalDeposits > 0 ? "up" : "neutral"}
               />
               
-              <StandardMetricsCard
+              <MetricCard
                 title="Total Withdraw"
                 value={formatCurrency(Math.abs(totalWithdrawals), '₺')}
                 subtitle="WD Transactions"
                 icon={TrendingDown}
                 color="red"
-                variant="default"
-                changeType="negative"
+                change={Math.abs(totalWithdrawals) > 0 ? "N/A" : "0%"}
+                trend={Math.abs(totalWithdrawals) > 0 ? "down" : "neutral"}
               />
               
-              <StandardMetricsCard
+              <MetricCard
                 title="Net Cash"
                 value={formatCurrency(totalDeposits - totalWithdrawals, '₺')}
                 subtitle="Tot DEP - Tot WD"
                 icon={DollarSign}
                 color={totalDeposits - totalWithdrawals >= 0 ? "blue" : "red"}
-                variant="default"
-                changeType={totalDeposits - totalWithdrawals >= 0 ? "positive" : "negative"}
+                change={totalDeposits - totalWithdrawals !== 0 ? "N/A" : "0%"}
+                trend={totalDeposits - totalWithdrawals !== 0 ? (totalDeposits - totalWithdrawals >= 0 ? "up" : "down") : "neutral"}
               />
               
-              <StandardMetricsCard
+              <MetricCard
                 title="Total Commissions"
                 value={formatCurrency(totalCommissions, '₺')}
                 subtitle="All paid commissions"
                 icon={FileText}
                 color="purple"
-                variant="default"
+                change={totalCommissions > 0 ? "N/A" : "0%"}
+                trend={totalCommissions > 0 ? "up" : "neutral"}
               />
-            </CardGrid>
-          </Section>
+              </div>
+            </CardContent>
+          </UnifiedCard>
 
           {/* Client Distribution and Top Performers */}
-          <Section title="Client Insights" subtitle="Distribution and top performers">
-            <CardGrid cols={2} gap="lg">
-              <StandardMetricsCard
+          <UnifiedCard variant="elevated" className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5 text-blue-600" />
+                Client Insights
+              </CardTitle>
+              <CardDescription>
+                Distribution and top performers
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <MetricCard
                 title="Client Distribution"
                 value={clients.length}
                 subtitle={`${clients.filter(c => Array.isArray(c.currencies) && c.currencies.length > 1).length} multi-currency`}
                 icon={Users}
-                color="primary"
-                variant="default"
+                color="blue"
+                change="N/A"
+                trend="up"
               />
 
-              <StandardMetricsCard
+              <MetricCard
                 title="Top Performers"
-                value={clients.length > 0 ? clients.reduce((max, client) => client.total_amount > max.total_amount ? client : max).client_name : 'N/A'}
-                subtitle={`Most transactions: ${clients.length > 0 ? clients.reduce((max, client) => client.transaction_count > max.transaction_count ? client : max).client_name : 'N/A'}`}
+                value={filteredClients.length > 0 ? filteredClients.reduce((max, client) => client.total_amount > max.total_amount ? client : max).client_name : 'N/A'}
+                subtitle={`Most transactions: ${filteredClients.length > 0 ? filteredClients.reduce((max, client) => client.transaction_count > max.transaction_count ? client : max).client_name : 'N/A'}`}
                 icon={Award}
-                color="success"
-                variant="default"
+                color="purple"
+                change="N/A"
+                trend="up"
               />
-            </CardGrid>
-          </Section>
+              </div>
+            </CardContent>
+          </UnifiedCard>
 
           {/* Payment Method Breakdown */}
-          <Section title="Payment Method Analysis" subtitle="Payment method breakdown">
+          <UnifiedCard variant="elevated" className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CreditCard className="h-5 w-5 text-blue-600" />
+                Payment Method Analysis
+              </CardTitle>
+              <CardDescription>
+                Payment method breakdown
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
             {Object.keys(paymentMethodBreakdown).length > 0 ? (
               <div className='space-y-4'>
                 {Object.entries(paymentMethodBreakdown)
@@ -2133,51 +3019,524 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                 <p className='text-gray-500'>No payment method data available</p>
               </div>
             )}
-          </Section>
+            </CardContent>
+          </UnifiedCard>
 
-        </div>
-      )}
+        </TabsContent>
 
-      {activeTab === 'transactions' && (
-        <ContentArea>
+        <TabsContent value="transactions" className="space-y-6">
           {/* Transactions Header Section */}
-          <Section title="Transaction Management" subtitle="All transaction records">
+          <UnifiedCard>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div>
+                    <CardTitle className="flex items-center gap-3">
+                      Transaction Management
+                      <UnifiedBadge variant="secondary" size="sm" className="bg-blue-100 text-blue-800">
+                        Enhanced Filters Available
+                      </UnifiedBadge>
+                    </CardTitle>
+              <CardDescription>All transaction records</CardDescription>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  {/* Prominent Filter Button */}
+                  <UnifiedButton
+                    variant={showFilters ? "primary" : "outline"}
+                    onClick={() => setShowFilters(!showFilters)}
+                    icon={<Filter className="h-4 w-4" />}
+                    className={`transition-all duration-200 ${
+                      showFilters 
+                        ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg' 
+                        : 'border-blue-300 text-blue-600 hover:bg-blue-50 hover:border-blue-400'
+                    }`}
+                  >
+                    {showFilters ? 'Hide Filters' : `Show Filters${getActiveFilterCount() > 0 ? ` (${getActiveFilterCount()})` : ''}`}
+                  </UnifiedButton>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
             
-            {/* Category Filter */}
-            <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-              <div className="flex items-center gap-4">
-                <label htmlFor="categoryFilter" className="text-sm font-medium text-gray-700">
-                  Category Filter:
-                </label>
+            {/* Comprehensive Filter Card */}
+            {showFilters && (
+              <div className="mb-6 animate-in slide-in-from-top-4 duration-300">
+                <UnifiedCard variant="outlined" className="overflow-hidden shadow-lg border-blue-200">
+                  <CardHeader className="bg-gradient-to-r from-slate-50 to-gray-50 border-b">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-blue-100 rounded-lg">
+                          <Filter className="h-5 w-5 text-blue-600" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-lg font-semibold text-gray-900">
+                            Advanced Transaction Filters
+                          </CardTitle>
+                          <CardDescription className="text-gray-600">
+                            Refine your search with comprehensive filtering options
+                            {getActiveFilterCount() > 0 && (
+                              <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                                {getActiveFilterCount()} active
+                              </span>
+                            )}
+                          </CardDescription>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {getActiveFilterCount() > 0 && (
+                          <UnifiedButton
+                            variant="ghost"
+                            size="sm"
+                            onClick={clearAllFilters}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          >
+                            Clear All
+                          </UnifiedButton>
+                        )}
+                        <UnifiedButton
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setShowFilters(false)}
+                          icon={<X className="h-4 w-4" />}
+                        >
+                          Close
+                        </UnifiedButton>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-6">
+                    <div className="space-y-6">
+                      {/* Quick Filters */}
+                      <div className="space-y-4">
+                        <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          Quick Filters
+                        </h3>
+                        <div className="flex flex-wrap gap-2">
+                          <UnifiedButton
+                            variant="outline"
+                            size="sm"
+                            onClick={() => applyQuickFilter('today')}
+                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                          >
+                            Today
+                          </UnifiedButton>
+                          <UnifiedButton
+                            variant="outline"
+                            size="sm"
+                            onClick={() => applyQuickFilter('thisWeek')}
+                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                          >
+                            This Week
+                          </UnifiedButton>
+                          <UnifiedButton
+                            variant="outline"
+                            size="sm"
+                            onClick={() => applyQuickFilter('deposits')}
+                            className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                          >
+                            Deposits Only
+                          </UnifiedButton>
+                          <UnifiedButton
+                            variant="outline"
+                            size="sm"
+                            onClick={() => applyQuickFilter('withdrawals')}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          >
+                            Withdrawals Only
+                          </UnifiedButton>
+                          <UnifiedButton
+                            variant="outline"
+                            size="sm"
+                            onClick={() => applyQuickFilter('highValue')}
+                            className="text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+                          >
+                            High Value (10K+)
+                          </UnifiedButton>
+                        </div>
+                      </div>
+
+                      {/* Basic Filters Section */}
+                      <div className="space-y-4">
+                        <div 
+                          className="flex items-center justify-between cursor-pointer"
+                          onClick={() => toggleFilterSection('basic')}
+                        >
+                          <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+                            <div className={`w-2 h-2 rounded-full ${expandedFilterSections.basic ? 'bg-blue-500' : 'bg-gray-300'}`}></div>
+                            Basic Filters
+                          </h3>
+                          <div className="flex items-center gap-2">
+                            {(filters.search || filters.category || filters.status) && (
+                              <UnifiedBadge variant="secondary" size="sm">
+                                {(filters.search ? 1 : 0) + (filters.category ? 1 : 0) + (filters.status ? 1 : 0)} active
+                              </UnifiedBadge>
+                            )}
+                            <div className={`transform transition-transform ${expandedFilterSections.basic ? 'rotate-90' : ''}`}>
+                              <ArrowUpRight className="h-4 w-4 text-gray-500" />
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {expandedFilterSections.basic && (
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pl-4">
+                            <div className="space-y-2">
+                              <label className="text-sm font-medium text-gray-700">Search</label>
+                              <Input
+                                placeholder="Search transactions..."
+                                value={filters.search}
+                                onChange={(e) => handleFilterChange('search', e.target.value)}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <label className="text-sm font-medium text-gray-700">Category</label>
                 <select
-                  id="categoryFilter"
                   value={filters.category}
-                  onChange={(e) => {
-                    setFilters(prev => ({ ...prev, category: e.target.value }));
-                    setPagination(prev => ({ ...prev, page: 1 })); // Reset to first page
-                  }}
-                  className="px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                onChange={e => handleFilterChange('category', e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="">All Categories</option>
-                  <option value="DEP">Deposits (DEP)</option>
-                  <option value="WD">Withdrawals (WD)</option>
-                  <option value="WIT">Withdrawals (WIT)</option>
+                                <option value="DEP">Deposit (DEP)</option>
+                                <option value="WD">Withdrawal (WD)</option>
                 </select>
-                
-                {/* Clear Filters Button */}
+                            </div>
+                            <div className="space-y-2">
+                              <label className="text-sm font-medium text-gray-700">Status</label>
+                              <select
+                                value={filters.status}
+                                onChange={e => handleFilterChange('status', e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              >
+                                <option value="">All Status</option>
+                                <option value="completed">Completed</option>
+                                <option value="pending">Pending</option>
+                                <option value="failed">Failed</option>
+                              </select>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Advanced Filters Section */}
+                      <div className="space-y-4">
+                        <div 
+                          className="flex items-center justify-between cursor-pointer"
+                          onClick={() => toggleFilterSection('advanced')}
+                        >
+                          <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+                            <div className={`w-2 h-2 rounded-full ${expandedFilterSections.advanced ? 'bg-purple-500' : 'bg-gray-300'}`}></div>
+                            Advanced Filters
+                          </h3>
+                          <div className="flex items-center gap-2">
+                            {(filters.psp || filters.company || filters.payment_method || filters.currency) && (
+                              <UnifiedBadge variant="secondary" size="sm">
+                                {(filters.psp ? 1 : 0) + (filters.company ? 1 : 0) + (filters.payment_method ? 1 : 0) + (filters.currency ? 1 : 0)} active
+                              </UnifiedBadge>
+                            )}
+                            <div className={`transform transition-transform ${expandedFilterSections.advanced ? 'rotate-90' : ''}`}>
+                              <ArrowUpRight className="h-4 w-4 text-gray-500" />
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {expandedFilterSections.advanced && (
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pl-4">
+                            <div className="space-y-2">
+                              <label className="text-sm font-medium text-gray-700">PSP</label>
+                              <select
+                                value={filters.psp}
+                                onChange={e => handleFilterChange('psp', e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              >
+                                <option value="">All PSPs</option>
+                                {dropdownOptions.psps.map((psp: string) => (
+                                  <option key={psp} value={psp}>{psp}</option>
+                                ))}
+                              </select>
+                            </div>
+                            <div className="space-y-2">
+                              <label className="text-sm font-medium text-gray-700">Company</label>
+                              <select
+                                value={filters.company}
+                                onChange={e => handleFilterChange('company', e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              >
+                                <option value="">All Companies</option>
+                                {dropdownOptions.companies.map((company: string) => (
+                                  <option key={company} value={company}>{company}</option>
+                                ))}
+                              </select>
+                            </div>
+                            <div className="space-y-2">
+                              <label className="text-sm font-medium text-gray-700">Payment Method</label>
+                              <select
+                                value={filters.payment_method}
+                                onChange={e => handleFilterChange('payment_method', e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              >
+                                <option value="">All Methods</option>
+                                {dropdownOptions.payment_methods.map((method: string) => (
+                                  <option key={method} value={method}>{method}</option>
+                                ))}
+                              </select>
+                            </div>
+                            <div className="space-y-2">
+                              <label className="text-sm font-medium text-gray-700">Currency</label>
+                              <select
+                                value={filters.currency}
+                                onChange={e => handleFilterChange('currency', e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              >
+                                <option value="">All Currencies</option>
+                                {dropdownOptions.currencies.map((currency: string) => (
+                                  <option key={currency} value={currency}>{currency}</option>
+                                ))}
+                              </select>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Amount Filters Section */}
+                      <div className="space-y-4">
+                        <div 
+                          className="flex items-center justify-between cursor-pointer"
+                          onClick={() => toggleFilterSection('amounts')}
+                        >
+                          <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+                            <div className={`w-2 h-2 rounded-full ${expandedFilterSections.amounts ? 'bg-emerald-500' : 'bg-gray-300'}`}></div>
+                            Amount Filters
+                          </h3>
+                          <div className="flex items-center gap-2">
+                            {(filters.amount_min || filters.amount_max || filters.commission_min || filters.commission_max) && (
+                              <UnifiedBadge variant="secondary" size="sm">
+                                {(filters.amount_min ? 1 : 0) + (filters.amount_max ? 1 : 0) + (filters.commission_min ? 1 : 0) + (filters.commission_max ? 1 : 0)} active
+                              </UnifiedBadge>
+                            )}
+                            <div className={`transform transition-transform ${expandedFilterSections.amounts ? 'rotate-90' : ''}`}>
+                              <ArrowUpRight className="h-4 w-4 text-gray-500" />
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {expandedFilterSections.amounts && (
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pl-4">
+                            <div className="space-y-2">
+                              <label className="text-sm font-medium text-gray-700">Min Amount</label>
+                              <Input
+                                type="number"
+                                placeholder="0.00"
+                                value={filters.amount_min}
+                                onChange={(e) => handleFilterChange('amount_min', e.target.value)}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <label className="text-sm font-medium text-gray-700">Max Amount</label>
+                              <Input
+                                type="number"
+                                placeholder="1000000.00"
+                                value={filters.amount_max}
+                                onChange={(e) => handleFilterChange('amount_max', e.target.value)}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <label className="text-sm font-medium text-gray-700">Min Commission</label>
+                              <Input
+                                type="number"
+                                placeholder="0.00"
+                                value={filters.commission_min}
+                                onChange={(e) => handleFilterChange('commission_min', e.target.value)}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <label className="text-sm font-medium text-gray-700">Max Commission</label>
+                              <Input
+                                type="number"
+                                placeholder="10000.00"
+                                value={filters.commission_max}
+                                onChange={(e) => handleFilterChange('commission_max', e.target.value)}
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Date & Sorting Section */}
+                      <div className="space-y-4">
+                        <div 
+                          className="flex items-center justify-between cursor-pointer"
+                          onClick={() => toggleFilterSection('dates')}
+                        >
+                          <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+                            <div className={`w-2 h-2 rounded-full ${expandedFilterSections.dates ? 'bg-orange-500' : 'bg-gray-300'}`}></div>
+                            Date & Sorting
+                          </h3>
+                          <div className="flex items-center gap-2">
+                            {(filters.date_from || filters.date_to || filters.sort_by !== 'created_at' || filters.sort_order !== 'desc') && (
+                              <UnifiedBadge variant="secondary" size="sm">
+                                {(filters.date_from ? 1 : 0) + (filters.date_to ? 1 : 0) + (filters.sort_by !== 'created_at' ? 1 : 0) + (filters.sort_order !== 'desc' ? 1 : 0)} active
+                              </UnifiedBadge>
+                            )}
+                            <div className={`transform transition-transform ${expandedFilterSections.dates ? 'rotate-90' : ''}`}>
+                              <ArrowUpRight className="h-4 w-4 text-gray-500" />
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {expandedFilterSections.dates && (
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pl-4">
+                            <div className="space-y-2">
+                              <label className="text-sm font-medium text-gray-700">From Date</label>
+                              <Input
+                                type="date"
+                                value={filters.date_from}
+                                onChange={(e) => handleFilterChange('date_from', e.target.value)}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <label className="text-sm font-medium text-gray-700">To Date</label>
+                              <Input
+                                type="date"
+                                value={filters.date_to}
+                                onChange={(e) => handleFilterChange('date_to', e.target.value)}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <label className="text-sm font-medium text-gray-700">Sort By</label>
+                              <select
+                                value={filters.sort_by}
+                                onChange={e => handleFilterChange('sort_by', e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              >
+                                <option value="created_at">Date Created</option>
+                                <option value="amount">Amount</option>
+                                <option value="commission">Commission</option>
+                                <option value="client_name">Client Name</option>
+                                <option value="psp">PSP</option>
+                              </select>
+                            </div>
+                            <div className="space-y-2">
+                              <label className="text-sm font-medium text-gray-700">Sort Order</label>
+                              <select
+                                value={filters.sort_order}
+                                onChange={e => handleFilterChange('sort_order', e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              >
+                                <option value="desc">Descending</option>
+                                <option value="asc">Ascending</option>
+                              </select>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Active Filters Summary */}
+                      {getActiveFilterCount() > 0 && (
+                        <div className="space-y-3 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                          <h4 className="text-sm font-medium text-blue-900">Active Filters</h4>
+                          <div className="flex flex-wrap gap-2">
+                            {filters.search && (
+                              <UnifiedBadge variant="secondary" size="sm" className="bg-blue-100 text-blue-800">
+                                Search: "{filters.search}"
+                              </UnifiedBadge>
+                            )}
                 {filters.category && (
-                  <button
+                              <UnifiedBadge variant="secondary" size="sm" className="bg-green-100 text-green-800">
+                                Category: {filters.category}
+                              </UnifiedBadge>
+                            )}
+                            {filters.psp && (
+                              <UnifiedBadge variant="secondary" size="sm" className="bg-purple-100 text-purple-800">
+                                PSP: {filters.psp}
+                              </UnifiedBadge>
+                            )}
+                            {filters.company && (
+                              <UnifiedBadge variant="secondary" size="sm" className="bg-orange-100 text-orange-800">
+                                Company: {filters.company}
+                              </UnifiedBadge>
+                            )}
+                            {filters.payment_method && (
+                              <UnifiedBadge variant="secondary" size="sm" className="bg-indigo-100 text-indigo-800">
+                                Method: {filters.payment_method}
+                              </UnifiedBadge>
+                            )}
+                            {filters.currency && (
+                              <UnifiedBadge variant="secondary" size="sm" className="bg-cyan-100 text-cyan-800">
+                                Currency: {filters.currency}
+                              </UnifiedBadge>
+                            )}
+                            {filters.status && (
+                              <UnifiedBadge variant="secondary" size="sm" className="bg-yellow-100 text-yellow-800">
+                                Status: {filters.status}
+                              </UnifiedBadge>
+                            )}
+                            {filters.date_from && (
+                              <UnifiedBadge variant="secondary" size="sm" className="bg-gray-100 text-gray-800">
+                                From: {filters.date_from}
+                              </UnifiedBadge>
+                            )}
+                            {filters.date_to && (
+                              <UnifiedBadge variant="secondary" size="sm" className="bg-gray-100 text-gray-800">
+                                To: {filters.date_to}
+                              </UnifiedBadge>
+                            )}
+                            {filters.amount_min && (
+                              <UnifiedBadge variant="secondary" size="sm" className="bg-emerald-100 text-emerald-800">
+                                Min: {filters.amount_min}
+                              </UnifiedBadge>
+                            )}
+                            {filters.amount_max && (
+                              <UnifiedBadge variant="secondary" size="sm" className="bg-emerald-100 text-emerald-800">
+                                Max: {filters.amount_max}
+                              </UnifiedBadge>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Action Buttons */}
+                      <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+                        <div className="text-sm text-gray-600">
+                          {getActiveFilterCount() > 0 ? (
+                            <span className="flex items-center gap-2">
+                              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                              {getActiveFilterCount()} filter{getActiveFilterCount() !== 1 ? 's' : ''} applied
+                            </span>
+                          ) : (
+                            <span className="flex items-center gap-2">
+                              <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
+                              No filters applied
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <UnifiedButton
+                            variant="outline"
+                            onClick={clearAllFilters}
+                            disabled={getActiveFilterCount() === 0}
+                          >
+                            Clear All
+                          </UnifiedButton>
+                          <UnifiedButton
+                            variant="primary"
                     onClick={() => {
-                      setFilters(prev => ({ ...prev, category: '' }));
+                              // Trigger data refresh
                       setPagination(prev => ({ ...prev, page: 1 }));
+                              fetchTransactions();
                     }}
-                    className="px-3 py-1 text-xs text-gray-600 hover:text-gray-800 hover:bg-gray-200 rounded transition-colors duration-200"
+                            icon={<RefreshCw className="h-4 w-4" />}
+                            iconPosition="left"
                   >
-                    Clear Filter
-                  </button>
-                )}
+                            Apply Filters
+                          </UnifiedButton>
               </div>
             </div>
+                    </div>
+                  </CardContent>
+                </UnifiedCard>
+              </div>
+            )}
             {loading ? (
               <div className='p-12 text-center'>
                 <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4'></div>
@@ -2193,7 +3552,7 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                 </h3>
                 <p className='text-gray-600 mb-6'>{error}</p>
                 <Button
-                  variant="primary"
+                  variant="default"
                   onClick={fetchTransactions}
                   className="flex items-center gap-2"
                 >
@@ -2306,16 +3665,21 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                 </div>
               </div>
             )}
-          </Section>
-        </ContentArea>
-      )}
+            </CardContent>
+          </UnifiedCard>
 
-      {activeTab === 'analytics' && (
-        <ContentArea>
+        </TabsContent>
+
+        <TabsContent value="analytics" className="space-y-6">
           {/* Analytics Overview Section */}
-          <Section title="Analytics Overview" subtitle="Financial and performance insights">
+          <UnifiedCard>
+            <CardHeader>
+              <CardTitle>Analytics Overview</CardTitle>
+              <CardDescription>Financial and performance insights</CardDescription>
+            </CardHeader>
+            <CardContent>
             {/* Professional Charts Section */}
-            <CardGrid cols={2} gap="lg">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Transaction Volume Trend Chart */}
               <div className='bg-white rounded-2xl p-6 shadow-sm border border-gray-200 hover:shadow-lg transition-all duration-200'>
                 <div className='flex items-center justify-between mb-6'>
@@ -2419,12 +3783,18 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                   </ResponsiveContainer>
                 </div>
               </div>
-            </CardGrid>
-          </Section>
+            </div>
+            </CardContent>
+          </UnifiedCard>
 
           {/* Client Performance and Currency Charts Section */}
-          <Section title="Client & Currency Analysis" subtitle="Performance and distribution">
-            <CardGrid cols={2} gap="lg">
+          <UnifiedCard>
+            <CardHeader>
+              <CardTitle>Client & Currency Analysis</CardTitle>
+              <CardDescription>Performance and distribution</CardDescription>
+            </CardHeader>
+            <CardContent>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Top Client Performance Chart */}
               <div className='bg-white rounded-2xl p-6 shadow-sm border border-gray-200 hover:shadow-lg transition-all duration-200'>
                 <div className='flex items-center justify-between mb-6'>
@@ -2506,12 +3876,18 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                   </ResponsiveContainer>
                 </div>
               </div>
-            </CardGrid>
-          </Section>
+            </div>
+            </CardContent>
+          </UnifiedCard>
 
           {/* PSP Performance and Recent Activity Section */}
-          <Section title="PSP Performance & Activity" subtitle="Provider performance metrics and client activity insights">
-            <CardGrid cols={2} gap="lg">
+          <UnifiedCard>
+            <CardHeader>
+              <CardTitle>PSP Performance & Activity</CardTitle>
+              <CardDescription>Provider performance metrics and client activity insights</CardDescription>
+            </CardHeader>
+            <CardContent>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* PSP Performance Chart */}
               <div className='bg-white rounded-2xl p-6 shadow-sm border border-gray-200 hover:shadow-lg transition-all duration-200'>
                 <div className='flex items-center justify-between mb-6'>
@@ -2599,10 +3975,376 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                     ))}
                 </div>
               </div>
-            </CardGrid>
-          </Section>
-        </ContentArea>
-      )}
+            </div>
+            </CardContent>
+          </UnifiedCard>
+
+      </TabsContent>
+
+      <TabsContent value="clients" className="space-y-6">
+          {/* Clients Table */}
+          <div className='bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden'>
+            <div className='px-8 py-6 border-b border-gray-100'>
+              <div className='flex items-center justify-between'>
+                <div className='flex items-center gap-3'>
+                  <div className='w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center'>
+                    <Users className='w-5 h-5 text-blue-600' />
+                  </div>
+                  <div>
+                    <h2 className='text-xl font-semibold text-gray-900'>Clients</h2>
+                    <p className='text-sm text-gray-500'>Manage your client relationships</p>
+                  </div>
+                </div>
+                <div className='flex items-center gap-3'>
+                  <Button
+                    onClick={() => setShowAddModal(true)}
+                    className='bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2'
+                  >
+                    <Plus className='w-4 h-4' />
+                    Add Client
+                  </Button>
+                </div>
+              </div>
+            </div>
+            <div className='p-8'>
+              {loading ? (
+                <div className='flex items-center justify-center py-12'>
+                  <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600'></div>
+                </div>
+              ) : (
+                <div className='overflow-x-auto'>
+                  <table className='w-full'>
+                    <thead>
+                      <tr className='border-b border-gray-100'>
+                        <th className='text-left py-3 px-4 font-medium text-gray-600'>Client</th>
+                        <th className='text-left py-3 px-4 font-medium text-gray-600'>Company</th>
+                        <th className='text-left py-3 px-4 font-medium text-gray-600'>Total Amount</th>
+                        <th className='text-left py-3 px-4 font-medium text-gray-600'>Transactions</th>
+                        <th className='text-left py-3 px-4 font-medium text-gray-600'>Last Transaction</th>
+                        <th className='text-left py-3 px-4 font-medium text-gray-600'>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {clients.map((client, index) => (
+                        <React.Fragment key={index}>
+                          <tr className='border-b border-gray-50 hover:bg-gray-50'>
+                            <td className='py-4 px-4'>
+                              <div className='flex items-center gap-3'>
+                                <div className='w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center'>
+                                  <span className='text-sm font-medium text-blue-600'>
+                                    {client.client_name.charAt(0).toUpperCase()}
+                                  </span>
+                                </div>
+                                <div>
+                                  <div className='font-medium text-gray-900'>{client.client_name}</div>
+                                  <div className='text-sm text-gray-500'>{client.company_name || 'N/A'}</div>
+                                </div>
+                              </div>
+                            </td>
+                            <td className='py-4 px-4'>
+                              <div className='text-sm text-gray-900'>{client.company_name || 'N/A'}</div>
+                            </td>
+                            <td className='py-4 px-4'>
+                              <div className='text-sm font-medium text-gray-900'>
+                                {formatCurrency(client.total_amount, 'TL')}
+                              </div>
+                            </td>
+                            <td className='py-4 px-4'>
+                              <div className='text-sm text-gray-600'>{client.transaction_count}</div>
+                            </td>
+                            <td className='py-4 px-4'>
+                              <div className='text-sm text-gray-600'>
+                                {client.last_transaction ? 
+                                  new Date(client.last_transaction).toLocaleDateString() : 
+                                  'N/A'
+                                }
+                              </div>
+                            </td>
+                            <td className='py-4 px-4'>
+                              <div className='flex items-center gap-2'>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleViewClient(client)}
+                                  className='text-blue-600 hover:text-blue-700'
+                                >
+                                  <Eye className='w-4 h-4' />
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleEditClient(client)}
+                                  className='text-green-600 hover:text-green-700'
+                                >
+                                  <Edit className='w-4 h-4' />
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleDeleteClient(client)}
+                                  className='text-red-600 hover:text-red-700'
+                                >
+                                  <Trash2 className='w-4 h-4' />
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        </React.Fragment>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* BRate Bulk Rate Management */}
+          {showBulkRates && (
+            <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5 text-green-600" />
+                  <h3 className="text-lg font-semibold text-gray-900">Bulk Rate Management</h3>
+                </div>
+                <div className="text-sm text-gray-500">
+                  Manage exchange rates for USD transactions by date
+                </div>
+              </div>
+
+              {/* Debug: Show transactions count */}
+              <div className="mb-4 p-2 bg-blue-50 border border-blue-200 rounded">
+                <p className="text-sm text-blue-700">
+                  Debug: Transactions count: {transactions.length}, 
+                  USD transactions: {transactions.filter(t => t.currency?.toUpperCase() === 'USD').length}
+                </p>
+              </div>
+
+              <BulkRateManager 
+                transactions={transactions}
+                onRateUpdate={handleBulkRateUpdate}
+              />
+            </div>
+          )}
+
+      </TabsContent>
+
+      <TabsContent value="accounting" className="space-y-6">
+        {/* Accounting Overview Section */}
+        <UnifiedCard>
+          <CardHeader>
+            <CardTitle>Accounting Overview</CardTitle>
+            <CardDescription>Financial accounting and reporting tools</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Total Revenue */}
+              <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6 border border-green-200">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                    <DollarSign className="h-6 w-6 text-green-600" />
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-medium text-green-600">Total Revenue</p>
+                    <p className="text-2xl font-bold text-green-900">
+                      {formatCurrency(
+                        filteredClients.reduce((sum, client) => sum + client.total_amount, 0),
+                        'TL'
+                      )}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center text-sm text-green-700">
+                  <TrendingUp className="h-4 w-4 mr-1" />
+                  <span>All time revenue</span>
+                </div>
+              </div>
+
+              {/* Total Commissions */}
+              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-200">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <CreditCard className="h-6 w-6 text-blue-600" />
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-medium text-blue-600">Total Commissions</p>
+                    <p className="text-2xl font-bold text-blue-900">
+                      {formatCurrency(
+                        filteredClients.reduce((sum, client) => sum + client.total_commission, 0),
+                        'TL'
+                      )}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center text-sm text-blue-700">
+                  <TrendingUp className="h-4 w-4 mr-1" />
+                  <span>Commission earned</span>
+                </div>
+              </div>
+
+              {/* Net Profit */}
+              <div className="bg-gradient-to-br from-purple-50 to-violet-50 rounded-xl p-6 border border-purple-200">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <BarChart3 className="h-6 w-6 text-purple-600" />
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-medium text-purple-600">Net Profit</p>
+                    <p className="text-2xl font-bold text-purple-900">
+                      {formatCurrency(
+                        clients.reduce((sum, client) => sum + client.total_net, 0),
+                        'TL'
+                      )}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center text-sm text-purple-700">
+                  <TrendingUp className="h-4 w-4 mr-1" />
+                  <span>After commissions</span>
+                </div>
+              </div>
+
+              {/* Total Transactions */}
+              <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl p-6 border border-orange-200">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                    <FileText className="h-6 w-6 text-orange-600" />
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-medium text-orange-600">Total Transactions</p>
+                    <p className="text-2xl font-bold text-orange-900">
+                      {clients.reduce((sum, client) => sum + client.transaction_count, 0).toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center text-sm text-orange-700">
+                  <TrendingUp className="h-4 w-4 mr-1" />
+                  <span>All transactions</span>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </UnifiedCard>
+
+        {/* Financial Reports Section */}
+        <UnifiedCard>
+          <CardHeader>
+            <CardTitle>Financial Reports</CardTitle>
+            <CardDescription>Generate and download financial reports</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {/* Revenue Report */}
+              <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                    <DollarSign className="h-5 w-5 text-green-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900">Revenue Report</h3>
+                    <p className="text-sm text-gray-500">Monthly revenue breakdown</p>
+                  </div>
+                </div>
+                <button className="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors">
+                  Generate Report
+                </button>
+              </div>
+
+              {/* Commission Report */}
+              <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <CreditCard className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900">Commission Report</h3>
+                    <p className="text-sm text-gray-500">Commission analysis by client</p>
+                  </div>
+                </div>
+                <button className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">
+                  Generate Report
+                </button>
+              </div>
+
+              {/* Profit & Loss */}
+              <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <BarChart3 className="h-5 w-5 text-purple-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900">Profit & Loss</h3>
+                    <p className="text-sm text-gray-500">P&L statement</p>
+                  </div>
+                </div>
+                <button className="w-full bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors">
+                  Generate Report
+                </button>
+              </div>
+            </div>
+          </CardContent>
+        </UnifiedCard>
+
+        {/* Client Financial Summary */}
+        <UnifiedCard>
+          <CardHeader>
+            <CardTitle>Client Financial Summary</CardTitle>
+            <CardDescription>Financial overview by client</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-200">
+                    <th className="text-left py-3 px-4 font-medium text-gray-600">Client</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-600">Revenue</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-600">Commission</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-600">Net Amount</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-600">Transactions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {clients.map((client, index) => (
+                    <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
+                      <td className="py-4 px-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                            <span className="text-sm font-medium text-blue-600">
+                              {client.client_name.charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                          <div>
+                            <div className="font-medium text-gray-900">{client.client_name}</div>
+                            <div className="text-sm text-gray-500">{client.company_name || 'N/A'}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-4 px-4">
+                        <div className="text-sm font-medium text-gray-900">
+                          {formatCurrency(client.total_amount, 'TL')}
+                        </div>
+                      </td>
+                      <td className="py-4 px-4">
+                        <div className="text-sm font-medium text-blue-600">
+                          {formatCurrency(client.total_commission, 'TL')}
+                        </div>
+                      </td>
+                      <td className="py-4 px-4">
+                        <div className="text-sm font-medium text-green-600">
+                          {formatCurrency(client.total_net, 'TL')}
+                        </div>
+                      </td>
+                      <td className="py-4 px-4">
+                        <div className="text-sm text-gray-600">{client.transaction_count}</div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </UnifiedCard>
+      </TabsContent>
+      </Tabs>
 
       {/* View Client Modal */}
       {showViewModal && selectedClient && (
@@ -2642,49 +4384,37 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                 <div className='bg-gray-50 rounded-lg p-4'>
                   <p className='text-sm text-gray-600'>Total Volume</p>
                   <p className='text-xl font-bold text-gray-900'>
-                    {(() => {
-                      const primaryCurrency =
-                        Array.isArray(selectedClient.currencies) &&
-                        selectedClient.currencies.length > 0
-                          ? selectedClient.currencies[0]
-                          : 'USD';
-                      return formatCurrency(
-                        selectedClient.total_amount,
-                        primaryCurrency
-                      );
-                    })()}
+                    {formatCurrency(
+                      selectedClient.total_amount,
+                      Array.isArray(selectedClient.currencies) &&
+                      selectedClient.currencies.length > 0
+                        ? selectedClient.currencies[0]
+                        : 'USD'
+                    )}
                   </p>
                 </div>
                 <div className='bg-gray-50 rounded-lg p-4'>
                   <p className='text-sm text-gray-600'>Commissions</p>
                   <p className='text-xl font-bold text-success-600'>
-                    {(() => {
-                      const primaryCurrency =
-                        Array.isArray(selectedClient.currencies) &&
-                        selectedClient.currencies.length > 0
-                          ? selectedClient.currencies[0]
-                          : 'USD';
-                      return formatCurrency(
-                        selectedClient.total_commission,
-                        primaryCurrency
-                      );
-                    })()}
+                    {formatCurrency(
+                      selectedClient.total_commission,
+                      Array.isArray(selectedClient.currencies) &&
+                      selectedClient.currencies.length > 0
+                        ? selectedClient.currencies[0]
+                        : 'USD'
+                    )}
                   </p>
                 </div>
                 <div className='bg-gray-50 rounded-lg p-4'>
                   <p className='text-sm text-gray-600'>Net Amount</p>
                   <p className='text-xl font-bold text-accent-600'>
-                    {(() => {
-                      const primaryCurrency =
-                        Array.isArray(selectedClient.currencies) &&
-                        selectedClient.currencies.length > 0
-                          ? selectedClient.currencies[0]
-                          : 'USD';
-                      return formatCurrency(
-                        selectedClient.total_net,
-                        primaryCurrency
-                      );
-                    })()}
+                    {formatCurrency(
+                      selectedClient.total_net,
+                      Array.isArray(selectedClient.currencies) &&
+                      selectedClient.currencies.length > 0
+                        ? selectedClient.currencies[0]
+                        : 'USD'
+                    )}
                   </p>
                 </div>
               </div>
@@ -2700,17 +4430,13 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                 <div className='bg-gray-50 rounded-lg p-4'>
                   <p className='text-sm text-gray-600'>Average Transaction</p>
                   <p className='text-2xl font-bold text-gray-900'>
-                    {(() => {
-                      const primaryCurrency =
-                        Array.isArray(selectedClient.currencies) &&
-                        selectedClient.currencies.length > 0
-                          ? selectedClient.currencies[0]
-                          : 'USD';
-                      return formatCurrency(
-                        selectedClient.avg_transaction,
-                        primaryCurrency
-                      );
-                    })()}
+                    {formatCurrency(
+                      selectedClient.avg_transaction,
+                      Array.isArray(selectedClient.currencies) &&
+                      selectedClient.currencies.length > 0
+                        ? selectedClient.currencies[0]
+                        : 'USD'
+                    )}
                   </p>
                 </div>
               </div>
@@ -2982,8 +4708,8 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                                 Net
                               </span>
                             </div>
-                            <p className={`text-2xl font-semibold mb-1 ${dailyMetrics.totalDeposits - dailyMetrics.totalWithdrawals >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                              {formatCurrency(dailyMetrics.totalDeposits - dailyMetrics.totalWithdrawals, '₺')}
+                            <p className={`text-2xl font-semibold mb-1 ${(dailySummaryData?.total_net_tl || dailyMetrics.totalDeposits - dailyMetrics.totalWithdrawals) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                              {formatCurrency(dailySummaryData?.total_net_tl || dailyMetrics.totalDeposits - dailyMetrics.totalWithdrawals, '₺')}
                             </p>
                             <p className='text-xs text-gray-500'>Balance</p>
                           </div>
@@ -3200,11 +4926,8 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
 
       {/* Exchange Rate Modal - REMOVED - No longer needed with automatic yfinance integration */}
 
-      {/* Clients Tab Content */}
-      {activeTab === 'clients' && (
-        <div className='space-y-6'>
-          {/* Clients Table */}
-          <div className='bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden'>
+      {/* Clients Table */}
+      <div className='bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden'>
             <div className='px-8 py-6 border-b border-gray-100'>
               <div className='flex items-center justify-between'>
                 <div className='flex items-center gap-3'>
@@ -3244,7 +4967,7 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                 <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-accent-600 mx-auto mb-4'></div>
                 <p className='text-gray-600 text-lg'>Loading clients...</p>
               </div>
-            ) : clientsError ? (
+            ) : clientsError && clients.length === 0 ? (
               <div className='p-12 text-center'>
                 <div className='text-red-500 mb-4'>
                   <AlertCircle className='h-16 w-16 mx-auto' />
@@ -3254,8 +4977,8 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                 </h3>
                 <p className='text-gray-600 mb-6'>{clientsError}</p>
                 <Button
-                  variant="primary"
-                  onClick={fetchClients}
+                  variant="default"
+                  onClick={retryClientsData}
                   className="inline-flex items-center gap-2"
                 >
                   <RefreshCw className="h-4 w-4" />
@@ -3431,7 +5154,7 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                                               {transaction.category}
                                             </td>
                                             <td className='px-4 py-2 whitespace-nowrap text-sm font-semibold text-gray-900'>
-                                              {formatCurrency(transaction.amount, transaction.currency)}
+                                              {formatCurrencyPositive(transaction.amount, transaction.currency)}
                                             </td>
                                             <td className='px-4 py-2 whitespace-nowrap text-sm text-gray-500'>
                                               {transaction.currency}
@@ -3486,7 +5209,6 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
             )}
           </div>
         </div>
-      )}
 
       {/* Transaction View Modal */}
       {showViewTransactionModal && selectedTransaction && (
@@ -3522,6 +5244,20 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                   )
                 }));
               }
+              
+              // Refresh daily summary if it's currently open for the same date
+              if (dailySummaryData && dailySummaryData.date === updatedTransaction.date) {
+                fetchDailySummary(updatedTransaction.date);
+              }
+              
+              // Dispatch event to refresh transaction lists in other components
+              window.dispatchEvent(new CustomEvent('transactionsUpdated', {
+                detail: { 
+                  action: 'update',
+                  transactionId: updatedTransaction.id
+                }
+              }));
+              
               setShowEditTransactionModal(false);
             }}
             onCancel={() => setShowEditTransactionModal(false)}
@@ -3560,7 +5296,6 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                     <li>• <strong>Client</strong> - Client's full name</li>
                     <li>• <strong>Amount</strong> - Transaction amount</li>
                     <li>• <strong>Company</strong> - Company name</li>
-                    <li></li>
                     <li>• <strong>Payment Method</strong> - How payment was made</li>
                     <li>• <strong>Category</strong> - Transaction category</li>
                     <li>• <strong>Currency</strong> - Transaction currency</li>
@@ -3731,9 +5466,9 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                 <li>• Only import <strong>raw data</strong> - let the system handle calculations!</li>
               </ul>
             </div>
-                       </div>
-           </Modal>
-         )}
+          </div>
+        </Modal>
+      )}
 
          {/* Import Preview Modal */}
          {showImportPreview && (

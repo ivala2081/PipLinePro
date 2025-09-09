@@ -30,32 +30,43 @@ class ExchangeRateService:
     """
     
     def __init__(self):
-        self.currency_pair = 'USDTRY=X'  # Yahoo Finance format for USD/TRY
+        self.currency_pairs = {
+            'USD': 'USDTRY=X',  # Yahoo Finance format for USD/TRY
+            'EUR': 'EURTRY=X'   # Yahoo Finance format for EUR/TRY
+        }
         self.update_interval = 15 * 60  # 15 minutes in seconds
         self.is_running = False
         self.update_thread = None
-        self.last_rate = None
+        self.last_rates = {}
         self.notification_threshold = 0.5  # 0.5 TRY change triggers notification
         
-    def get_current_rate_from_api(self) -> Optional[Dict[str, Any]]:
+    def get_current_rate_from_api(self, currency='USD') -> Optional[Dict[str, Any]]:
         """
-        Fetch current USD/TRY rate from yfinance
+        Fetch current exchange rate from yfinance
+        
+        Args:
+            currency (str): Currency code (USD, EUR)
         
         Returns:
             Dict with rate data or None if failed
         """
         try:
-            logger.info("Fetching USD/TRY rate from yfinance...")
+            if currency not in self.currency_pairs:
+                logger.error(f"Unsupported currency: {currency}")
+                return None
+                
+            currency_pair = self.currency_pairs[currency]
+            logger.debug(f"Fetching {currency}/TRY rate from yfinance...")
             
             # Create ticker object
-            ticker = yf.Ticker(self.currency_pair)
+            ticker = yf.Ticker(currency_pair)
             
             # Get current data
             info = ticker.info
             history = ticker.history(period="1d", interval="1m")
             
             if history.empty:
-                logger.warning("No recent data available from yfinance")
+                logger.warning(f"No recent data available from yfinance for {currency}")
                 return None
             
             # Get the latest price
@@ -68,6 +79,7 @@ class ExchangeRateService:
             volume = float(latest_data['Volume']) if 'Volume' in latest_data else None
             
             rate_data = {
+                'currency': currency,
                 'rate': current_rate,
                 'bid_price': bid_price,
                 'ask_price': ask_price,
@@ -76,14 +88,14 @@ class ExchangeRateService:
                 'timestamp': datetime.now(timezone.utc)
             }
             
-            logger.info(f"Successfully fetched USD/TRY rate: {current_rate}")
+            logger.debug(f"Successfully fetched {currency}/TRY rate: {current_rate}")
             return rate_data
             
         except Exception as e:
-            logger.error(f"Error fetching rate from yfinance: {e}")
+            logger.error(f"Error fetching {currency} rate from yfinance: {e}")
             return None
     
-    def get_fallback_rate(self, app=None) -> Optional[Dict[str, Any]]:
+    def get_fallback_rate(self, app=None, currency='USD') -> Optional[Dict[str, Any]]:
         """
         Get fallback rate from alternative sources or database
         
@@ -146,9 +158,14 @@ class ExchangeRateService:
                 logger.warning(f"Fallback API failed: {api_error}")
             
             # Last resort: use a reasonable default based on recent trends
-            default_rate = 27.5  # Update this periodically based on market conditions
-            logger.warning(f"Using default fallback rate: {default_rate}")
+            default_rates = {
+                'USD': 27.5,  # Update this periodically based on market conditions
+                'EUR': 30.0   # Update this periodically based on market conditions
+            }
+            default_rate = default_rates.get(currency, 27.5)
+            logger.warning(f"Using default fallback rate for {currency}: {default_rate}")
             return {
+                'currency': currency,
                 'rate': default_rate,
                 'source': 'fallback_default',
                 'timestamp': datetime.now(timezone.utc)
@@ -158,34 +175,36 @@ class ExchangeRateService:
             logger.error(f"Error getting fallback rate: {e}")
             return None
     
-    def update_exchange_rate(self, app=None) -> bool:
+    def update_exchange_rate(self, app=None, currency='USD') -> bool:
         """
         Update exchange rate in database
         
         Args:
             app: Flask app instance for context (optional)
+            currency: Currency to update (USD, EUR)
             
         Returns:
             bool: True if successful, False otherwise
         """
         try:
             # Try to get rate from yfinance first
-            rate_data = self.get_current_rate_from_api()
+            rate_data = self.get_current_rate_from_api(currency)
             
             # If yfinance fails, try fallback
             if not rate_data:
-                rate_data = self.get_fallback_rate(app)
+                rate_data = self.get_fallback_rate(app, currency)
             
             if not rate_data:
-                logger.error("Failed to get exchange rate from any source")
+                logger.error(f"Failed to get {currency} exchange rate from any source")
                 return False
             
             # Database operations need app context
             def _update_in_context():
                 # Create new rate in database
+                currency_pair = f"{currency}TRY"
                 new_rate = ExchangeRate.create_new_rate(
                     rate=rate_data['rate'],
-                    currency_pair='USDTRY',
+                    currency_pair=currency_pair,
                     source=rate_data['source'],
                     bid_price=rate_data.get('bid_price'),
                     ask_price=rate_data.get('ask_price'),
@@ -196,9 +215,9 @@ class ExchangeRateService:
                 self.check_rate_change_notification(new_rate)
                 
                 # Update last rate for comparison
-                self.last_rate = new_rate.rate
+                self.last_rates[currency] = new_rate.rate
                 
-                logger.info(f"Exchange rate updated successfully: {new_rate.rate} TRY/USD")
+                logger.debug(f"Exchange rate updated successfully: {new_rate.rate} TRY/{currency}")
                 return True
             
             # Try to use provided app context or current context
@@ -216,7 +235,7 @@ class ExchangeRateService:
                     return _update_in_context()
             
         except Exception as e:
-            logger.error(f"Error updating exchange rate: {e}")
+            logger.error(f"Error updating {currency} exchange rate: {e}")
             return False
     
     def check_rate_change_notification(self, new_rate: ExchangeRate):
@@ -242,7 +261,7 @@ class ExchangeRateService:
                 direction = "increased" if rate_change > 0 else "decreased"
                 message = (
                     f"USD/TRY rate {direction} significantly: "
-                    f"{previous_rate.rate:.4f} → {new_rate.rate:.4f} "
+                    f"{previous_rate.rate:.4f} -> {new_rate.rate:.4f} "
                     f"({rate_change:+.4f} TRY, {percentage_change:+.2f}%)"
                 )
                 
@@ -290,7 +309,7 @@ class ExchangeRateService:
         self.app = app  # Store app reference for context
         self.update_thread = threading.Thread(target=self._auto_update_loop, daemon=True)
         self.update_thread.start()
-        logger.info("Started automatic exchange rate updates (every 15 minutes)")
+        logger.debug("Started automatic exchange rate updates (every 15 minutes)")
     
     def stop_auto_update(self):
         """Stop automatic rate updates"""
@@ -303,8 +322,16 @@ class ExchangeRateService:
         """Internal loop for automatic updates"""
         while self.is_running:
             try:
-                # Update rate immediately on start, pass app for context
-                self.update_exchange_rate(self.app)
+                # Update both USD and EUR rates
+                usd_success = self.update_exchange_rate(self.app, 'USD')
+                eur_success = self.update_exchange_rate(self.app, 'EUR')
+                
+                if usd_success and eur_success:
+                    logger.debug("Successfully updated both USD and EUR exchange rates")
+                elif usd_success or eur_success:
+                    logger.warning("Partially updated exchange rates")
+                else:
+                    logger.error("Failed to update any exchange rates")
                 
                 # Wait for next update
                 time.sleep(self.update_interval)
@@ -322,6 +349,15 @@ class ExchangeRateService:
             ExchangeRate: Current rate or None if not available
         """
         return ExchangeRate.get_current_rate('USDTRY')
+    
+    def get_eur_rate(self) -> Optional[ExchangeRate]:
+        """
+        Get current EUR/TRY exchange rate from database
+        
+        Returns:
+            ExchangeRate: Current EUR rate or None if not available
+        """
+        return ExchangeRate.get_current_rate('EURTRY')
     
     def get_rate_for_date(self, date: datetime) -> Optional[ExchangeRate]:
         """
