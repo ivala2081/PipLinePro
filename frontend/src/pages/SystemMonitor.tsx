@@ -21,6 +21,7 @@ import {
   DatabaseIcon,
   Gauge
 } from 'lucide-react';
+import { Breadcrumb } from '../components/ui';
 
 interface SystemMetrics {
   cpu_usage: number;
@@ -253,7 +254,7 @@ const SystemMonitor: React.FC = () => {
     if (!severity) return 'border-l-gray-500 bg-gray-50';
     
     switch (severity.toLowerCase()) {
-      case 'low': return 'border-l-blue-500 bg-blue-50';
+      case 'low': return 'border-l-gray-500 bg-gray-50';
       case 'medium': return 'border-l-yellow-500 bg-yellow-50';
       case 'high': return 'border-l-orange-500 bg-orange-50';
       case 'critical': return 'border-l-red-500 bg-red-50';
@@ -262,41 +263,50 @@ const SystemMonitor: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">System Monitor</h1>
-              <p className="text-gray-600">Real-time system performance and health monitoring</p>
-            </div>
+    <div className="p-6">
+      {/* Breadcrumb Navigation */}
+      <div className="mb-6">
+        <Breadcrumb 
+          items={[
+            { label: 'Dashboard', href: '/' },
+            { label: 'System Monitor', current: true }
+          ]} 
+        />
+      </div>
+
+      {/* Page Header */}
+      <div className="mb-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">System Monitor</h1>
+            <p className="text-gray-600">Real-time system performance and health monitoring</p>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            <button
+              onClick={fetchSystemData}
+              disabled={isLoading}
+              className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+              {isLoading ? 'Refreshing...' : 'Refresh Now'}
+            </button>
             
-            <div className="flex items-center gap-4">
-              <button
-                onClick={fetchSystemData}
-                disabled={isLoading}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-              >
-                <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-                {isLoading ? 'Refreshing...' : 'Refresh Now'}
-              </button>
-              
-              <button
-                onClick={runDatabaseOptimization}
-                disabled={isOptimizing}
-                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 flex items-center gap-2"
-              >
-                <Settings className="w-4 h-4" />
-                {isOptimizing ? 'Optimizing...' : 'Run DB Optimization'}
-              </button>
+            <button
+              onClick={runDatabaseOptimization}
+              disabled={isOptimizing}
+              className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 flex items-center gap-2"
+            >
+              <Settings className="w-4 h-4" />
+              {isOptimizing ? 'Optimizing...' : 'Run DB Optimization'}
+            </button>
               
               <label className="flex items-center gap-2 text-sm text-gray-600">
                 <input
                   type="checkbox"
                   checked={autoRefresh}
                   onChange={(e) => setAutoRefresh(e.target.checked)}
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  className="rounded border-gray-300 text-gray-600 focus:ring-gray-500"
                 />
                 Auto-refresh
               </label>
@@ -305,7 +315,7 @@ const SystemMonitor: React.FC = () => {
                 <select
                   value={refreshInterval}
                   onChange={(e) => setRefreshInterval(Number(e.target.value))}
-                  className="text-sm border border-gray-300 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="text-sm border border-gray-300 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-gray-500"
                 >
                   <option value={15}>15 seconds</option>
                   <option value={30}>30 seconds</option>
@@ -354,7 +364,7 @@ const SystemMonitor: React.FC = () => {
         {/* Loading State */}
         {isLoading && (
           <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-600"></div>
             <span className="ml-3 text-gray-600">Loading system data...</span>
           </div>
         )}
@@ -397,7 +407,7 @@ const SystemMonitor: React.FC = () => {
                     {(systemStatus.database || 'unknown').charAt(0).toUpperCase() + (systemStatus.database || 'unknown').slice(1)}
                   </p>
                 </div>
-                <Database className="w-6 h-6 text-blue-600" />
+                <Database className="w-6 h-6 text-gray-600" />
               </div>
             </div>
             
@@ -470,7 +480,7 @@ const SystemMonitor: React.FC = () => {
             {/* System Resources */}
             <div className="bg-white rounded-lg shadow-sm p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <Cpu className="w-5 h-5 text-blue-600" />
+                <Cpu className="w-5 h-5 text-gray-600" />
                 System Resources
               </h3>
               
@@ -525,8 +535,8 @@ const SystemMonitor: React.FC = () => {
               
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="text-center p-3 bg-blue-50 rounded-lg">
-                    <p className="text-2xl font-bold text-blue-600">{(metrics.response_time ?? 0).toFixed(2)}ms</p>
+                  <div className="text-center p-3 bg-gray-50 rounded-lg">
+                    <p className="text-2xl font-bold text-gray-600">{(metrics.response_time ?? 0).toFixed(2)}ms</p>
                     <p className="text-sm text-gray-600">Response Time</p>
                   </div>
                   
@@ -585,12 +595,12 @@ const SystemMonitor: React.FC = () => {
               </div>
             ) : (
               <div className="space-y-4">
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                   <div className="flex items-center gap-2 mb-2">
-                    <CheckCircle className="w-5 h-5 text-blue-600" />
-                    <span className="font-medium text-blue-800">Optimization Analysis Complete</span>
+                    <CheckCircle className="w-5 h-5 text-gray-600" />
+                    <span className="font-medium text-gray-800">Optimization Analysis Complete</span>
                   </div>
-                  <p className="text-sm text-blue-700">
+                  <p className="text-sm text-gray-700">
                     Found {dbOptimization.total} optimization opportunities. Last run: {new Date(dbOptimization.timestamp).toLocaleString()}
                   </p>
                 </div>
@@ -601,14 +611,14 @@ const SystemMonitor: React.FC = () => {
                       rec.type === 'warning' ? 'border-yellow-200 bg-yellow-50' :
                       rec.type === 'error' ? 'border-red-200 bg-red-50' :
                       rec.type === 'success' ? 'border-green-200 bg-green-50' :
-                      'border-blue-200 bg-blue-50'
+                      'border-gray-200 bg-gray-50'
                     }`}>
                       <div className="flex items-start gap-3">
                         <div className={`w-2 h-2 rounded-full mt-2 ${
                           rec.type === 'warning' ? 'bg-yellow-500' :
                           rec.type === 'error' ? 'bg-red-500' :
                           rec.type === 'success' ? 'bg-green-500' :
-                          'bg-blue-500'
+                          'bg-gray-500'
                         }`}></div>
                         <div className="flex-1">
                           <h4 className="font-medium text-gray-900 mb-1">{rec.message}</h4>
@@ -629,7 +639,7 @@ const SystemMonitor: React.FC = () => {
                               <ul className="text-xs text-gray-600 space-y-1">
                                 {rec.details.suggestions.map((suggestion, idx) => (
                                   <li key={idx} className="flex items-start gap-2">
-                                    <span className="text-blue-500 mt-1">•</span>
+                                    <span className="text-gray-500 mt-1">•</span>
                                     {suggestion}
                                   </li>
                                 ))}
@@ -687,7 +697,7 @@ const SystemMonitor: React.FC = () => {
                             (alert.severity || 'low') === 'critical' ? 'bg-red-100 text-red-800' :
                             (alert.severity || 'low') === 'high' ? 'bg-orange-100 text-orange-800' :
                             (alert.severity || 'low') === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                            'bg-blue-100 text-blue-800'
+                            'bg-gray-100 text-gray-800'
                           }`}>
                             {(alert.severity || 'low').toUpperCase()}
                           </span>
@@ -702,7 +712,7 @@ const SystemMonitor: React.FC = () => {
                             <ul className="space-y-1">
                               {alert.recommendations.map((rec, index) => (
                                 <li key={index} className="text-sm text-gray-600 flex items-start gap-2">
-                                  <span className="text-blue-500 mt-1">•</span>
+                                  <span className="text-gray-500 mt-1">•</span>
                                   <span>{rec}</span>
                                 </li>
                               ))}
@@ -805,7 +815,7 @@ const SystemMonitor: React.FC = () => {
                                 i === index ? { ...h, details: null } : h
                               ));
                             }}
-                            className="text-blue-600 hover:underline text-xs"
+                            className="text-gray-600 hover:underline text-xs"
                           >
                             View Details
                           </button>

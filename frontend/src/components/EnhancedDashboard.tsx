@@ -127,7 +127,7 @@ export const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
                 <select
                   value={selectedTimeRange}
                   onChange={(e) => setSelectedTimeRange(e.target.value)}
-                  className="px-3 py-2 border border-gray-200 rounded-lg bg-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="px-3 py-2 border border-gray-200 rounded-lg bg-white text-sm focus:ring-2 focus:ring-gray-500 focus:border-transparent"
                 >
                   <option value="24h">Last 24 hours</option>
                   <option value="7d">Last 7 days</option>
@@ -212,7 +212,7 @@ export const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
               subtitle="Total revenue this month"
               icon={TrendingUp}
               variant="gradient"
-              color="blue"
+              color="gray"
               size="lg"
             >
               <div className="mt-6">
@@ -274,7 +274,7 @@ export const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
                 <h3 className="text-lg font-semibold text-gray-900">
                   Recent Activity
                 </h3>
-                <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+                <button className="text-sm text-gray-600 hover:text-gray-700 font-medium">
                   View All
                 </button>
               </div>
@@ -287,7 +287,7 @@ export const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
                     <div className={`
                       w-2 h-2 rounded-full mt-2 flex-shrink-0
                       ${activity.type === 'transaction' ? 'bg-green-500' : 
-                        activity.type === 'client' ? 'bg-blue-500' : 'bg-gray-400'}
+                        activity.type === 'client' ? 'bg-gray-500' : 'bg-gray-400'}
                     `} />
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
@@ -324,7 +324,7 @@ export const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({
             <div className="p-6">
               <div className="grid grid-cols-2 gap-4">
                 <button className="p-4 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all duration-200 group">
-                  <DollarSign className="h-6 w-6 text-blue-600 mb-2 group-hover:scale-110 transition-transform" />
+                  <DollarSign className="h-6 w-6 text-gray-600 mb-2 group-hover:scale-110 transition-transform" />
                   <div className="text-sm font-medium text-gray-900">
                     New Transaction
                   </div>

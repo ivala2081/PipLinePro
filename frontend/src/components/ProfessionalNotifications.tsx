@@ -118,11 +118,11 @@ export function Toast({
         };
       case 'info':
         return {
-          bg: 'bg-blue-50 border-blue-200',
-          icon: 'text-blue-500',
-          title: 'text-blue-800',
-          message: 'text-blue-700',
-          progress: 'bg-blue-500'
+          bg: 'bg-gray-50 border-gray-200',
+          icon: 'text-gray-500',
+          title: 'text-gray-800',
+          message: 'text-gray-700',
+          progress: 'bg-gray-500'
         };
       default:
         return {
@@ -305,11 +305,11 @@ export function AlertBanner({
         };
       case 'info':
         return {
-          bg: 'bg-blue-50 border-blue-200',
-          icon: 'text-blue-500',
-          title: 'text-blue-800',
-          message: 'text-blue-700',
-          action: 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500'
+          bg: 'bg-gray-50 border-gray-200',
+          icon: 'text-gray-500',
+          title: 'text-gray-800',
+          message: 'text-gray-700',
+          action: 'bg-gray-600 hover:bg-gray-700 focus:ring-gray-500'
         };
       default:
         return {
@@ -427,7 +427,7 @@ export function ProgressIndicator({
       case 'error':
         return 'bg-red-500';
       default:
-        return 'bg-blue-500';
+        return 'bg-gray-500';
     }
   };
 
@@ -605,7 +605,7 @@ export function FeedbackRating({
             disabled={disabled}
             onClick={() => onRatingChange?.(index + 1)}
             className={`
-              transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500
+              transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500
               ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:scale-110'}
             `}
           >
@@ -717,7 +717,7 @@ export function DemoNotificationSystem() {
             <button
               onClick={startProgress}
               disabled={progress > 0 && progress < 100}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {progress === 0 ? 'Start Progress' : progress === 100 ? 'Reset' : 'Running...'}
             </button>
@@ -796,7 +796,7 @@ export function DemoNotificationSystem() {
             </button>
             <button
               onClick={() => addToast('info', 'Information', 'Here is some helpful information.')}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
             >
               Info Toast
             </button>
@@ -830,8 +830,8 @@ export function ProfessionalNotificationsShowcase() {
       {/* Features Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div className="text-center p-6 bg-white rounded-lg border border-gray-200">
-          <div className="bg-blue-100 w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-4">
-            <Bell className="w-6 h-6 text-blue-600" />
+          <div className="bg-gray-100 w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-4">
+            <Bell className="w-6 h-6 text-gray-600" />
           </div>
           <h4 className="font-semibold text-gray-900 mb-2">Smart Toasts</h4>
           <p className="text-sm text-gray-600">Auto-dismissing notifications with progress bars and smooth animations</p>

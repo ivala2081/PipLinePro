@@ -21,6 +21,7 @@ import {
   UnifiedSection, 
   UnifiedGrid 
 } from '../design-system';
+import { Breadcrumb } from '../components/ui';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
@@ -115,35 +116,44 @@ export default function PSPTrack() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Modern Header */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="px-6 py-6">
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-                <Building className="h-8 w-8 text-blue-600" />
-                PSP Tracking
-              </h1>
-              <p className="text-gray-600">Monitor Payment Service Provider transactions and commissions</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <UnifiedButton
-                variant="outline"
-                size="sm"
-                icon={<Upload className="h-4 w-4" />}
-                iconPosition="left"
-              >
-                Import
-              </UnifiedButton>
-              <UnifiedButton
-                variant="outline"
-                size="sm"
-                icon={<Download className="h-4 w-4" />}
-                iconPosition="left"
-              >
-                Export
-              </UnifiedButton>
+    <div className="p-6">
+      {/* Breadcrumb Navigation */}
+      <div className="mb-6">
+        <Breadcrumb 
+          items={[
+            { label: 'Dashboard', href: '/' },
+            { label: 'PSP Tracking', current: true }
+          ]} 
+        />
+      </div>
+
+      {/* Page Header */}
+      <div className="mb-6">
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
+            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+              <Building className="h-8 w-8 text-blue-600" />
+              PSP Tracking
+            </h1>
+            <p className="text-gray-600">Monitor Payment Service Provider transactions and commissions</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <UnifiedButton
+              variant="outline"
+              size="sm"
+              icon={<Upload className="h-4 w-4" />}
+              iconPosition="left"
+            >
+              Import
+            </UnifiedButton>
+            <UnifiedButton
+              variant="outline"
+              size="sm"
+              icon={<Download className="h-4 w-4" />}
+              iconPosition="left"
+            >
+              Export
+            </UnifiedButton>
               <UnifiedButton
                 variant="primary"
                 size="sm"

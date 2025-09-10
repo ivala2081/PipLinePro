@@ -47,8 +47,8 @@ const TransactionDetailView: React.FC<TransactionDetailViewProps> = ({ transacti
       {/* Transaction ID */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
-          <div className="bg-blue-100 p-2 rounded-lg">
-            <DollarSign className="h-6 w-6 text-blue-600" />
+          <div className="bg-gray-100 p-2 rounded-lg">
+            <DollarSign className="h-6 w-6 text-gray-600" />
           </div>
           <div>
             <h3 className="text-lg font-semibold text-gray-900">
@@ -145,58 +145,58 @@ const TransactionDetailView: React.FC<TransactionDetailViewProps> = ({ transacti
       </div>
 
       {/* Financial Information */}
-      <div className="bg-blue-50 rounded-lg p-4">
-        <h4 className="text-sm font-medium text-blue-700 mb-3 flex items-center">
+      <div className="bg-gray-50 rounded-lg p-4">
+        <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center">
           <DollarSign className="h-4 w-4 mr-2" />
           Financial Information
         </h4>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="text-center">
-            <label className="text-xs font-medium text-blue-600 uppercase tracking-wide">
+            <label className="text-xs font-medium text-gray-600 uppercase tracking-wide">
               Amount
             </label>
-            <p className="text-lg font-bold text-blue-900">
+            <p className="text-lg font-bold text-gray-900">
               {formatCurrencyPositive(transaction.amount, transaction.currency)}
             </p>
             {transaction.amount_tl && (
-              <p className="text-xs text-blue-600">
+              <p className="text-xs text-gray-600">
                 ({formatCurrencyPositive(transaction.amount_tl, '₺')})
               </p>
             )}
           </div>
           <div className="text-center">
-            <label className="text-xs font-medium text-blue-600 uppercase tracking-wide">
+            <label className="text-xs font-medium text-gray-600 uppercase tracking-wide">
               Commission
             </label>
-            <p className="text-lg font-bold text-blue-900">
+            <p className="text-lg font-bold text-gray-900">
               {formatCurrency(transaction.commission, transaction.currency || '₺')}
             </p>
             {transaction.commission_tl && (
-              <p className="text-xs text-blue-600">
+              <p className="text-xs text-gray-600">
                 ({formatCurrency(transaction.commission_tl, '₺')})
               </p>
             )}
           </div>
           <div className="text-center">
-            <label className="text-xs font-medium text-blue-600 uppercase tracking-wide">
+            <label className="text-xs font-medium text-gray-600 uppercase tracking-wide">
               Net Amount
             </label>
-            <p className="text-lg font-bold text-blue-900">
+            <p className="text-lg font-bold text-gray-900">
               {formatCurrencyPositive(transaction.net_amount, transaction.currency || '₺')}
             </p>
             {transaction.net_amount_tl && (
-              <p className="text-xs text-blue-600">
+              <p className="text-xs text-gray-600">
                 ({formatCurrencyPositive(transaction.net_amount_tl, '₺')})
               </p>
             )}
           </div>
         </div>
         {transaction.exchange_rate && (
-          <div className="mt-3 pt-3 border-t border-blue-200">
-            <label className="text-xs font-medium text-blue-600 uppercase tracking-wide">
+          <div className="mt-3 pt-3 border-t border-gray-200">
+            <label className="text-xs font-medium text-gray-600 uppercase tracking-wide">
               Exchange Rate
             </label>
-            <p className="text-sm text-blue-900">
+            <p className="text-sm text-gray-900">
               1 {transaction.currency} = {transaction.exchange_rate.toFixed(4)} TL
             </p>
           </div>

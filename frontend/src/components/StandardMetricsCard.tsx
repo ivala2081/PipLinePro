@@ -9,7 +9,7 @@ export interface MetricsCardProps {
   changeType?: 'positive' | 'negative' | 'neutral';
   icon: LucideIcon;
   variant?: 'default' | 'gradient' | 'minimal' | 'compact';
-  color?: 'primary' | 'success' | 'warning' | 'danger' | 'neutral' | 'turquoise' | 'blue' | 'green' | 'red' | 'purple' | 'orange' | 'indigo' | 'teal' | 'pink';
+  color?: 'primary' | 'success' | 'warning' | 'danger' | 'neutral' | 'turquoise' | 'gray' | 'green' | 'red' | 'purple' | 'orange' | 'indigo' | 'teal' | 'pink';
   loading?: boolean;
   subtitle?: string;
   onClick?: () => void;
@@ -49,10 +49,10 @@ const enterpriseColorVariants = {
     accent: '#2CC5A7'
   },
   // Backward compatibility mappings
-  blue: {
-    iconBg: 'bg-blue-50',
-    icon: 'text-blue-600',
-    accent: '#2D5EFF'
+  gray: {
+    iconBg: 'bg-gray-50',
+    icon: 'text-gray-600',
+    accent: '#6B7280'
   },
   green: {
     iconBg: 'bg-green-50',

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
+import { Breadcrumb } from '../components/ui';
 import {
   DollarSign,
   Users,
@@ -215,8 +216,8 @@ export default function BusinessAnalytics() {
       name: 'Growth Metrics',
       icon: TrendingUp,
       description: 'Business growth and expansion metrics',
-      color: 'blue',
-      gradient: 'bg-blue-500',
+      color: 'gray',
+      gradient: 'bg-gray-500',
       value: '18.2%',
       change: '+2.1%',
       trend: 'up',
@@ -262,7 +263,7 @@ export default function BusinessAnalytics() {
       change: '+8.5%',
       trend: 'up',
       icon: Users,
-      color: 'bg-blue-500',
+      color: 'bg-gray-500',
       subtitle: 'Total active clients',
     },
     {
@@ -505,7 +506,7 @@ export default function BusinessAnalytics() {
       case 'P2':
         return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       case 'P3':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
+        return 'bg-gray-100 text-gray-800 border-gray-200';
       default:
         return 'bg-gray-100 text-gray-800 border-gray-200';
     }
@@ -538,19 +539,29 @@ export default function BusinessAnalytics() {
   };
 
   return (
-    <div className='space-y-8'>
-      {/* Enhanced Header */}
-      <div className='business-card'>
-        <div className='business-card-header'>
+    <div className="p-6">
+      {/* Breadcrumb Navigation */}
+      <div className="mb-6">
+        <Breadcrumb 
+          items={[
+            { label: 'Dashboard', href: '/' },
+            { label: 'Business Analytics', current: true }
+          ]} 
+        />
+      </div>
+
+      {/* Page Header */}
+      <div className="mb-6">
+        <div className="flex items-center justify-between">
           <div>
-            <h1 className='text-2xl font-bold text-gray-900'>Business Analytics</h1>
-            <p className='text-gray-600 mt-2'>Advanced analytics and business intelligence dashboard</p>
+            <h1 className="text-3xl font-bold text-gray-900">Business Analytics</h1>
+            <p className="text-gray-600">Advanced analytics and business intelligence dashboard</p>
           </div>
-          <div className='flex items-center space-business-x-sm'>
+          <div className='flex items-center space-x-3'>
             <select 
               value={timeRange} 
               onChange={(e) => handleTimeRangeChange(e.target.value)}
-              className='business-input w-32'
+              className='px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-300 w-32'
             >
               <option value="7d">Last 7 days</option>
               <option value="30d">Last 30 days</option>
@@ -587,10 +598,10 @@ export default function BusinessAnalytics() {
             change={kpi.change}
             changeType={kpi.trend === 'up' ? 'positive' : kpi.trend === 'down' ? 'negative' : 'neutral'}
             icon={kpi.icon}
-            color={kpi.color.includes('blue') ? 'blue' : 
+            color={kpi.color.includes('gray') ? 'gray' : 
                   kpi.color.includes('green') ? 'green' : 
                   kpi.color.includes('purple') ? 'purple' : 
-                  kpi.color.includes('orange') ? 'orange' : 'blue'}
+                  kpi.color.includes('orange') ? 'orange' : 'gray'}
             variant="default"
           />
         ))}
@@ -606,10 +617,10 @@ export default function BusinessAnalytics() {
             change={metric.change}
             changeType={metric.trend === 'up' ? 'positive' : metric.trend === 'down' ? 'negative' : 'neutral'}
             icon={metric.icon}
-            color={metric.color.includes('blue') ? 'blue' : 
+            color={metric.color.includes('gray') ? 'gray' : 
                   metric.color.includes('green') ? 'green' : 
                   metric.color.includes('purple') ? 'purple' : 
-                  metric.color.includes('orange') ? 'orange' : 'blue'}
+                  metric.color.includes('orange') ? 'orange' : 'gray'}
             variant="compact"
           />
         ))}
@@ -622,7 +633,7 @@ export default function BusinessAnalytics() {
           <div className='business-card sticky top-6'>
             <div className='business-card-header'>
               <div className='flex items-center gap-3'>
-                <div className='w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center'>
+                <div className='w-10 h-10 bg-gray-500 rounded-lg flex items-center justify-center'>
                   <BarChart3 className='w-5 h-5 text-white' />
                 </div>
                 <h3 className='text-xl font-semibold text-gray-900'>
@@ -637,40 +648,40 @@ export default function BusinessAnalytics() {
                   onClick={() => setSelectedMetric(metric.id)}
                   className={`w-full p-4 text-left rounded-lg transition-all duration-200 ${
                     selectedMetric === metric.id
-                      ? 'bg-blue-50 border border-blue-200 text-blue-900'
+                      ? 'bg-gray-50 border border-gray-200 text-gray-900'
                       : 'hover:bg-gray-50 border border-gray-100 hover:border-gray-200'
                   }`}
                 >
                   <div className='flex items-center'>
                     <div className={`w-10 h-10 rounded-lg flex items-center justify-center mr-4 ${
                       selectedMetric === metric.id
-                        ? 'bg-blue-100'
+                        ? 'bg-gray-100'
                         : 'bg-gray-100'
                     }`}>
                       <metric.icon className={`w-5 h-5 ${
                         selectedMetric === metric.id
-                          ? 'text-blue-600'
+                          ? 'text-gray-600'
                           : 'text-gray-600'
                       }`} />
                     </div>
                     <div className='flex-1'>
                       <div className={`font-semibold ${
                         selectedMetric === metric.id
-                          ? 'text-blue-900'
+                          ? 'text-gray-900'
                           : 'text-gray-900'
                       }`}>
                         {metric.name}
                       </div>
                       <div className={`text-sm ${
                         selectedMetric === metric.id
-                          ? 'text-blue-700'
+                          ? 'text-gray-700'
                           : 'text-gray-500'
                       }`}>
                         {metric.description}
                       </div>
                       <div className={`text-sm font-medium mt-1 ${
                         selectedMetric === metric.id
-                          ? 'text-blue-700'
+                          ? 'text-gray-700'
                           : 'text-gray-600'
                       }`}>
                         {metric.value} • {metric.change}
@@ -711,14 +722,14 @@ export default function BusinessAnalytics() {
             {/* Enhanced Chart Placeholder */}
             <div className='h-64 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg border border-gray-200 flex items-center justify-center'>
               <div className='text-center'>
-                <div className='w-16 h-16 bg-blue-500 rounded-xl flex items-center justify-center mx-auto mb-4'>
+                <div className='w-16 h-16 bg-gray-500 rounded-xl flex items-center justify-center mx-auto mb-4'>
                   <LineChart className='w-8 h-8 text-white' />
                 </div>
                 <h4 className='text-lg font-semibold text-gray-700 mb-2'>Revenue Chart</h4>
                 <p className='text-gray-500'>Interactive revenue trend chart will be displayed here</p>
                 <div className='mt-4 flex items-center justify-center gap-4'>
                   <div className='flex items-center gap-2'>
-                    <div className='w-3 h-3 bg-blue-500 rounded-full'></div>
+                    <div className='w-3 h-3 bg-gray-500 rounded-full'></div>
                     <span className='text-sm text-gray-600'>Revenue</span>
                   </div>
                   <div className='flex items-center gap-2'>
@@ -732,7 +743,7 @@ export default function BusinessAnalytics() {
             {/* Enhanced Chart Legend */}
             <div className='business-chart-legend'>
               <div className='business-chart-legend-item'>
-                <div className='business-chart-legend-color bg-blue-500'></div>
+                <div className='business-chart-legend-color bg-gray-500'></div>
                 <span className='business-chart-legend-label'>Revenue</span>
                 <span className='business-chart-legend-value'>₺125,000</span>
               </div>
@@ -802,7 +813,7 @@ export default function BusinessAnalytics() {
                 <div key={index} className='business-timeline-item'>
                   <div className={`business-timeline-marker ${
                     item.type === 'success' ? 'bg-green-500' :
-                    item.type === 'info' ? 'bg-blue-500' : 'bg-yellow-500'
+                    item.type === 'info' ? 'bg-gray-500' : 'bg-yellow-500'
                   }`}></div>
                   <div className='business-timeline-content'>
                     <div className='flex items-center justify-between mb-1'>
@@ -1034,7 +1045,7 @@ export default function BusinessAnalytics() {
          <div className='business-card'>
            <div className='business-card-header flex items-center justify-between'>
              <h3 className='text-lg font-semibold text-gray-900 flex items-center gap-2'>
-               <Zap className='w-5 h-5 text-blue-600' />
+               <Zap className='w-5 h-5 text-gray-600' />
                Performance Monitoring & Auto-Optimization
              </h3>
              <button
@@ -1050,8 +1061,8 @@ export default function BusinessAnalytics() {
                {/* Performance Metrics */}
                {performanceMetrics && (
                  <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6'>
-                   <div className='text-center p-4 bg-blue-50 rounded-lg'>
-                     <div className='text-2xl font-bold text-blue-600'>
+                   <div className='text-center p-4 bg-gray-50 rounded-lg'>
+                     <div className='text-2xl font-bold text-gray-600'>
                        {performanceMetrics.cpu_usage?.toFixed(1) || '0'}%
                      </div>
                      <div className='text-sm text-gray-600'>CPU Usage</div>
@@ -1132,7 +1143,7 @@ export default function BusinessAnalytics() {
                            rec.priority === 'critical' ? 'border-l-red-500 bg-red-50' :
                            rec.priority === 'high' ? 'border-l-orange-500 bg-orange-50' :
                            rec.priority === 'medium' ? 'border-l-yellow-500 bg-yellow-50' :
-                           'border-l-blue-500 bg-blue-50'
+                           'border-l-gray-500 bg-gray-50'
                          }`}
                        >
                          <div className='flex items-start justify-between'>
@@ -1142,7 +1153,7 @@ export default function BusinessAnalytics() {
                                  rec.priority === 'critical' ? 'bg-red-100 text-red-800' :
                                  rec.priority === 'high' ? 'bg-orange-100 text-orange-800' :
                                  rec.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                                 'bg-blue-100 text-blue-800'
+                                 'bg-gray-100 text-gray-800'
                                }`}>
                                  {rec.priority.toUpperCase()}
                                </span>

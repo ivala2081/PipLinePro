@@ -107,10 +107,10 @@ const CurrencyConversionModal: React.FC<CurrencyConversionModalProps> = ({
     <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-xl shadow-2xl border border-gray-200 max-w-md w-full max-h-[90vh] flex flex-col">
         {/* Header - Fixed */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50 flex-shrink-0">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-indigo-50 flex-shrink-0">
           <div className="flex items-center">
-            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-              <DollarSign className="h-4 w-4 text-blue-600" />
+            <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center mr-3">
+              <DollarSign className="h-4 w-4 text-gray-600" />
             </div>
             <div>
               <h3 className="text-lg font-semibold text-gray-900">Currency Conversion</h3>
@@ -152,14 +152,14 @@ const CurrencyConversionModal: React.FC<CurrencyConversionModalProps> = ({
           {/* Current Rate Section */}
           {loading ? (
             <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600"></div>
               <span className="ml-3 text-gray-600">Fetching current rate...</span>
             </div>
           ) : currentRate ? (
-            <div className="border border-blue-200 rounded-lg p-4 bg-blue-50">
+            <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
               <div className="flex items-center justify-between mb-3">
-                <h4 className="text-sm font-medium text-blue-900">Current Market Rate</h4>
-                <div className="flex items-center text-xs text-blue-700">
+                <h4 className="text-sm font-medium text-gray-900">Current Market Rate</h4>
+                <div className="flex items-center text-xs text-gray-700">
                   <Clock className="h-3 w-3 mr-1" />
                   Updated: {lastUpdated}
                 </div>
@@ -167,11 +167,11 @@ const CurrencyConversionModal: React.FC<CurrencyConversionModalProps> = ({
               
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
-                  <span className="text-lg font-bold text-blue-900">1 USD = ₺{currentRate.rate.toFixed(4)}</span>
+                  <span className="text-lg font-bold text-gray-900">1 USD = ₺{currentRate.rate.toFixed(4)}</span>
                   {formatRateChange(currentRate.change_24h)}
                 </div>
                 
-                <div className="text-sm text-blue-700">
+                <div className="text-sm text-gray-700">
                   <span className="font-medium">${currentAmount.toFixed(2)} USD</span>
                   <span className="mx-2">→</span>
                   <span className="font-bold">₺{calculateTRYAmount(currentRate.rate)}</span>
@@ -180,7 +180,7 @@ const CurrencyConversionModal: React.FC<CurrencyConversionModalProps> = ({
 
               <button
                 onClick={handleUseCurrentRate}
-                className="w-full mt-4 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center justify-center"
+                className="w-full mt-4 bg-gray-600 text-white py-2 px-4 rounded-lg hover:bg-gray-700 transition-colors duration-200 flex items-center justify-center"
               >
                 <CheckCircle className="h-4 w-4 mr-2" />
                 Use Current Rate
@@ -203,7 +203,7 @@ const CurrencyConversionModal: React.FC<CurrencyConversionModalProps> = ({
                   min="0"
                   value={customRate}
                   onChange={(e) => setCustomRate(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500"
                   placeholder="Enter exchange rate..."
                 />
               </div>

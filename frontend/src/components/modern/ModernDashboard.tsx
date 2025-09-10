@@ -943,7 +943,7 @@ export const ModernDashboard: React.FC<ModernDashboardProps> = ({ user, pspRollo
                     </div>
                     <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                       <div className="flex items-center gap-2">
-                        <Database className="w-4 h-4 text-blue-600" />
+                        <Database className="w-4 h-4 text-gray-600" />
                         <span className="text-sm font-medium">Database</span>
                       </div>
                       <span className="text-sm font-semibold">
@@ -1057,7 +1057,7 @@ export const ModernDashboard: React.FC<ModernDashboardProps> = ({ user, pspRollo
                       const statusConfig = {
                         completed: { variant: 'default' as const, color: 'bg-green-100 text-green-800' },
                         pending: { variant: 'secondary' as const, color: 'bg-yellow-100 text-yellow-800' },
-                        processing: { variant: 'outline' as const, color: 'bg-blue-100 text-blue-800' },
+                        processing: { variant: 'outline' as const, color: 'bg-gray-100 text-gray-800' },
                         failed: { variant: 'destructive' as const, color: 'bg-red-100 text-red-800' }
                       };
                       const config = statusConfig[value as keyof typeof statusConfig] || statusConfig.pending;
@@ -1184,7 +1184,7 @@ export const ModernDashboard: React.FC<ModernDashboardProps> = ({ user, pspRollo
                   </div>
                   <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                     <div className="flex items-center gap-3">
-                      <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                      <div className="w-3 h-3 bg-gray-500 rounded-full"></div>
                       <span className="text-sm font-medium">Standard Clients</span>
                     </div>
                     <Badge variant="outline" className="text-sm">73</Badge>
@@ -1409,7 +1409,7 @@ export const ModernDashboard: React.FC<ModernDashboardProps> = ({ user, pspRollo
                         <div key={segment} className={`flex justify-between items-center p-2 rounded ${
                           segment === 'VIP' ? 'bg-purple-50' :
                           segment === 'Premium' ? 'bg-green-50' :
-                          segment === 'Regular' ? 'bg-blue-50' :
+                          segment === 'Regular' ? 'bg-gray-50' :
                           'bg-yellow-50'
                         }`}>
                           <span className="text-sm font-medium">{segment} Clients</span>
@@ -1947,8 +1947,8 @@ export const ModernDashboard: React.FC<ModernDashboardProps> = ({ user, pspRollo
                         </div>
                         <div className="text-xs text-muted-foreground">Active Sessions</div>
                       </div>
-                      <div className="text-center p-3 bg-blue-50 rounded-lg">
-                        <div className="text-lg font-bold text-blue-600">
+                      <div className="text-center p-3 bg-gray-50 rounded-lg">
+                        <div className="text-lg font-bold text-gray-600">
                           {(securityMetrics as any).failed_logins?.today || 0}
                         </div>
                         <div className="text-xs text-muted-foreground">Failed Logins</div>
@@ -2036,7 +2036,7 @@ export const ModernDashboard: React.FC<ModernDashboardProps> = ({ user, pspRollo
                         <div className="flex items-center gap-2">
                           <div className="w-16 bg-muted rounded-full h-2">
                             <div 
-                              className="bg-blue-500 h-2 rounded-full"
+                              className="bg-gray-500 h-2 rounded-full"
                               style={{ width: `${Math.min(100, (dataQuality as any).completeness_score || 0)}%` }}
                             ></div>
                           </div>
@@ -2176,7 +2176,7 @@ export const ModernDashboard: React.FC<ModernDashboardProps> = ({ user, pspRollo
                         className={`flex items-start gap-3 p-3 border rounded-lg ${
                           alert.priority === 'high' ? 'border-red-200 bg-red-50/50' :
                           alert.priority === 'medium' ? 'border-yellow-200 bg-yellow-50/50' :
-                          'border-blue-200 bg-blue-50/50'
+                          'border-gray-200 bg-gray-50/50'
                         }`}
                       >
                         <div className="mt-0.5">

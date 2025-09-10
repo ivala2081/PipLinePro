@@ -66,8 +66,8 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ range = '7d' }) => {
       value: dashboardStats.active_clients?.toLocaleString() || '0',
       change: trends.clients_change || 0,
       icon: Users,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-100',
+      color: 'text-gray-600',
+      bgColor: 'bg-gray-100',
     },
     {
       name: 'Total Transactions',

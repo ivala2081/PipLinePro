@@ -59,7 +59,7 @@ export function TableHeader({
         {onAdd && (
           <button
             onClick={onAdd}
-            className="business-chart-filter-button bg-blue-100 text-blue-700 hover:bg-blue-200"
+            className="business-chart-filter-button bg-gray-100 text-gray-700 hover:bg-gray-200"
             title="Add new item"
           >
             <Plus className="w-4 h-4" />
@@ -164,10 +164,10 @@ export function SortableHeader({
         <span>{label}</span>
         <div className="flex flex-col">
           <ChevronUp 
-            className={`w-3 h-3 ${isActive && isAsc ? 'text-blue-600' : 'text-gray-300'}`} 
+            className={`w-3 h-3 ${isActive && isAsc ? 'text-gray-600' : 'text-gray-300'}`} 
           />
           <ChevronDown 
-            className={`w-3 h-3 ${isActive && !isAsc ? 'text-blue-600' : 'text-gray-300'}`} 
+            className={`w-3 h-3 ${isActive && !isAsc ? 'text-gray-600' : 'text-gray-300'}`} 
           />
         </div>
       </div>
@@ -604,7 +604,7 @@ export function DemoDataTable() {
 
   const actions = (item: any) => (
     <div className="flex items-center space-x-2">
-      <button className="text-blue-600 hover:text-blue-800" title="View">
+      <button className="text-gray-600 hover:text-gray-800" title="View">
         <Eye className="w-4 h-4" />
       </button>
       <button className="text-green-600 hover:text-green-800" title="Edit">

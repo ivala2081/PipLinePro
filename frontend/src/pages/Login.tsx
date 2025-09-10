@@ -304,12 +304,7 @@ export default function Login() {
 
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/30 p-4 relative overflow-hidden">
-      {/* Background Pattern */}
-      <div className="absolute inset-0 opacity-30">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_25%,theme(colors.primary/0.05),transparent_25%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_75%,theme(colors.primary/0.05),transparent_25%)]" />
-      </div>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4 relative">
       
       {/* Network Status Indicator */}
       <div className="absolute top-4 right-4 flex items-center gap-2 bg-card border rounded-lg px-3 py-2 shadow-sm">
@@ -438,7 +433,7 @@ export default function Login() {
         )}
 
         {/* Login Form */}
-        <Card className="shadow-xl border-border/50 backdrop-blur-sm bg-card/95">
+        <Card className="shadow-sm border border-gray-200 bg-white">
           <CardHeader className="space-y-1 pb-4">
             <CardTitle className="text-2xl flex items-center gap-2">
               <KeyRound className="w-5 h-5" />

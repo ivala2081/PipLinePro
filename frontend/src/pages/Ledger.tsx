@@ -41,6 +41,7 @@ import {
   UnifiedSection, 
   UnifiedGrid 
 } from '../design-system';
+import { Breadcrumb } from '../components/ui';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
@@ -657,7 +658,7 @@ export default function Ledger() {
 
   const getPSPColor = (psp: string) => {
     const colors = [
-      'bg-blue-100 text-blue-800',
+      'bg-gray-100 text-gray-800',
       'bg-green-100 text-green-800',
       'bg-purple-100 text-purple-800',
       'bg-orange-100 text-orange-800',
@@ -740,135 +741,64 @@ export default function Ledger() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Modern Header */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-                <Building className="h-8 w-8 text-blue-600" />
-                PSP Ledger
-              </h1>
-              <p className="text-gray-600 mt-1">PSP transactions and balances</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <UnifiedButton 
-                variant="outline"
-                size="sm"
-                onClick={handleRefresh}
-                disabled={refreshing}
-                icon={<RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />}
-              >
-                {refreshing ? 'Refreshing...' : 'Refresh'}
-              </UnifiedButton>
-              <UnifiedButton 
-                variant="outline" 
-                size="sm"
-                onClick={handleExport}
-                icon={<Download className='h-4 w-4' />}
-              >
-                Export
-              </UnifiedButton>
-            </div>
+    <div className="p-6">
+      {/* Breadcrumb Navigation */}
+      <div className="mb-6">
+        <Breadcrumb 
+          items={[
+            { label: 'Dashboard', href: '/' },
+            { label: 'PSP Ledger', current: true }
+          ]} 
+        />
+      </div>
+
+      {/* Page Header */}
+      <div className="mb-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+              <Building className="h-8 w-8 text-gray-600" />
+              PSP Ledger
+            </h1>
+            <p className="text-gray-600 mt-1">PSP transactions and balances</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <UnifiedButton 
+              variant="outline"
+              size="sm"
+              onClick={handleRefresh}
+              disabled={refreshing}
+              icon={<RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />}
+            >
+              {refreshing ? 'Refreshing...' : 'Refresh'}
+            </UnifiedButton>
+            <UnifiedButton 
+              variant="outline" 
+              size="sm"
+              onClick={handleExport}
+              icon={<Download className='h-4 w-4' />}
+            >
+              Export
+            </UnifiedButton>
           </div>
         </div>
       </div>
 
       <div className="p-6 space-y-6">
         {/* Status Indicators */}
-      <div className="bg-blue-50/50 border border-blue-200/60 rounded-xl p-4">
-        <div className='flex items-center gap-6 text-sm text-blue-700'>
+      <div className="bg-gray-50/50 border border-gray-200/60 rounded-xl p-4">
+        <div className='flex items-center gap-6 text-sm text-gray-700'>
           <div className='flex items-center gap-2'>
             <div className='w-2 h-2 bg-green-500 rounded-full'></div>
             <span className="font-medium">Total Entries: {totalEntries}</span>
           </div>
           <div className='flex items-center gap-2'>
-            <div className='w-2 h-2 bg-blue-500 rounded-full'></div>
+            <div className='w-2 h-2 bg-gray-500 rounded-full'></div>
             <span className="font-medium">Total Volume: {formatCurrency(totalAmount, '₺')}</span>
           </div>
         </div>
       </div>
 
-      {/* Enhanced Rollover Risk Summary with Predictive Alerts */}
-      {(() => {
-        const riskSummary = ledgerData.reduce((summary, dayData) => {
-          Object.entries(dayData.psps).forEach(([psp, pspData]) => {
-            const rolloverAmount = (pspData.net || 0) - (pspData.allocation || 0);
-            const riskLevel = getRolloverRiskLevel(rolloverAmount, pspData.net || 0);
-            
-            if (riskLevel === 'Critical') summary.critical++;
-            else if (riskLevel === 'High') summary.high++;
-            else if (riskLevel === 'Medium') summary.medium++;
-            else summary.normal++;
-            
-            summary.totalRollover += rolloverAmount;
-          });
-          return summary;
-        }, { critical: 0, high: 0, medium: 0, normal: 0, totalRollover: 0 });
-
-        const portfolioMetrics = calculatePortfolioRiskMetrics();
-        const hasRisk = riskSummary.critical > 0 || riskSummary.high > 0;
-        const isHighRiskPortfolio = portfolioMetrics.averageRiskScore > 70;
-
-        if (hasRisk || isHighRiskPortfolio) {
-          return (
-            <div className={`${isHighRiskPortfolio ? 'bg-red-50/50 border-red-200/60' : 'bg-orange-50/50 border-orange-200/60'} border rounded-xl p-4`}>
-              <div className='flex items-center gap-4 text-sm'>
-                <div className='flex items-center gap-2'>
-                  {isHighRiskPortfolio ? (
-                    <AlertTriangle className='h-5 w-5 text-red-600' />
-                  ) : (
-                    <AlertTriangle className='h-5 w-5 text-orange-600' />
-                  )}
-                  <span className={`font-semibold ${isHighRiskPortfolio ? 'text-red-700' : 'text-orange-700'}`}>
-                    {isHighRiskPortfolio ? '🚨 CRITICAL PORTFOLIO RISK' : '⚠️ Rollover Risk Alert'}
-                  </span>
-                </div>
-                <div className={`flex items-center gap-6 ${isHighRiskPortfolio ? 'text-red-700' : 'text-orange-700'}`}>
-                  {riskSummary.critical > 0 && (
-                    <div className='flex items-center gap-2'>
-                      <div className='w-3 h-3 bg-red-500 rounded-full'></div>
-                      <span className="font-medium">{riskSummary.critical} Critical Risk PSPs</span>
-                    </div>
-                  )}
-                  {riskSummary.high > 0 && (
-                    <div className='flex items-center gap-2'>
-                      <div className='w-3 h-3 bg-orange-500 rounded-full'></div>
-                      <span className="font-medium">{riskSummary.high} High Risk PSPs</span>
-                    </div>
-                  )}
-                  {riskSummary.medium > 0 && (
-                    <div className='flex items-center gap-2'>
-                      <div className='w-3 h-3 bg-yellow-500 rounded-full'></div>
-                      <span className="font-medium">{riskSummary.medium} Medium Risk PSPs</span>
-                    </div>
-                  )}
-                  <div className='flex items-center gap-2'>
-                    <div className='w-3 h-3 bg-red-600 rounded-full'></div>
-                    <span className="font-medium">Total Outstanding: {formatCurrency(riskSummary.totalRollover, '₺')}</span>
-                  </div>
-                  {isHighRiskPortfolio && (
-                    <div className='flex items-center gap-2'>
-                      <div className='w-3 h-3 bg-red-600 rounded-full'></div>
-                      <span className="font-medium">Portfolio Risk Score: {portfolioMetrics.averageRiskScore}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-              {isHighRiskPortfolio && (
-                <div className='mt-3 p-3 bg-red-100/50 rounded-lg border border-red-200/50'>
-                  <div className='text-sm text-red-800'>
-                    <strong>🚨 IMMEDIATE ACTION REQUIRED:</strong> Portfolio risk level is critically high. 
-                    Review all PSP relationships and implement emergency risk mitigation measures.
-                  </div>
-                </div>
-              )}
-            </div>
-          );
-        }
-        return null;
-      })()}
 
       {/* Modern Tab Navigation */}
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)} className="w-full">
@@ -897,7 +827,7 @@ export default function Ledger() {
           <UnifiedCard variant="elevated" className="mb-6">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <BarChart3 className="h-5 w-5 text-blue-600" />
+                <BarChart3 className="h-5 w-5 text-gray-600" />
                 PSP Overview
               </CardTitle>
               <CardDescription>
@@ -911,7 +841,7 @@ export default function Ledger() {
                 value={formatNumber(pspOverviewData.length)}
                 subtitle="Active providers"
                 icon={Building}
-                color="blue"
+                color="gray"
                 change="N/A"
                 trend="up"
               />
@@ -983,7 +913,7 @@ export default function Ledger() {
           <UnifiedCard variant="elevated" className="mb-6">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Building className="h-5 w-5 text-blue-600" />
+                <Building className="h-5 w-5 text-gray-600" />
                 PSP Overview Cards
               </CardTitle>
               <CardDescription>
@@ -1020,11 +950,11 @@ export default function Ledger() {
                       {/* Header */}
                       <div className='flex items-center justify-between mb-6'>
                         <div className='flex items-center gap-4'>
-                          <div className='w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg'>
+                          <div className='w-14 h-14 bg-gradient-to-br from-gray-500 to-purple-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg'>
                             <PSPSpecificIcon className='h-7 w-7 text-white' />
                           </div>
                           <div>
-                            <h4 className='text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors duration-200'>{psp.psp}</h4>
+                            <h4 className='text-xl font-bold text-gray-900 group-hover:text-gray-600 transition-colors duration-200'>{psp.psp}</h4>
                             <p className='text-sm text-gray-500'>Payment Provider</p>
                           </div>
                         </div>
@@ -1046,9 +976,9 @@ export default function Ledger() {
                           <span className='text-sm font-medium text-red-700'>Total Withdrawals</span>
                           <span className='text-sm font-bold text-red-900'>{formatCurrency(psp.total_withdrawals, '₺')}</span>
                         </div>
-                        <div className='flex justify-between items-center p-3 bg-gradient-to-r from-blue-50 to-blue-100/50 rounded-xl border border-blue-200'>
-                          <span className='text-sm font-medium text-blue-700'>Net Amount</span>
-                          <span className='text-sm font-bold text-blue-900'>{formatCurrency(psp.total_net, '₺')}</span>
+                        <div className='flex justify-between items-center p-3 bg-gradient-to-r from-gray-50 to-gray-100/50 rounded-xl border border-gray-200'>
+                          <span className='text-sm font-medium text-gray-700'>Net Amount</span>
+                          <span className='text-sm font-bold text-gray-900'>{formatCurrency(psp.total_net, '₺')}</span>
                         </div>
                       </div>
 
@@ -1101,7 +1031,7 @@ export default function Ledger() {
           <UnifiedCard variant="elevated" className="mb-6">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Filter className="h-5 w-5 text-blue-600" />
+                <Filter className="h-5 w-5 text-gray-600" />
                 Filters & Search
               </CardTitle>
               <CardDescription>
@@ -1185,11 +1115,91 @@ export default function Ledger() {
             </CardContent>
           </UnifiedCard>
 
+          {/* Enhanced Rollover Risk Summary with Predictive Alerts */}
+          {(() => {
+            const riskSummary = ledgerData.reduce((summary, dayData) => {
+              Object.entries(dayData.psps).forEach(([psp, pspData]) => {
+                const rolloverAmount = (pspData.net || 0) - (pspData.allocation || 0);
+                const riskLevel = getRolloverRiskLevel(rolloverAmount, pspData.net || 0);
+                
+                if (riskLevel === 'Critical') summary.critical++;
+                else if (riskLevel === 'High') summary.high++;
+                else if (riskLevel === 'Medium') summary.medium++;
+                else summary.normal++;
+                
+                summary.totalRollover += rolloverAmount;
+              });
+              return summary;
+            }, { critical: 0, high: 0, medium: 0, normal: 0, totalRollover: 0 });
+
+            const portfolioMetrics = calculatePortfolioRiskMetrics();
+            const hasRisk = riskSummary.critical > 0 || riskSummary.high > 0;
+            const isHighRiskPortfolio = portfolioMetrics.averageRiskScore > 70;
+
+            if (hasRisk || isHighRiskPortfolio) {
+              return (
+                <div className={`${isHighRiskPortfolio ? 'bg-red-50/50 border-red-200/60' : 'bg-orange-50/50 border-orange-200/60'} border rounded-xl p-4 mb-6`}>
+                  <div className='flex items-center gap-4 text-sm'>
+                    <div className='flex items-center gap-2'>
+                      {isHighRiskPortfolio ? (
+                        <AlertTriangle className='h-5 w-5 text-red-600' />
+                      ) : (
+                        <AlertTriangle className='h-5 w-5 text-orange-600' />
+                      )}
+                      <span className={`font-semibold ${isHighRiskPortfolio ? 'text-red-700' : 'text-orange-700'}`}>
+                        {isHighRiskPortfolio ? '🚨 CRITICAL PORTFOLIO RISK' : '⚠️ Rollover Risk Alert'}
+                      </span>
+                    </div>
+                    <div className={`flex items-center gap-6 ${isHighRiskPortfolio ? 'text-red-700' : 'text-orange-700'}`}>
+                      {riskSummary.critical > 0 && (
+                        <div className='flex items-center gap-2'>
+                          <div className='w-3 h-3 bg-red-500 rounded-full'></div>
+                          <span className="font-medium">{riskSummary.critical} Critical Risk PSPs</span>
+                        </div>
+                      )}
+                      {riskSummary.high > 0 && (
+                        <div className='flex items-center gap-2'>
+                          <div className='w-3 h-3 bg-orange-500 rounded-full'></div>
+                          <span className="font-medium">{riskSummary.high} High Risk PSPs</span>
+                        </div>
+                      )}
+                      {riskSummary.medium > 0 && (
+                        <div className='flex items-center gap-2'>
+                          <div className='w-3 h-3 bg-yellow-500 rounded-full'></div>
+                          <span className="font-medium">{riskSummary.medium} Medium Risk PSPs</span>
+                        </div>
+                      )}
+                      <div className='flex items-center gap-2'>
+                        <div className='w-3 h-3 bg-red-600 rounded-full'></div>
+                        <span className="font-medium">Total Outstanding: {formatCurrency(riskSummary.totalRollover, '₺')}</span>
+                      </div>
+                      {isHighRiskPortfolio && (
+                        <div className='flex items-center gap-2'>
+                          <div className='w-3 h-3 bg-red-600 rounded-full'></div>
+                          <span className="font-medium">Portfolio Risk Score: {portfolioMetrics.averageRiskScore}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  {isHighRiskPortfolio && (
+                    <div className='mt-3 p-3 bg-red-100/50 rounded-lg border border-red-200/50'>
+                      <div className='text-sm text-red-800'>
+                        <strong>🚨 IMMEDIATE ACTION REQUIRED:</strong> Portfolio risk level is critically high. 
+                        Review all PSP relationships and implement emergency risk mitigation measures.
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            }
+            return null;
+          })()}
+
           {/* Ledger Data Section */}
           <UnifiedCard variant="elevated" className="mb-6">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Table className="h-5 w-5 text-blue-600" />
+                <Table className="h-5 w-5 text-gray-600" />
                 Ledger Data
               </CardTitle>
               <CardDescription>
@@ -1296,7 +1306,7 @@ export default function Ledger() {
                               statusClass = 'bg-green-100 text-green-800';
                             } else if (rolloverAmount < (netAmount * 0.1)) {
                               status = 'almost-paid';
-                              statusClass = 'bg-blue-100 text-blue-800';
+                              statusClass = 'bg-gray-100 text-gray-800';
                             }
 
                             return (
@@ -1347,7 +1357,7 @@ export default function Ledger() {
                                       <input
                                         type='number'
                                         step='0.01'
-                                        className='w-28 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-right font-medium bg-white shadow-sm transition-all duration-200'
+                                        className='w-28 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 text-right font-medium bg-white shadow-sm transition-all duration-200'
                                         value={tempAllocations[`${dayData.date}-${psp}`] !== undefined ? tempAllocations[`${dayData.date}-${psp}`] : typedPspData.allocation || ''}
                                         onChange={(e) => handleAllocationChange(dayData.date, psp, parseFloat(e.target.value) || 0)}
                                         placeholder='0.00'
@@ -1366,7 +1376,7 @@ export default function Ledger() {
                                           ${allocationSaving[`${dayData.date}-${psp}`] 
                                             ? 'bg-gray-400 text-white cursor-not-allowed' 
                                             : (tempAllocations[`${dayData.date}-${psp}`] !== typedPspData.allocation)
-                                            ? 'bg-blue-600 text-white hover:bg-blue-700 hover:shadow-md transform hover:scale-105'
+                                            ? 'bg-gray-600 text-white hover:bg-gray-700 hover:shadow-md transform hover:scale-105'
                                             : 'bg-gray-200 text-gray-500 cursor-not-allowed'
                                           }
                                           disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none
@@ -1451,7 +1461,7 @@ export default function Ledger() {
                                   </span>
                                 </td>
                                 <td className='px-6 py-4 text-center'>
-                                  <button className='inline-flex items-center gap-1 px-3 py-1 text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 transition-colors duration-200'>
+                                  <button className='inline-flex items-center gap-1 px-3 py-1 text-xs font-medium text-gray-600 bg-gray-50 border border-gray-200 rounded-md hover:bg-gray-100 transition-colors duration-200'>
                                     <Eye className='h-3 w-3' />
                                     Details
                                   </button>
@@ -1536,7 +1546,7 @@ export default function Ledger() {
           <UnifiedCard variant="elevated" className="mb-6">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <BarChart3 className="h-5 w-5 text-blue-600" />
+                <BarChart3 className="h-5 w-5 text-gray-600" />
                 {t('ledger.key_performance_indicators')}
               </CardTitle>
               <CardDescription>
@@ -1552,8 +1562,8 @@ export default function Ledger() {
                     <p className='text-3xl font-bold text-gray-900'>{formatNumber(totalEntries)}</p>
                     <p className='text-sm text-gray-500 mt-1'>{t('ledger.active_providers')}</p>
                   </div>
-                  <div className='p-3 bg-blue-50 rounded-lg'>
-                    <Building className='h-6 w-6 text-blue-600' />
+                  <div className='p-3 bg-gray-50 rounded-lg'>
+                    <Building className='h-6 w-6 text-gray-600' />
                   </div>
                 </div>
               </div>
@@ -1604,7 +1614,7 @@ export default function Ledger() {
           <UnifiedCard variant="elevated" className="mb-6">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <PieChart className="h-5 w-5 text-blue-600" />
+                <PieChart className="h-5 w-5 text-gray-600" />
                 {t('ledger.performance_insights')}
               </CardTitle>
               <CardDescription>
@@ -1643,7 +1653,7 @@ export default function Ledger() {
           <UnifiedCard variant="elevated" className="mb-6">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Shield className="h-5 w-5 text-blue-600" />
+                <Shield className="h-5 w-5 text-gray-600" />
                 Rollover Risk Dashboard
               </CardTitle>
               <CardDescription>
@@ -1827,7 +1837,7 @@ export default function Ledger() {
                               </div>
                             </td>
                             <td className='px-6 py-4 text-right'>
-                              <div className='text-sm font-medium text-blue-600'>
+                              <div className='text-sm font-medium text-gray-600'>
                                 {formatCurrency(pspData.allocation, '₺')}
                               </div>
                             </td>
@@ -1873,7 +1883,7 @@ export default function Ledger() {
                                     <div className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full ${
                                       trend === 'increasing' ? 'bg-red-100 text-red-700' : 
                                       trend === 'decreasing' ? 'bg-green-100 text-green-700' : 
-                                      'bg-blue-100 text-blue-700'
+                                      'bg-gray-100 text-gray-700'
                                     }`}>
                                       {trend === 'increasing' ? '↗' : trend === 'decreasing' ? '↘' : '→'}
                                       <span className='ml-1'>{trend}</span>
@@ -1888,7 +1898,7 @@ export default function Ledger() {
                               </div>
                             </td>
                             <td className='px-6 py-4 text-center'>
-                              <button className='inline-flex items-center gap-1 px-3 py-1 text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 transition-colors duration-200'>
+                              <button className='inline-flex items-center gap-1 px-3 py-1 text-xs font-medium text-gray-600 bg-gray-50 border border-gray-200 rounded-md hover:bg-gray-100 transition-colors duration-200'>
                                 <Eye className='h-3 w-3' />
                                 View Details
                               </button>
@@ -1907,7 +1917,7 @@ export default function Ledger() {
             <UnifiedCard variant="elevated" className="mb-6">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <BarChart3 className="h-5 w-5 text-blue-600" />
+                  <BarChart3 className="h-5 w-5 text-gray-600" />
                   Advanced Risk Analytics
                 </CardTitle>
                 <CardDescription>
@@ -1924,9 +1934,9 @@ export default function Ledger() {
                     return (
                       <div className='space-y-4'>
                         <div className='grid grid-cols-2 gap-4'>
-                          <div className='text-center p-3 bg-blue-50 rounded-lg'>
-                            <div className='text-2xl font-bold text-blue-600'>{metrics.averageRiskScore}</div>
-                            <div className='text-xs text-blue-600'>Avg Risk Score</div>
+                          <div className='text-center p-3 bg-gray-50 rounded-lg'>
+                            <div className='text-2xl font-bold text-gray-600'>{metrics.averageRiskScore}</div>
+                            <div className='text-xs text-gray-600'>Avg Risk Score</div>
                           </div>
                           <div className='text-center p-3 bg-red-50 rounded-lg'>
                             <div className='text-2xl font-bold text-red-600'>{formatCurrency(metrics.totalExposure, '₺')}</div>
@@ -1956,10 +1966,10 @@ export default function Ledger() {
                 <div className='bg-white rounded-xl p-6 shadow-sm border border-gray-100'>
                   <h3 className='text-lg font-semibold text-gray-900 mb-4'>Risk Trend Analysis</h3>
                   <div className='space-y-4'>
-                    <div className='text-center p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg'>
-                      <TrendingUp className='h-8 w-8 text-blue-600 mx-auto mb-2' />
-                      <h4 className='font-medium text-blue-900'>Real-time Trend Detection</h4>
-                      <p className='text-sm text-blue-700'>Analyzing risk patterns across all PSPs</p>
+                    <div className='text-center p-4 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg'>
+                      <TrendingUp className='h-8 w-8 text-gray-600 mx-auto mb-2' />
+                      <h4 className='font-medium text-gray-900'>Real-time Trend Detection</h4>
+                      <p className='text-sm text-gray-700'>Analyzing risk patterns across all PSPs</p>
                     </div>
                     <div className='space-y-2'>
                       <div className='flex items-center justify-between text-sm'>
@@ -1986,7 +1996,7 @@ export default function Ledger() {
                       </div>
                       <div className='flex items-center justify-between text-sm'>
                         <span className='text-gray-600'>Stable:</span>
-                        <span className='text-blue-600 font-medium'>
+                        <span className='text-gray-600 font-medium'>
                           {(() => {
                             const stablePSPs = Array.from(new Set(ledgerData.flatMap(day => 
                               Object.keys(day.psps).filter(psp => getRiskTrend(psp) === 'stable')
@@ -2006,7 +2016,7 @@ export default function Ledger() {
             <UnifiedCard variant="elevated" className="mb-6">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Zap className="h-5 w-5 text-blue-600" />
+                  <Zap className="h-5 w-5 text-gray-600" />
                   Risk Mitigation Recommendations
                 </CardTitle>
                 <CardDescription>
@@ -2087,7 +2097,7 @@ export default function Ledger() {
             <UnifiedCard variant="elevated" className="mb-6">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <AlertCircle className="h-5 w-5 text-blue-600" />
+                  <AlertCircle className="h-5 w-5 text-gray-600" />
                   Predictive Risk Alerts
                 </CardTitle>
                 <CardDescription>

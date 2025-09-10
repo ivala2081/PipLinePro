@@ -272,9 +272,9 @@ export function DemoLineChart() {
       loading={isLoading}
     >
       {/* This is where you'd put your actual chart library component */}
-      <div className="business-chart-responsive h-64 bg-gradient-to-br from-blue-50 to-indigo-100 rounded-lg flex items-center justify-center">
+      <div className="business-chart-responsive h-64 bg-gradient-to-br from-gray-50 to-indigo-100 rounded-lg flex items-center justify-center">
         <div className="text-center text-gray-600">
-          <TrendingUp className="w-16 h-16 mx-auto mb-4 text-blue-500" />
+          <TrendingUp className="w-16 h-16 mx-auto mb-4 text-gray-500" />
           <p className="text-lg font-medium">Line Chart Placeholder</p>
           <p className="text-sm">Your chart library component goes here</p>
           <p className="text-xs mt-2">Time Range: {timeRange}</p>
@@ -480,9 +480,9 @@ export function ProfessionalChartsShowcase() {
       </div>
 
       {/* Usage Instructions */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-        <h3 className="text-lg font-semibold text-blue-900 mb-3">How to Use with Your Chart Library</h3>
-        <div className="text-blue-800 space-y-2 text-sm">
+      <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-3">How to Use with Your Chart Library</h3>
+        <div className="text-gray-800 space-y-2 text-sm">
           <p><strong>1. Wrap your chart:</strong> Use <code>BusinessChartContainer</code> around any chart component</p>
           <p><strong>2. Add legends:</strong> Use <code>BusinessChartLegend</code> for consistent legend styling</p>
           <p><strong>3. Add filters:</strong> Use <code>BusinessChartFilters</code> for interactive controls</p>

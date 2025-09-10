@@ -49,6 +49,7 @@ import {
   UnifiedSection, 
   UnifiedGrid 
 } from '../design-system';
+import { Breadcrumb } from '../components/ui';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
@@ -174,41 +175,40 @@ export default function Accounting() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="p-6">
       {/* Breadcrumb Navigation */}
-      <div className="px-6 py-4 bg-white border-b border-slate-200">
-        <div className="flex items-center space-x-2 text-sm text-gray-600">
-          <span>Dashboard</span>
-          <span>/</span>
-          <span className="text-gray-900 font-medium">Accounting</span>
-        </div>
+      <div className="mb-6">
+        <Breadcrumb 
+          items={[
+            { label: 'Dashboard', href: '/' },
+            { label: 'Accounting', current: true }
+          ]} 
+        />
       </div>
 
-      {/* Modern Header */}
-      <div className="bg-white border-b border-slate-200">
-        <div className="px-6 py-6">
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <h1 className="text-3xl font-bold text-gray-900">Accounting</h1>
-              <p className="text-gray-600">Financial records and accounting management</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <Button
-                variant="outline"
-                onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center gap-2"
-              >
-                <Filter className="h-4 w-4" />
-                {showFilters ? 'Hide Filters' : 'Show Filters'}
-              </Button>
-              <Button
-                onClick={() => {/* Add new accounting entry */}}
-                className="flex items-center gap-2"
-              >
-                <Plus className="h-4 w-4" />
-                Add Entry
-              </Button>
-            </div>
+      {/* Page Header */}
+      <div className="mb-6">
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
+            <h1 className="text-3xl font-bold text-gray-900">Accounting</h1>
+            <p className="text-gray-600">Financial records and accounting management</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center gap-2"
+            >
+              <Filter className="h-4 w-4" />
+              {showFilters ? 'Hide Filters' : 'Show Filters'}
+            </Button>
+            <Button
+              onClick={() => {/* Add new accounting entry */}}
+              className="flex items-center gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              Add Entry
+            </Button>
           </div>
         </div>
       </div>

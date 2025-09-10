@@ -421,7 +421,7 @@ const Dashboard = memo(() => {
         description: t('dashboard.highest_deposit_volume'),
         data: topPerformers.volume_leaders,
         icon: <BarChart3 className='h-4 w-4 text-white' />,
-        iconBgColor: 'bg-blue-600',
+        iconBgColor: 'bg-gray-600',
         showVolume: true
       },
       countLeaders: {
@@ -570,7 +570,7 @@ const Dashboard = memo(() => {
                   change={dashboardData.stats.total_revenue.change}
                   trend="up"
                   icon={DollarSign}
-                  color="blue"
+                  color="gray"
                   subtitle="All time net cash"
                 />
                 
@@ -612,10 +612,10 @@ const Dashboard = memo(() => {
             <CardGrid cols={4} gap="lg">
               <Button
                 variant="outline"
-                className="h-24 flex flex-col items-center justify-center gap-2 hover:bg-blue-50 hover:border-blue-200 transition-colors"
+                className="h-24 flex flex-col items-center justify-center gap-2 hover:bg-gray-50 hover:border-gray-200 transition-colors"
                 onClick={() => handleQuickAction('Add Transaction', '/transactions/add')}
               >
-                <CreditCard className="h-6 w-6 text-blue-600" />
+                <CreditCard className="h-6 w-6 text-gray-600" />
                 <span className="text-sm font-medium">Add Transaction</span>
               </Button>
               
@@ -1021,7 +1021,7 @@ const Dashboard = memo(() => {
                 </div>
                 <div className='business-chart-legend'>
                   <div className='business-chart-legend-item'>
-                    <div className='business-chart-legend-color bg-blue-500'></div>
+                    <div className='business-chart-legend-color bg-gray-500'></div>
                     <span className='business-chart-legend-label'>Net Revenue</span>
                     <span className='business-chart-legend-value'>₺{revenueTrends.data.metrics.total_revenue?.toLocaleString()}</span>
                   </div>
@@ -1040,8 +1040,8 @@ const Dashboard = memo(() => {
                     {clientAnalytics.data.client_analytics?.slice(0, 5).map((client: any, index: number) => (
                       <div key={client.client_name} className='flex items-center justify-between p-3 bg-gray-50 rounded-lg'>
                         <div className='flex items-center gap-3'>
-                          <div className='w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center'>
-                            <span className='text-sm font-medium text-blue-700'>{index + 1}</span>
+                          <div className='w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center'>
+                            <span className='text-sm font-medium text-gray-700'>{index + 1}</span>
                           </div>
                           <div>
                             <p className='font-medium text-gray-900'>{client.client_name}</p>
@@ -1094,7 +1094,7 @@ const Dashboard = memo(() => {
                   value={`${systemPerformance.cpu_usage?.toFixed(1)}%`}
                   subtitle="System performance"
                   icon={Server}
-                  color="blue"
+                  color="gray"
                 />
                 
                 <MetricCard
@@ -1124,7 +1124,7 @@ const Dashboard = memo(() => {
                   title="Client Completeness"
                   value={`${dataQuality.client_completeness?.toFixed(1)}%`}
                   icon={Users}
-                  color="blue"
+                  color="gray"
                   subtitle="Data completeness"
                 />
                 
@@ -1342,13 +1342,13 @@ const Dashboard = memo(() => {
                     <span className='text-xs text-green-600 font-medium'>Success</span>
                   </div>
                   
-                  <div className='flex items-center gap-3 p-3 bg-blue-50 rounded-lg'>
-                    <div className='w-2 h-2 bg-blue-500 rounded-full'></div>
+                  <div className='flex items-center gap-3 p-3 bg-gray-50 rounded-lg'>
+                    <div className='w-2 h-2 bg-gray-500 rounded-full'></div>
                     <div className='flex-1'>
                       <p className='text-sm font-medium text-gray-900'>Data Sync Completed</p>
                       <p className='text-xs text-gray-500'>5 minutes ago</p>
                     </div>
-                    <span className='text-xs text-blue-600 font-medium'>Info</span>
+                    <span className='text-xs text-gray-600 font-medium'>Info</span>
                   </div>
                   
                   <div className='flex items-center gap-3 p-3 bg-yellow-50 rounded-lg'>
@@ -1408,10 +1408,10 @@ const Dashboard = memo(() => {
                   
                   <div className='flex items-center justify-between'>
                     <div className='flex items-center gap-3'>
-                      <Activity className='h-5 w-5 text-blue-600' />
+                      <Activity className='h-5 w-5 text-gray-600' />
                       <span className='text-sm font-medium text-gray-900'>Performance</span>
                     </div>
-                    <span className='text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full'>Good</span>
+                    <span className='text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded-full'>Good</span>
                   </div>
                 </div>
               </div>
@@ -1442,7 +1442,7 @@ const Dashboard = memo(() => {
                   value={formatCurrency(dashboardData.summary.total_commission, '₺')}
                   subtitle={t('dashboard.earned')}
                   icon={DollarSign}
-                  color="blue"
+                  color="gray"
                 />
 
                 {/* Active Clients */}

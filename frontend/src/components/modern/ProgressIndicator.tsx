@@ -35,7 +35,7 @@ export const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({
       case 'completed':
         return <CheckCircle className="w-5 h-5 text-green-500" />;
       case 'current':
-        return <Clock className="w-5 h-5 text-blue-500" />;
+        return <Clock className="w-5 h-5 text-gray-500" />;
       case 'error':
         return <XCircle className="w-5 h-5 text-red-500" />;
       case 'upcoming':
@@ -50,7 +50,7 @@ export const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({
       case 'completed':
         return 'text-green-600 bg-green-50 border-green-200';
       case 'current':
-        return 'text-blue-600 bg-blue-50 border-blue-200';
+        return 'text-gray-600 bg-gray-50 border-gray-200';
       case 'error':
         return 'text-red-600 bg-red-50 border-red-200';
       case 'upcoming':
@@ -65,7 +65,7 @@ export const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({
       return 'bg-green-500';
     }
     if (currentStatus === 'current') {
-      return 'bg-blue-500';
+      return 'bg-gray-500';
     }
     if (currentStatus === 'error') {
       return 'bg-red-500';
@@ -94,7 +94,7 @@ export const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({
                   {step.title}
                 </h4>
                 {step.status === 'current' && (
-                  <Badge variant="outline" className="text-blue-600 border-blue-200">
+                  <Badge variant="outline" className="text-gray-600 border-gray-200">
                     In Progress
                   </Badge>
                 )}

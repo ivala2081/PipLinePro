@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { Breadcrumb } from '../components/ui';
 import {
   BarChart3,
   TrendingUp,
@@ -308,12 +309,24 @@ export default function RevenueAnalytics() {
   }
 
   return (
-    <ContentArea spacing="xl">
-      {/* Header */}
-      <PageHeader
-        title="Revenue Analytics"
-        subtitle="Comprehensive revenue analysis with all transaction data"
-        actions={
+    <div className="p-6">
+      {/* Breadcrumb Navigation */}
+      <div className="mb-6">
+        <Breadcrumb 
+          items={[
+            { label: 'Dashboard', href: '/' },
+            { label: 'Revenue Analytics', current: true }
+          ]} 
+        />
+      </div>
+
+      {/* Page Header */}
+      <div className="mb-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Revenue Analytics</h1>
+            <p className="text-gray-600">Comprehensive revenue analysis with all transaction data</p>
+          </div>
           <div className="flex items-center gap-3">
             <Button
               onClick={handleBackToDashboard}
@@ -360,11 +373,11 @@ export default function RevenueAnalytics() {
               </div>
             </div>
           </div>
-        }
-      />
+        </div>
+      </div>
 
       {/* Filters */}
-      <Section spacing="md">
+      <div className="mb-6">
         <div className="bg-white rounded-xl border border-gray-200 p-4">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900">Filters & Controls</h3>
@@ -446,10 +459,14 @@ export default function RevenueAnalytics() {
             </div>
           )}
         </div>
-      </Section>
+      </div>
 
       {/* Key Metrics */}
-      <Section title="Key Metrics" subtitle="Revenue overview and key performance indicators" spacing="lg">
+      <div className="mb-6">
+        <div className="mb-4">
+          <h2 className="text-2xl font-bold text-gray-900">Key Metrics</h2>
+          <p className="text-gray-600">Revenue overview and key performance indicators</p>
+        </div>
         <CardGrid cols={4} gap="lg">
           <Card>
             <CardContent className="p-6">
@@ -530,10 +547,10 @@ export default function RevenueAnalytics() {
             </CardContent>
           </Card>
         </CardGrid>
-      </Section>
+      </div>
 
       {/* Tab Navigation */}
-      <Section spacing="lg">
+      <div className="mb-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="overview" className="flex items-center gap-2">
@@ -1007,7 +1024,7 @@ export default function RevenueAnalytics() {
             </div>
           </TabsContent>
         </Tabs>
-      </Section>
-    </ContentArea>
+      </div>
+    </div>
   );
 }

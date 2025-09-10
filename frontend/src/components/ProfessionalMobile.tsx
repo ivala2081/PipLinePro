@@ -236,7 +236,7 @@ export function TouchButton({
   const getVariantClasses = () => {
     switch (variant) {
       case 'primary':
-        return 'bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800';
+        return 'bg-gray-600 text-white hover:bg-gray-700 active:bg-gray-800';
       case 'secondary':
         return 'bg-gray-200 text-gray-900 hover:bg-gray-300 active:bg-gray-400';
       case 'success':
@@ -248,7 +248,7 @@ export function TouchButton({
       case 'ghost':
         return 'bg-transparent text-gray-700 hover:bg-gray-100 active:bg-gray-200';
       default:
-        return 'bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800';
+        return 'bg-gray-600 text-white hover:bg-gray-700 active:bg-gray-800';
     }
   };
 
@@ -274,7 +274,7 @@ export function TouchButton({
         ${getSizeClasses()}
         font-medium rounded-lg
         transition-all duration-200 ease-in-out
-        focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+        focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2
         disabled:opacity-50 disabled:cursor-not-allowed
         active:scale-95 touch-manipulation
         ${className}
@@ -624,7 +624,7 @@ export function DemoMobileSystem() {
           <h4 className="text-lg font-semibold text-gray-900 mb-4">Responsive Breakpoint Detection</h4>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="text-center p-4 bg-white rounded-lg border border-gray-200">
-              <Smartphone className="w-8 h-8 mx-auto mb-2 text-blue-600" />
+              <Smartphone className="w-8 h-8 mx-auto mb-2 text-gray-600" />
               <p className="text-sm font-medium text-gray-900">Mobile</p>
               <p className="text-xs text-gray-600">{isMobile ? 'Active' : 'Inactive'}</p>
             </div>
@@ -759,7 +759,7 @@ export function DemoMobileSystem() {
             <ResponsiveCard variant="elevated" padding="lg" className="text-center">
               <div className="space-y-4">
                                  <div className="flex justify-center space-x-4">
-                   <Move className="w-8 h-8 text-blue-600" />
+                   <Move className="w-8 h-8 text-gray-600" />
                    <MousePointer className="w-8 h-8 text-green-600" />
                    <Hand className="w-8 h-8 text-purple-600" />
                  </div>
@@ -839,8 +839,8 @@ export function ProfessionalMobileShowcase() {
       {/* Features Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div className="text-center p-6 bg-white rounded-lg border border-gray-200">
-          <div className="bg-blue-100 w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-4">
-            <Smartphone className="w-6 h-6 text-blue-600" />
+          <div className="bg-gray-100 w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-4">
+            <Smartphone className="w-6 h-6 text-gray-600" />
           </div>
           <h4 className="font-semibold text-gray-900 mb-2">Responsive Breakpoints</h4>
           <p className="text-sm text-gray-600">Automatic device detection with responsive behavior</p>

@@ -494,35 +494,35 @@ export default function Settings() {
         <div className="space-y-6">
           {/* Company Information */}
           <UnifiedCard variant="elevated" className="relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-100 rounded-full -translate-y-16 translate-x-16"></div>
+            <div className="absolute top-0 right-0 w-32 h-32 bg-gray-100 rounded-full -translate-y-16 translate-x-16"></div>
             <CardContent className="p-6">
               <div className="flex items-center gap-4 mb-6">
-                <div className="w-12 h-12 bg-gradient-to-br from-slate-700 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                <div className="w-12 h-12 bg-gradient-to-br from-gray-700 to-gray-600 rounded-xl flex items-center justify-center shadow-lg">
                   <Building className="h-6 w-6 text-white" />
                 </div>
                 <div>
-                  <CardTitle className="text-xl font-bold text-slate-900">
+                  <CardTitle className="text-xl font-bold text-gray-900">
                     Company Information
                   </CardTitle>
-                  <CardDescription className="text-slate-600 font-medium">Order Invest & PipLine Collaboration</CardDescription>
+                  <CardDescription className="text-gray-600 font-medium">Order Invest & PipLine Collaboration</CardDescription>
                 </div>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-white rounded-lg p-4 border border-slate-200">
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">
+                <div className="bg-white rounded-lg p-4 border border-gray-200">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Company Name
                   </label>
                   <div className="flex items-center gap-2">
-                    <span className="text-lg font-bold text-slate-900">Order Invest</span>
-                    <span className="text-slate-500">×</span>
-                    <span className="text-lg font-bold text-blue-600">PipLine</span>
+                    <span className="text-lg font-bold text-gray-900">Order Invest</span>
+                    <span className="text-gray-500">×</span>
+                    <span className="text-lg font-bold text-gray-600">PipLine</span>
                   </div>
-                  <p className="text-xs text-slate-500 mt-1">Strategic Financial Technology Partnership</p>
+                  <p className="text-xs text-gray-500 mt-1">Strategic Financial Technology Partnership</p>
                 </div>
                 
-                <div className="bg-white rounded-lg p-4 border border-slate-200">
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">
+                <div className="bg-white rounded-lg p-4 border border-gray-200">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Contact Email
                   </label>
                   <Input
@@ -532,12 +532,12 @@ export default function Settings() {
                 </div>
               </div>
               
-              <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="mt-4 p-4 bg-gray-50 border border-gray-200 rounded-lg">
                 <div className="flex items-start gap-3">
-                  <div className="w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center mt-0.5">
-                    <span className="text-blue-600 text-xs font-bold">ℹ</span>
+                  <div className="w-5 h-5 bg-gray-100 rounded-full flex items-center justify-center mt-0.5">
+                    <span className="text-gray-600 text-xs font-bold">ℹ</span>
                   </div>
-                  <div className="text-sm text-blue-800">
+                  <div className="text-sm text-gray-800">
                     <p className="font-medium mb-1">Partnership Overview</p>
                     <p className="text-xs leading-relaxed">
                       Order Invest provides strategic financial insights while PipLine delivers cutting-edge technology solutions. 
@@ -558,33 +558,33 @@ export default function Settings() {
                   <Globe className="h-6 w-6 text-white" />
                 </div>
                 <div>
-                  <CardTitle className="text-xl font-bold text-slate-900">
+                  <CardTitle className="text-xl font-bold text-gray-900">
                     System Preferences
                   </CardTitle>
-                  <CardDescription className="text-slate-600 font-medium">Configure your system settings and preferences</CardDescription>
+                  <CardDescription className="text-gray-600 font-medium">Configure your system settings and preferences</CardDescription>
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="bg-white rounded-lg p-4 border border-emerald-200">
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Timezone
                   </label>
-                  <select className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors duration-200">
+                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors duration-200">
                     <option>Europe/Istanbul (UTC+3)</option>
                     <option>UTC</option>
                     <option>Europe/London (UTC+0)</option>
                     <option>America/New_York (UTC-5)</option>
                     <option>Asia/Dubai (UTC+4)</option>
                   </select>
-                  <p className="text-xs text-slate-500 mt-1">Default: Europe/Istanbul</p>
+                  <p className="text-xs text-gray-500 mt-1">Default: Europe/Istanbul</p>
                 </div>
                 
                 <div className="bg-white rounded-lg p-4 border border-emerald-200">
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Language
                   </label>
                   <select
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors duration-200"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors duration-200"
                     value={safeCurrentLanguage}
                     onChange={e => handleLanguageChange(e.target.value)}
                   >
@@ -594,7 +594,7 @@ export default function Settings() {
                       </option>
                     ))}
                   </select>
-                  <p className="text-xs text-slate-500 mt-1">Primary: Türkçe</p>
+                  <p className="text-xs text-gray-500 mt-1">Primary: Türkçe</p>
                 </div>
               </div>
               
@@ -622,7 +622,7 @@ export default function Settings() {
               size="lg"
               icon={<SettingsIcon className="h-5 w-5" />}
               iconPosition="left"
-              className="px-8 py-3 font-semibold shadow-lg hover:shadow-xl"
+              className="px-8 py-3 font-semibold shadow-lg hover:shadow-lg"
             >
               Save Configuration Changes
             </UnifiedButton>
@@ -638,18 +638,18 @@ export default function Settings() {
         <div className="space-y-6">
           {/* Professional Header */}
           <UnifiedCard variant="elevated" className="relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-100 rounded-full -translate-y-16 translate-x-16"></div>
+            <div className="absolute top-0 right-0 w-32 h-32 bg-gray-100 rounded-full -translate-y-16 translate-x-16"></div>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-slate-700 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <div className="w-12 h-12 bg-gradient-to-br from-gray-700 to-gray-600 rounded-xl flex items-center justify-center shadow-lg">
                     <List className="h-6 w-6 text-white" />
                   </div>
                   <div>
-                    <CardTitle className="text-2xl font-bold text-slate-900">
+                    <CardTitle className="text-2xl font-bold text-gray-900">
                       Dropdown Management
                     </CardTitle>
-                    <CardDescription className="text-slate-600 font-medium">
+                    <CardDescription className="text-gray-600 font-medium">
                       Enterprise-grade configuration management for transaction systems
                     </CardDescription>
                   </div>
@@ -660,7 +660,7 @@ export default function Settings() {
                   onClick={() => setShowAddModal(true)}
                   icon={<Plus className="h-5 w-5" />}
                   iconPosition="left"
-                  className="px-6 py-3 font-semibold shadow-lg hover:shadow-xl"
+                  className="px-6 py-3 font-semibold shadow-lg hover:shadow-lg"
                 >
                   Add New Option
                 </UnifiedButton>
@@ -671,15 +671,15 @@ export default function Settings() {
           {/* Statistics Overview */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <UnifiedCard variant="outlined" className="relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-16 h-16 bg-blue-100 rounded-full -translate-y-8 translate-x-8"></div>
+              <div className="absolute top-0 right-0 w-16 h-16 bg-gray-100 rounded-full -translate-y-8 translate-x-8"></div>
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <span className="text-blue-600 font-bold text-lg">₺</span>
+                  <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                    <span className="text-gray-600 font-bold text-lg">₺</span>
                   </div>
                   <div>
-                    <p className="text-xs text-slate-500 font-medium">Currency Options</p>
-                    <p className="text-xl font-bold text-slate-900">
+                    <p className="text-xs text-gray-500 font-medium">Currency Options</p>
+                    <p className="text-xl font-bold text-gray-900">
                       {dropdownOptions['currency']?.length || 0}
                     </p>
                   </div>
@@ -695,8 +695,8 @@ export default function Settings() {
                     <span className="text-emerald-600 font-bold text-lg">💳</span>
                   </div>
                   <div>
-                    <p className="text-xs text-slate-500 font-medium">Payment Methods</p>
-                    <p className="text-xl font-bold text-slate-900">
+                    <p className="text-xs text-gray-500 font-medium">Payment Methods</p>
+                    <p className="text-xl font-bold text-gray-900">
                       {dropdownOptions['payment_method']?.length || 0}
                     </p>
                   </div>
@@ -712,8 +712,8 @@ export default function Settings() {
                     <span className="text-purple-600 font-bold text-lg">🏢</span>
                   </div>
                   <div>
-                    <p className="text-xs text-slate-500 font-medium">PSP/KASA</p>
-                    <p className="text-xl font-bold text-slate-900">
+                    <p className="text-xs text-gray-500 font-medium">PSP/KASA</p>
+                    <p className="text-xl font-bold text-gray-900">
                       {dropdownOptions['psp']?.length || 0}
                     </p>
                   </div>
@@ -729,8 +729,8 @@ export default function Settings() {
                     <span className="text-orange-600 font-bold text-lg">📊</span>
                   </div>
                   <div>
-                    <p className="text-xs text-slate-500 font-medium">Total Options</p>
-                    <p className="text-xl font-bold text-slate-900">
+                    <p className="text-xs text-gray-500 font-medium">Total Options</p>
+                    <p className="text-xl font-bold text-gray-900">
                       {Object.values(dropdownOptions).reduce((acc, curr) => acc + (curr?.length || 0), 0)}
                     </p>
                   </div>
@@ -743,17 +743,17 @@ export default function Settings() {
           {loadingOptions ? (
             <UnifiedCard variant="outlined" className="p-8">
               <CardContent className="text-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                <p className="text-slate-600 font-medium">Loading configuration data...</p>
-                <p className="text-sm text-slate-500 mt-1">Please wait while we retrieve your settings</p>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-600 mx-auto mb-4"></div>
+                <p className="text-gray-600 font-medium">Loading configuration data...</p>
+                <p className="text-sm text-gray-500 mt-1">Please wait while we retrieve your settings</p>
               </CardContent>
             </UnifiedCard>
           ) : (
             <UnifiedCard variant="outlined" className="overflow-hidden">
               {/* Table Header */}
-              <CardHeader className="px-6 py-4 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-blue-50">
+              <CardHeader className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-50">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg font-semibold text-slate-900">
+                  <CardTitle className="text-lg font-semibold text-gray-900">
                     Configuration Categories
                   </CardTitle>
                   <div className="flex items-center gap-2">
@@ -766,17 +766,17 @@ export default function Settings() {
               
               {/* Configuration Categories */}
               <CardContent className="p-0">
-                <div className="divide-y divide-slate-100">
+                <div className="divide-y divide-gray-100">
                   {fieldTypes.map(fieldType => (
-                    <div key={fieldType.value} className="p-6 hover:bg-slate-50 transition-colors duration-200">
+                    <div key={fieldType.value} className="p-6 hover:bg-gray-50 transition-colors duration-200">
                     <div className='flex items-center justify-between mb-4'>
                       <div className='flex items-center gap-4'>
-                        <div className='w-12 h-12 bg-gradient-to-br from-slate-600 to-blue-600 rounded-lg flex items-center justify-center shadow-sm'>
+                        <div className='w-12 h-12 bg-gradient-to-br from-gray-600 to-gray-600 rounded-lg flex items-center justify-center shadow-sm'>
                           <List className='h-6 w-6 text-white' />
                         </div>
                         <div>
                           <div className='flex items-center gap-2'>
-                            <h5 className='text-lg font-bold text-slate-900'>
+                            <h5 className='text-lg font-bold text-gray-900'>
                               {fieldType.label}
                             </h5>
                             {fieldType.isProtected && (
@@ -787,7 +787,7 @@ export default function Settings() {
                             )}
                           </div>
                           <div className='flex items-center gap-3 mt-1'>
-                            <span className='text-sm text-slate-600'>
+                            <span className='text-sm text-gray-600'>
                               {fieldType.isStatic 
                                 ? `${fieldType.staticValues?.length || 0} fixed options`
                                 : `${dropdownOptions[fieldType.value]?.length || 0} options configured`
@@ -805,7 +805,7 @@ export default function Settings() {
                               </span>
                             )}
                             {fieldType.requiresCommission && (
-                              <span className='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800'>
+                              <span className='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800'>
                                 Commission Required
                               </span>
                             )}
@@ -831,29 +831,29 @@ export default function Settings() {
 
                     {fieldType.isStatic ? (
                       /* Static fields - show fixed values */
-                      <div className='bg-slate-50 rounded-lg p-4'>
+                      <div className='bg-gray-50 rounded-lg p-4'>
                         <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3'>
                           {fieldType.staticValues?.map((value, index) => (
                             <div
                               key={index}
-                              className='bg-white rounded-lg p-3 border border-slate-200 shadow-sm'
+                              className='bg-white rounded-lg p-3 border border-gray-200 shadow-sm'
                             >
                               <div className='flex items-center justify-between'>
                                 <div className='flex-1'>
                                   <div className='flex items-center gap-2 mb-1'>
-                                    <span className='font-semibold text-slate-900 text-sm'>
+                                    <span className='font-semibold text-gray-900 text-sm'>
                                       {value}
                                     </span>
                                     <span className='inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800'>
                                       Fixed
                                     </span>
                                   </div>
-                                  <p className='text-xs text-slate-500'>
+                                  <p className='text-xs text-gray-500'>
                                     Static value - cannot be modified
                                   </p>
                                 </div>
                                 <div className='flex items-center gap-1'>
-                                  <Lock className='h-4 w-4 text-slate-400' />
+                                  <Lock className='h-4 w-4 text-gray-400' />
                                 </div>
                               </div>
                             </div>
@@ -862,17 +862,17 @@ export default function Settings() {
                       </div>
                     ) : dropdownOptions[fieldType.value]?.length > 0 ? (
                       /* Dynamic fields - show manageable options */
-                      <div className='bg-slate-50 rounded-lg p-4'>
+                      <div className='bg-gray-50 rounded-lg p-4'>
                         <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3'>
                           {dropdownOptions[fieldType.value].map(option => (
                             <div
                               key={option.id}
-                              className='bg-white rounded-lg p-3 border border-slate-200 hover:border-blue-300 hover:shadow-sm transition-all duration-200'
+                              className='bg-white rounded-lg p-3 border border-gray-200 hover:border-gray-300 hover:shadow-sm transition-all duration-200'
                             >
                               <div className='flex items-center justify-between'>
                                 <div className='flex-1'>
                                   <div className='flex items-center gap-2 mb-1'>
-                                    <span className='font-semibold text-slate-900 text-sm'>
+                                    <span className='font-semibold text-gray-900 text-sm'>
                                       {option.value}
                                     </span>
                                     {option.commission_rate && (
@@ -887,14 +887,14 @@ export default function Settings() {
                                       </span>
                                     )}
                                   </div>
-                                  <p className='text-xs text-slate-500'>
+                                  <p className='text-xs text-gray-500'>
                                     ID: {option.id} • Created: {option.created_at ? new Date(option.created_at).toLocaleDateString() : 'N/A'}
                                   </p>
                                 </div>
                                 <div className='flex items-center gap-1'>
                                   <button
                                     onClick={() => openEditModal(option, fieldType.value)}
-                                    className='p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors duration-200'
+                                    className='p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded transition-colors duration-200'
                                     title='Edit option'
                                   >
                                     <Edit className='h-4 w-4' />
@@ -904,7 +904,7 @@ export default function Settings() {
                                     className={`p-1.5 rounded transition-colors duration-200 ${
                                       fieldType.isProtected 
                                         ? 'text-red-400 hover:text-red-600 hover:bg-red-50' 
-                                        : 'text-slate-400 hover:text-red-600 hover:bg-red-50'
+                                        : 'text-gray-400 hover:text-red-600 hover:bg-red-50'
                                     }`}
                                     title={fieldType.isProtected ? t('settings.protected_option_warning') : 'Delete option'}
                                   >
@@ -917,17 +917,17 @@ export default function Settings() {
                         </div>
                       </div>
                     ) : (
-                      <div className='text-center py-8 bg-slate-50 rounded-lg'>
-                        <div className='w-16 h-16 bg-slate-200 rounded-full flex items-center justify-center mx-auto mb-3'>
-                          <List className='h-8 w-8 text-slate-400' />
+                      <div className='text-center py-8 bg-gray-50 rounded-lg'>
+                        <div className='w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-3'>
+                          <List className='h-8 w-8 text-gray-400' />
                         </div>
-                        <h6 className='text-slate-600 font-medium mb-1'>No {fieldType.label} configured</h6>
-                        <p className='text-sm text-slate-500 mb-3'>
+                        <h6 className='text-gray-600 font-medium mb-1'>No {fieldType.label} configured</h6>
+                        <p className='text-sm text-gray-500 mb-3'>
                           Start building your {fieldType.label.toLowerCase()} configuration
                         </p>
                         <button
                           onClick={() => setShowAddModal(true)}
-                          className='inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium text-sm'
+                          className='inline-flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors duration-200 font-medium text-sm'
                         >
                           <Plus className='h-4 w-4' />
                           Add First {fieldType.label}
@@ -951,18 +951,18 @@ export default function Settings() {
         <div className="space-y-6">
           {/* Professional Header */}
           <UnifiedCard variant="elevated" className="relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-100 rounded-full -translate-y-16 translate-x-16"></div>
+            <div className="absolute top-0 right-0 w-32 h-32 bg-gray-100 rounded-full -translate-y-16 translate-x-16"></div>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-slate-700 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <div className="w-12 h-12 bg-gradient-to-br from-gray-700 to-gray-600 rounded-xl flex items-center justify-center shadow-lg">
                     <Building className="h-6 w-6 text-white" />
                   </div>
                   <div>
-                    <CardTitle className="text-2xl font-bold text-slate-900">
+                    <CardTitle className="text-2xl font-bold text-gray-900">
                       Department Management
                     </CardTitle>
-                    <CardDescription className="text-slate-600 font-medium">
+                    <CardDescription className="text-gray-600 font-medium">
                       Organizational structure management for Order Invest & PipLine operations
                     </CardDescription>
                   </div>
@@ -973,7 +973,7 @@ export default function Settings() {
                   onClick={() => openDepartmentModal()}
                   icon={<Plus className="h-5 w-5" />}
                   iconPosition="left"
-                  className="px-6 py-3 font-semibold shadow-lg hover:shadow-xl"
+                  className="px-6 py-3 font-semibold shadow-lg hover:shadow-lg"
                 >
                   Add New Department
                 </UnifiedButton>
@@ -984,15 +984,15 @@ export default function Settings() {
           {/* Statistics Overview */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <UnifiedCard variant="outlined" className="relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-16 h-16 bg-blue-100 rounded-full -translate-y-8 translate-x-8"></div>
+              <div className="absolute top-0 right-0 w-16 h-16 bg-gray-100 rounded-full -translate-y-8 translate-x-8"></div>
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <Building className="h-5 w-5 text-blue-600" />
+                  <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                    <Building className="h-5 w-5 text-gray-600" />
                   </div>
                   <div>
-                    <p className="text-xs text-slate-500 font-medium">Total Departments</p>
-                    <p className="text-xl font-bold text-slate-900">
+                    <p className="text-xs text-gray-500 font-medium">Total Departments</p>
+                    <p className="text-xl font-bold text-gray-900">
                       {departments.length}
                     </p>
                   </div>
@@ -1008,8 +1008,8 @@ export default function Settings() {
                     <Users className="h-5 w-5 text-emerald-600" />
                   </div>
                   <div>
-                    <p className="text-xs text-slate-500 font-medium">Active Teams</p>
-                    <p className="text-xl font-bold text-slate-900">
+                    <p className="text-xs text-gray-500 font-medium">Active Teams</p>
+                    <p className="text-xl font-bold text-gray-900">
                       {departments.filter(dept => ['Conversion', 'Retention', 'Marketing', 'Research', 'Operation'].includes(dept)).length}
                     </p>
                   </div>
@@ -1025,8 +1025,8 @@ export default function Settings() {
                     <Building2 className="h-5 w-5 text-purple-600" />
                   </div>
                   <div>
-                    <p className="text-xs text-slate-500 font-medium">Support Functions</p>
-                    <p className="text-xl font-bold text-slate-900">
+                    <p className="text-xs text-gray-500 font-medium">Support Functions</p>
+                    <p className="text-xl font-bold text-gray-900">
                       {departments.filter(dept => ['Management', 'Facility'].includes(dept)).length}
                     </p>
                   </div>
@@ -1039,21 +1039,21 @@ export default function Settings() {
           {loadingDepartments ? (
             <UnifiedCard variant="outlined" className="p-8">
               <CardContent className="text-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                <p className="text-slate-600 font-medium">Loading organizational structure...</p>
-                <p className="text-sm text-slate-500 mt-1">Please wait while we retrieve your department configuration</p>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-600 mx-auto mb-4"></div>
+                <p className="text-gray-600 font-medium">Loading organizational structure...</p>
+                <p className="text-sm text-gray-500 mt-1">Please wait while we retrieve your department configuration</p>
               </CardContent>
             </UnifiedCard>
           ) : (
             <UnifiedCard variant="outlined" className="overflow-hidden">
               {/* Table Header */}
-              <div className='px-6 py-4 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-blue-50'>
+              <div className='px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-50'>
                 <div className='flex items-center justify-between'>
-                  <h4 className='text-lg font-semibold text-slate-900'>
+                  <h4 className='text-lg font-semibold text-gray-900'>
                     Organizational Structure
                   </h4>
                   <div className='flex items-center gap-2'>
-                    <span className='text-xs text-slate-500 bg-white px-2 py-1 rounded-full border border-slate-200'>
+                    <span className='text-xs text-gray-500 bg-white px-2 py-1 rounded-full border border-gray-200'>
                       {departments.length} Departments
                     </span>
                   </div>
@@ -1062,43 +1062,43 @@ export default function Settings() {
               
               {departments.length === 0 ? (
                 <div className='text-center py-12 px-6'>
-                  <div className='w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4'>
-                    <Building className='h-10 w-10 text-slate-400' />
+                  <div className='w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4'>
+                    <Building className='h-10 w-10 text-gray-400' />
                   </div>
-                  <h3 className='text-lg font-semibold text-slate-900 mb-2'>
+                  <h3 className='text-lg font-semibold text-gray-900 mb-2'>
                     No departments configured
                   </h3>
-                  <p className='text-slate-500 mb-6 max-w-md mx-auto text-sm'>
+                  <p className='text-gray-500 mb-6 max-w-md mx-auto text-sm'>
                     Start building your organizational structure to organize agents and team operations 
                     across the Order Invest & PipLine platform.
                   </p>
                   <button 
                     onClick={() => openDepartmentModal()}
-                    className='inline-flex items-center px-6 py-3 border border-transparent rounded-lg text-sm font-medium text-white bg-gradient-to-r from-slate-700 to-blue-600 hover:from-slate-800 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors shadow-sm'
+                    className='inline-flex items-center px-6 py-3 border border-transparent rounded-lg text-sm font-medium text-white bg-gradient-to-r from-gray-700 to-gray-600 hover:from-gray-800 hover:to-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors shadow-sm'
                   >
                     <Plus className='h-4 w-4 mr-2' />
                     Create Your First Department
                   </button>
                 </div>
               ) : (
-                <div className='divide-y divide-slate-100'>
+                <div className='divide-y divide-gray-100'>
                   {departments.map((department, index) => (
-                    <div key={index} className='p-6 hover:bg-slate-50 transition-colors duration-200'>
+                    <div key={index} className='p-6 hover:bg-gray-50 transition-colors duration-200'>
                       <div className='flex items-center justify-between'>
                         <div className='flex items-center gap-4'>
-                          <div className='w-12 h-12 bg-gradient-to-br from-slate-600 to-blue-600 rounded-lg flex items-center justify-center shadow-sm'>
+                          <div className='w-12 h-12 bg-gradient-to-br from-gray-600 to-gray-600 rounded-lg flex items-center justify-center shadow-sm'>
                             <Building className='h-6 w-6 text-white' />
                           </div>
                           <div>
-                            <h4 className='text-lg font-bold text-slate-900'>
+                            <h4 className='text-lg font-bold text-gray-900'>
                               {department}
                             </h4>
                             <div className='flex items-center gap-3 mt-1'>
-                              <span className='text-sm text-slate-600'>
+                              <span className='text-sm text-gray-600'>
                                 Department ID: {index + 1}
                               </span>
                               {['Conversion', 'Retention', 'Marketing', 'Research', 'Operation'].includes(department) && (
-                                <span className='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800'>
+                                <span className='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800'>
                                   Core Team
                                 </span>
                               )}
@@ -1113,7 +1113,7 @@ export default function Settings() {
                         <div className='flex items-center gap-2'>
                           <button
                             onClick={() => openDepartmentModal(department)}
-                            className='inline-flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors duration-200 font-medium text-sm'
+                            className='inline-flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200 font-medium text-sm'
                             title='Edit department'
                           >
                             <Edit className='h-4 w-4' />
@@ -1157,8 +1157,8 @@ export default function Settings() {
                 </div>
               </div>
               <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
-                <div className='p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-all duration-200 hover:border-blue-300 hover:shadow-sm'>
-                  <Users className='h-7 w-7 text-blue-600 mb-2' />
+                <div className='p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-all duration-200 hover:border-gray-300 hover:shadow-sm'>
+                  <Users className='h-7 w-7 text-gray-600 mb-2' />
                   <h4 className='font-medium text-gray-900 text-sm'>
                     {t('settings.user_management')}
                   </h4>
@@ -1267,7 +1267,7 @@ export default function Settings() {
               <div className='bg-white rounded-lg p-5 border border-orange-200'>
                 <div className='flex items-center justify-between'>
                   <div className='flex items-center gap-3'>
-                    <div className='w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center'>
+                    <div className='w-8 h-8 bg-gradient-to-br from-gray-500 to-gray-600 rounded-lg flex items-center justify-center'>
                       <Mail className='h-4 w-4 text-white' />
                     </div>
                     <div>
@@ -1341,16 +1341,16 @@ export default function Settings() {
       content: (
         <div className='space-y-6'>
           {/* Professional Header */}
-          <div className='bg-gradient-to-r from-slate-50 to-blue-50 rounded-xl p-6 border border-slate-200'>
+          <div className='bg-gradient-to-r from-gray-50 to-gray-50 rounded-xl p-6 border border-gray-200'>
             <div className='flex items-center gap-4'>
-              <div className='w-12 h-12 bg-gradient-to-br from-slate-700 to-blue-600 rounded-xl flex items-center justify-center shadow-lg'>
+              <div className='w-12 h-12 bg-gradient-to-br from-gray-700 to-gray-600 rounded-xl flex items-center justify-center shadow-lg'>
                 <Globe className='h-6 w-6 text-white' />
               </div>
               <div>
-                <h3 className='text-2xl font-bold text-slate-900'>
+                <h3 className='text-2xl font-bold text-gray-900'>
                   System Integrations
                 </h3>
-                <p className='text-slate-600 font-medium'>
+                <p className='text-gray-600 font-medium'>
                   Connect external services and APIs to enhance Order Invest & PipLine functionality
                 </p>
               </div>
@@ -1360,25 +1360,25 @@ export default function Settings() {
           {/* Integration Categories */}
           <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
             {/* API Integrations */}
-            <div className='bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden'>
-              <div className='px-6 py-4 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-blue-50'>
-                <h4 className='text-lg font-semibold text-slate-900'>
+            <div className='bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden'>
+              <div className='px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-50'>
+                <h4 className='text-lg font-semibold text-gray-900'>
                   API Integrations
                 </h4>
-                <p className='text-sm text-slate-600'>Connect external financial data sources</p>
+                <p className='text-sm text-gray-600'>Connect external financial data sources</p>
               </div>
               <div className='p-6 space-y-4'>
-                <div className='p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors duration-200'>
+                <div className='p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-200'>
                   <div className='flex items-center justify-between'>
                     <div className='flex items-center gap-3'>
-                      <div className='w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center'>
-                        <TrendingUp className='h-5 w-5 text-blue-600' />
+                      <div className='w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center'>
+                        <TrendingUp className='h-5 w-5 text-gray-600' />
                       </div>
                       <div>
-                        <h5 className='font-semibold text-slate-900 text-sm'>
+                        <h5 className='font-semibold text-gray-900 text-sm'>
                           Exchange Rate APIs
                         </h5>
-                        <p className='text-xs text-slate-500'>
+                        <p className='text-xs text-gray-500'>
                           Real-time currency conversion data
                         </p>
                       </div>
@@ -1387,24 +1387,24 @@ export default function Settings() {
                       <span className='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800'>
                         Active
                       </span>
-                      <button className='px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors duration-200 text-xs font-medium'>
+                      <button className='px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200 text-xs font-medium'>
                         Configure
                       </button>
                     </div>
                   </div>
                 </div>
                 
-                <div className='p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors duration-200'>
+                <div className='p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-200'>
                   <div className='flex items-center justify-between'>
                     <div className='flex items-center gap-3'>
                       <div className='w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center'>
                         <Building className='h-5 w-5 text-emerald-600' />
                       </div>
                       <div>
-                        <h5 className='font-semibold text-slate-900 text-sm'>
+                        <h5 className='font-semibold text-gray-900 text-sm'>
                           Banking APIs
                         </h5>
-                        <p className='text-xs text-slate-500'>
+                        <p className='text-xs text-gray-500'>
                           Account balance and transaction sync
                         </p>
                       </div>
@@ -1413,33 +1413,33 @@ export default function Settings() {
                       <span className='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800'>
                         Pending
                       </span>
-                      <button className='px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors duration-200 text-xs font-medium'>
+                      <button className='px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200 text-xs font-medium'>
                         Setup
                       </button>
                     </div>
                   </div>
                 </div>
                 
-                <div className='p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors duration-200'>
+                <div className='p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-200'>
                   <div className='flex items-center justify-between'>
                     <div className='flex items-center gap-3'>
                       <div className='w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center'>
                         <BarChart3 className='h-5 w-5 text-purple-600' />
                       </div>
                       <div>
-                        <h5 className='font-semibold text-slate-900 text-sm'>
+                        <h5 className='font-semibold text-gray-900 text-sm'>
                           Market Data APIs
                         </h5>
-                        <p className='text-xs text-slate-500'>
+                        <p className='text-xs text-gray-500'>
                           Stock prices and market analytics
                         </p>
                       </div>
                     </div>
                     <div className='flex items-center gap-2'>
-                      <span className='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600'>
+                      <span className='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600'>
                         Inactive
                       </span>
-                      <button className='px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors duration-200 text-xs font-medium'>
+                      <button className='px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200 text-xs font-medium'>
                         Enable
                       </button>
                     </div>
@@ -1449,25 +1449,25 @@ export default function Settings() {
             </div>
 
             {/* Data Integrations */}
-            <div className='bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden'>
-              <div className='px-6 py-4 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-emerald-50'>
-                <h4 className='text-lg font-semibold text-slate-900'>
+            <div className='bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden'>
+              <div className='px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-emerald-50'>
+                <h4 className='text-lg font-semibold text-gray-900'>
                   Data Integrations
                 </h4>
-                <p className='text-sm text-slate-600'>Import and export data from external sources</p>
+                <p className='text-sm text-gray-600'>Import and export data from external sources</p>
               </div>
               <div className='p-6 space-y-4'>
-                <div className='p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors duration-200'>
+                <div className='p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-200'>
                   <div className='flex items-center justify-between'>
                     <div className='flex items-center gap-3'>
                       <div className='w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center'>
                         <FileText className='h-5 w-5 text-orange-600' />
                       </div>
                       <div>
-                        <h5 className='font-semibold text-slate-900 text-sm'>
+                        <h5 className='font-semibold text-gray-900 text-sm'>
                           Excel/CSV Import
                         </h5>
-                        <p className='text-xs text-slate-500'>
+                        <p className='text-xs text-gray-500'>
                           Bulk transaction data import
                         </p>
                       </div>
@@ -1476,24 +1476,24 @@ export default function Settings() {
                       <span className='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800'>
                         Active
                       </span>
-                      <button className='px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors duration-200 text-xs font-medium'>
+                      <button className='px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200 text-xs font-medium'>
                         Manage
                       </button>
                     </div>
                   </div>
                 </div>
                 
-                <div className='p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors duration-200'>
+                <div className='p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-200'>
                   <div className='flex items-center justify-between'>
                     <div className='flex items-center gap-3'>
                       <div className='w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center'>
                         <RefreshCw className='h-5 w-5 text-indigo-600' />
                       </div>
                       <div>
-                        <h5 className='font-semibold text-slate-900 text-sm'>
+                        <h5 className='font-semibold text-gray-900 text-sm'>
                           Database Sync
                         </h5>
-                        <p className='text-xs text-slate-500'>
+                        <p className='text-xs text-gray-500'>
                           Real-time data synchronization
                         </p>
                       </div>
@@ -1502,24 +1502,24 @@ export default function Settings() {
                       <span className='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800'>
                         Active
                       </span>
-                      <button className='px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors duration-200 text-xs font-medium'>
+                      <button className='px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200 text-xs font-medium'>
                         Monitor
                       </button>
                     </div>
                   </div>
                 </div>
                 
-                <div className='p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors duration-200'>
+                <div className='p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-200'>
                   <div className='flex items-center justify-between'>
                     <div className='flex items-center gap-3'>
                       <div className='w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center'>
                         <Download className='h-5 w-5 text-red-600' />
                       </div>
                       <div>
-                        <h5 className='font-semibold text-slate-900 text-sm'>
+                        <h5 className='font-semibold text-gray-900 text-sm'>
                           Report Export
                         </h5>
-                        <p className='text-xs text-slate-500'>
+                        <p className='text-xs text-gray-500'>
                           Automated report generation
                         </p>
                       </div>
@@ -1528,7 +1528,7 @@ export default function Settings() {
                       <span className='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800'>
                         Active
                       </span>
-                      <button className='px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors duration-200 text-xs font-medium'>
+                      <button className='px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200 text-xs font-medium'>
                         Configure
                       </button>
                     </div>
@@ -1539,8 +1539,8 @@ export default function Settings() {
           </div>
 
           {/* Integration Status Overview */}
-          <div className='bg-white rounded-xl shadow-sm border border-slate-200 p-6'>
-            <h4 className='text-lg font-semibold text-slate-900 mb-4'>
+          <div className='bg-white rounded-xl shadow-sm border border-gray-200 p-6'>
+            <h4 className='text-lg font-semibold text-gray-900 mb-4'>
               Integration Health Status
             </h4>
             <div className='grid grid-cols-1 md:grid-cols-4 gap-4'>
@@ -1560,40 +1560,40 @@ export default function Settings() {
                 <p className='text-xs text-yellow-600'>1 Integration</p>
               </div>
               
-              <div className='text-center p-4 bg-slate-50 rounded-lg border border-slate-200'>
-                <div className='w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-2'>
-                  <Circle className='h-5 w-5 text-slate-600' />
+              <div className='text-center p-4 bg-gray-50 rounded-lg border border-gray-200'>
+                <div className='w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-2'>
+                  <Circle className='h-5 w-5 text-gray-600' />
                 </div>
-                <p className='text-sm font-medium text-slate-800'>Inactive</p>
-                <p className='text-xs text-slate-600'>1 Integration</p>
+                <p className='text-sm font-medium text-gray-800'>Inactive</p>
+                <p className='text-xs text-gray-600'>1 Integration</p>
               </div>
               
-              <div className='text-center p-4 bg-blue-50 rounded-lg border border-blue-200'>
-                <div className='w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2'>
-                  <BarChart3 className='h-5 w-5 text-blue-600' />
+              <div className='text-center p-4 bg-gray-50 rounded-lg border border-gray-200'>
+                <div className='w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-2'>
+                  <BarChart3 className='h-5 w-5 text-gray-600' />
                 </div>
-                <p className='text-sm font-medium text-blue-800'>Total</p>
-                <p className='text-xs text-blue-600'>6 Integrations</p>
+                <p className='text-sm font-medium text-gray-800'>Total</p>
+                <p className='text-xs text-gray-600'>6 Integrations</p>
               </div>
             </div>
           </div>
 
           {/* Integration Actions */}
-          <div className='bg-gradient-to-r from-slate-50 to-blue-50 rounded-xl p-6 border border-slate-200'>
+          <div className='bg-gradient-to-r from-gray-50 to-gray-50 rounded-xl p-6 border border-gray-200'>
             <div className='flex items-center justify-between'>
               <div>
-                <h4 className='text-lg font-semibold text-slate-900 mb-2'>
+                <h4 className='text-lg font-semibold text-gray-900 mb-2'>
                   Need More Integrations?
                 </h4>
-                <p className='text-sm text-slate-600'>
+                <p className='text-sm text-gray-600'>
                   Contact our integration team to add custom APIs and services
                 </p>
               </div>
               <div className='flex items-center gap-3'>
-                <button className='px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors duration-200 font-medium text-sm'>
+                <button className='px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200 font-medium text-sm'>
                   View Documentation
                 </button>
-                <button className='px-6 py-2 bg-gradient-to-r from-slate-700 to-blue-600 text-white rounded-lg hover:from-slate-800 hover:to-blue-700 transition-all duration-200 font-medium text-sm'>
+                <button className='px-6 py-2 bg-gradient-to-r from-gray-700 to-gray-600 text-white rounded-lg hover:from-gray-800 hover:to-gray-700 transition-all duration-200 font-medium text-sm'>
                   Request Integration
                 </button>
               </div>
@@ -1605,9 +1605,9 @@ export default function Settings() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="p-6">
       {/* Breadcrumb Navigation */}
-      <div className="px-6 py-4 bg-white border-b border-slate-200">
+      <div className="mb-6">
         <Breadcrumb 
           items={[
             { label: 'Dashboard', href: '/' },
@@ -1616,14 +1616,13 @@ export default function Settings() {
         />
       </div>
 
-      {/* Modern Header with Tabs */}
-      <div className="bg-white border-b border-slate-200">
-        <div className="px-6 py-6">
-          <div className="flex items-center justify-between mb-6">
-            <div className="space-y-1">
-              <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
-              <p className="text-gray-600">Application settings and configuration</p>
-            </div>
+      {/* Page Header with Tabs */}
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-6">
+          <div className="space-y-1">
+            <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
+            <p className="text-gray-600">Application settings and configuration</p>
+          </div>
             <div className="flex items-center gap-3">
               <UnifiedButton
                 variant="outline"
@@ -1679,7 +1678,6 @@ export default function Settings() {
             </TabsList>
           </Tabs>
         </div>
-      </div>
 
       {/* Tab Content */}
       <div className="px-6 py-6">
@@ -1724,7 +1722,7 @@ export default function Settings() {
                       field_name: e.target.value,
                     }))
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500"
                 >
                   <option value=''>Select field type...</option>
                   {fieldTypes.filter(field => !field.isStatic).map(field => (
@@ -1931,12 +1929,12 @@ export default function Settings() {
                   autoFocus
                 />
               </div>
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                 <div className="flex items-start gap-2">
-                  <div className="w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center mt-0.5">
-                    <span className="text-blue-600 text-xs font-bold">i</span>
+                  <div className="w-5 h-5 bg-gray-100 rounded-full flex items-center justify-center mt-0.5">
+                    <span className="text-gray-600 text-xs font-bold">i</span>
                   </div>
-                  <div className="text-sm text-blue-800">
+                  <div className="text-sm text-gray-800">
                     <p className="font-medium mb-1">Department Management</p>
                     <p className="text-xs">
                       {isEditingDepartment 

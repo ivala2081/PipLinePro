@@ -363,7 +363,7 @@ export function LoadingOverlay({
       {children}
       <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600 mx-auto mb-2"></div>
           <p className="text-sm text-gray-600">{message}</p>
         </div>
       </div>
@@ -505,13 +505,13 @@ export function DemoUtilitySystem() {
           <h4 className="text-lg font-semibold text-gray-900 mb-4">Tooltip Components</h4>
           <div className="flex items-center space-x-4">
             <Tooltip content="This is a helpful tooltip" position="top">
-              <button className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200">
+              <button className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors duration-200">
                 Hover for Tooltip (Top)
               </button>
             </Tooltip>
             
             <Tooltip content="Information tooltip with icon" position="bottom">
-              <button className="p-2 text-blue-600 hover:bg-blue-50 rounded-md transition-colors duration-200">
+              <button className="p-2 text-gray-600 hover:bg-gray-50 rounded-md transition-colors duration-200">
                 <Info className="w-5 h-5" />
               </button>
             </Tooltip>
@@ -547,7 +547,7 @@ export function DemoUtilitySystem() {
                     This is a popover with custom content. You can put anything here.
                   </p>
                   <div className="flex space-x-2">
-                    <button className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors duration-200">
+                    <button className="px-3 py-1 bg-gray-600 text-white text-sm rounded hover:bg-gray-700 transition-colors duration-200">
                       Action
                     </button>
                     <button className="px-3 py-1 bg-gray-200 text-gray-700 text-sm rounded hover:bg-gray-300 transition-colors duration-200">
@@ -621,7 +621,7 @@ export function DemoUtilitySystem() {
             </CopyToClipboard>
             
             <CopyToClipboard text="user@example.com">
-              <button className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 flex items-center space-x-2">
+              <button className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors duration-200 flex items-center space-x-2">
                 <Mail className="w-4 h-4" />
                 <span>Copy Email</span>
               </button>
@@ -697,8 +697,8 @@ export function ProfessionalUtilitiesShowcase() {
       {/* Features Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div className="text-center p-6 bg-white rounded-lg border border-gray-200">
-          <div className="bg-blue-100 w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-4">
-            <Info className="w-6 h-6 text-blue-600" />
+          <div className="bg-gray-100 w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-4">
+            <Info className="w-6 h-6 text-gray-600" />
           </div>
           <h4 className="font-semibold text-gray-900 mb-2">Smart Tooltips</h4>
           <p className="text-sm text-gray-600">Position-aware tooltips with smooth animations and custom content</p>

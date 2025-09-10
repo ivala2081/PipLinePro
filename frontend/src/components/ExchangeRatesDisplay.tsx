@@ -97,7 +97,7 @@ const ManualOverrideModal: React.FC<ManualOverrideModalProps> = ({
               step="0.0001"
               value={newRate}
               onChange={(e) => setNewRate(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
               placeholder="Enter new rate"
               required
             />
@@ -110,7 +110,7 @@ const ManualOverrideModal: React.FC<ManualOverrideModalProps> = ({
             <textarea
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
               placeholder="Why are you overriding this rate?"
               rows={3}
             />
@@ -133,7 +133,7 @@ const ManualOverrideModal: React.FC<ManualOverrideModalProps> = ({
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+              className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 disabled:opacity-50"
               disabled={loading}
             >
               {loading ? 'Updating...' : 'Update Rate'}
@@ -163,7 +163,7 @@ const ExchangeRateCard: React.FC<{
 
   return (
     <div className={`bg-white rounded-lg border p-4 ${
-      rate.is_manual_override ? 'border-blue-300 bg-blue-50' : 'border-gray-200'
+      rate.is_manual_override ? 'border-gray-300 bg-gray-50' : 'border-gray-200'
     } ${hasWarning ? 'border-yellow-300 bg-yellow-50' : ''}`}>
       <div className="flex justify-between items-start mb-2">
         <div>
@@ -178,7 +178,7 @@ const ExchangeRateCard: React.FC<{
         {showManualOverride && onManualOverride && (
           <button
             onClick={() => onManualOverride(rate.currency_pair, rate.rate)}
-            className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+            className="text-gray-600 hover:text-gray-800 text-sm font-medium"
             title="Manual Override"
           >
             ✏️ Edit
@@ -192,7 +192,7 @@ const ExchangeRateCard: React.FC<{
             <span className="mr-2">{exchangeRatesService.getSourceIcon(rate.source)}</span>
             <span>{exchangeRatesService.getSourceDisplayName(rate.source)}</span>
             {rate.is_manual_override && (
-              <span className="ml-2 text-blue-600 text-xs font-medium">
+              <span className="ml-2 text-gray-600 text-xs font-medium">
                 (Manual Override)
               </span>
             )}
@@ -290,7 +290,7 @@ export const ExchangeRatesDisplay: React.FC<ExchangeRatesDisplayProps> = ({
     return (
       <div className={`bg-white rounded-lg border p-6 ${className}`}>
         <div className="flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600"></div>
           <span className="ml-3 text-gray-600">Loading exchange rates...</span>
         </div>
       </div>
@@ -327,7 +327,7 @@ export const ExchangeRatesDisplay: React.FC<ExchangeRatesDisplayProps> = ({
         <button
           onClick={handleRefreshRates}
           disabled={loading}
-          className="px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+          className="px-3 py-1 text-sm bg-gray-600 text-white rounded-md hover:bg-gray-700 disabled:opacity-50"
         >
           {loading ? 'Refreshing...' : '🔄 Refresh'}
         </button>

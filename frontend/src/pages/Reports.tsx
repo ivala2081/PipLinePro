@@ -17,6 +17,7 @@ import {
   UnifiedSection, 
   UnifiedGrid 
 } from '../design-system';
+import { Breadcrumb } from '../components/ui';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
@@ -54,37 +55,45 @@ export default function Reports() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Modern Header */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-                <FileText className="h-8 w-8 text-blue-600" />
-                Reports
-              </h1>
-              <p className="text-gray-600 mt-1">Generate and view comprehensive business reports</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <UnifiedButton 
-                variant="outline" 
-                size="sm" 
-                onClick={() => window.location.reload()}
-                icon={<RefreshCw className='h-4 w-4' />}
-              >
-                Refresh
-              </UnifiedButton>
-              <UnifiedButton variant="outline" size="sm" icon={<Calendar className='h-4 w-4' />}>
-                Date Range
-              </UnifiedButton>
-              <UnifiedButton variant="outline" size="sm" icon={<Filter className='h-4 w-4' />}>
-                Filters
-              </UnifiedButton>
-              <UnifiedButton variant="primary" size="sm" icon={<Download className='h-4 w-4' />}>
-                Export Report
-              </UnifiedButton>
-            </div>
+    <div className="p-6">
+      {/* Breadcrumb Navigation */}
+      <div className="mb-6">
+        <Breadcrumb 
+          items={[
+            { label: 'Dashboard', href: '/' },
+            { label: 'Reports', current: true }
+          ]} 
+        />
+      </div>
+
+      {/* Page Header */}
+      <div className="mb-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+              <FileText className="h-8 w-8 text-gray-600" />
+              Reports
+            </h1>
+            <p className="text-gray-600 mt-1">Generate and view comprehensive business reports</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <UnifiedButton 
+              variant="outline" 
+              size="sm" 
+              onClick={() => window.location.reload()}
+              icon={<RefreshCw className='h-4 w-4' />}
+            >
+              Refresh
+            </UnifiedButton>
+            <UnifiedButton variant="outline" size="sm" icon={<Calendar className='h-4 w-4' />}>
+              Date Range
+            </UnifiedButton>
+            <UnifiedButton variant="outline" size="sm" icon={<Filter className='h-4 w-4' />}>
+              Filters
+            </UnifiedButton>
+            <UnifiedButton variant="primary" size="sm" icon={<Download className='h-4 w-4' />}>
+              Export Report
+            </UnifiedButton>
           </div>
         </div>
       </div>
@@ -95,7 +104,7 @@ export default function Reports() {
       <UnifiedCard variant="elevated" className="mb-6">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <BarChart3 className="h-5 w-5 text-blue-600" />
+            <BarChart3 className="h-5 w-5 text-gray-600" />
             Available Reports
           </CardTitle>
           <CardDescription>
@@ -110,7 +119,7 @@ export default function Reports() {
                 onClick={() => setSelectedReport(report.id)}
                 className={`cursor-pointer transition-all duration-200 ${
                   selectedReport === report.id
-                    ? 'ring-2 ring-blue-500 bg-blue-50/50'
+                    ? 'ring-2 ring-gray-500 bg-gray-50/50'
                     : 'hover:bg-gray-50 hover:shadow-md'
                 }`}
               >
@@ -121,10 +130,10 @@ export default function Reports() {
                 <CardContent className="p-6">
                   <div className="flex items-center gap-4">
                     <div className={`p-3 rounded-lg ${
-                      selectedReport === report.id ? 'bg-blue-100' : 'bg-gray-100'
+                      selectedReport === report.id ? 'bg-gray-100' : 'bg-gray-100'
                     }`}>
                       <report.icon className={`h-6 w-6 ${
-                        selectedReport === report.id ? 'text-blue-600' : 'text-gray-600'
+                        selectedReport === report.id ? 'text-gray-600' : 'text-gray-600'
                       }`} />
                     </div>
                     <div className="flex-1">
@@ -147,7 +156,7 @@ export default function Reports() {
             {(() => {
               const selectedReportData = reports.find(r => r.id === selectedReport);
               const IconComponent = selectedReportData?.icon;
-              return IconComponent ? <IconComponent className="h-5 w-5 text-blue-600" /> : null;
+              return IconComponent ? <IconComponent className="h-5 w-5 text-gray-600" /> : null;
             })()}
             {reports.find(r => r.id === selectedReport)?.name}
           </CardTitle>
@@ -174,9 +183,9 @@ export default function Reports() {
                   <h4 className='font-medium text-red-900'>Total Expenses</h4>
                   <p className='text-2xl font-bold text-red-600'>$45,000</p>
                 </div>
-                <div className='p-4 bg-blue-50 rounded-lg'>
-                  <h4 className='font-medium text-blue-900'>Net Profit</h4>
-                  <p className='text-2xl font-bold text-blue-600'>$80,000</p>
+                <div className='p-4 bg-gray-50 rounded-lg'>
+                  <h4 className='font-medium text-gray-900'>Net Profit</h4>
+                  <p className='text-2xl font-bold text-gray-600'>$80,000</p>
                 </div>
               </div>
               <div className='h-64 bg-gray-100 rounded-lg flex items-center justify-center'>
@@ -190,11 +199,11 @@ export default function Reports() {
           {selectedReport === 'transaction' && (
             <div className='space-y-4'>
               <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
-                <div className='p-4 bg-blue-50 rounded-lg'>
-                  <h4 className='font-medium text-blue-900'>
+                <div className='p-4 bg-gray-50 rounded-lg'>
+                  <h4 className='font-medium text-gray-900'>
                     {t('dashboard.total_transactions')}
                   </h4>
-                  <p className='text-2xl font-bold text-blue-600'>1,234</p>
+                  <p className='text-2xl font-bold text-gray-600'>1,234</p>
                 </div>
                 <div className='p-4 bg-green-50 rounded-lg'>
                   <h4 className='font-medium text-green-900'>Successful</h4>
@@ -228,11 +237,11 @@ export default function Reports() {
                   </h4>
                   <p className='text-2xl font-bold text-green-600'>142</p>
                 </div>
-                <div className='p-4 bg-blue-50 rounded-lg'>
-                  <h4 className='font-medium text-blue-900'>
+                <div className='p-4 bg-gray-50 rounded-lg'>
+                  <h4 className='font-medium text-gray-900'>
                     New This Month
                   </h4>
-                  <p className='text-2xl font-bold text-blue-600'>12</p>
+                  <p className='text-2xl font-bold text-gray-600'>12</p>
                 </div>
               </div>
               <div className='h-64 bg-gray-100 rounded-lg flex items-center justify-center'>

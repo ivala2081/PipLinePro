@@ -233,7 +233,7 @@ export const ChartSkeleton: React.FC<{
 export const DashboardPageSkeleton: React.FC = () => (
   <div className="space-y-8">
     {/* Page Header */}
-    <div className="bg-gradient-to-r from-blue-50 via-white to-purple-50 rounded-2xl p-8 border border-gray-100 shadow-sm animate-pulse">
+    <div className="bg-gradient-to-r from-gray-50 via-white to-purple-50 rounded-2xl p-8 border border-gray-100 shadow-sm animate-pulse">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Skeleton className="w-12 h-12" rounded="xl" />
@@ -367,13 +367,13 @@ export const ProgressiveLoader: React.FC<{
 }> = ({ steps, currentStep, className = '' }) => (
   <div className={`bg-white rounded-2xl shadow-sm border border-gray-200 p-8 text-center ${className}`}>
     <div className="w-16 h-16 mx-auto mb-6">
-      <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-100 border-t-blue-600"></div>
+      <div className="animate-spin rounded-full h-16 w-16 border-4 border-gray-100 border-t-gray-600"></div>
     </div>
     <h3 className="text-lg font-semibold text-gray-900 mb-2">Loading...</h3>
     <p className="text-gray-600 mb-4">{steps[currentStep] || 'Please wait...'}</p>
     <div className="w-full bg-gray-200 rounded-full h-2">
       <div 
-        className="bg-blue-600 h-2 rounded-full transition-all duration-500"
+        className="bg-gray-600 h-2 rounded-full transition-all duration-500"
         style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
       ></div>
     </div>

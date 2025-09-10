@@ -77,6 +77,7 @@ import {
   UnifiedSection, 
   UnifiedGrid 
 } from '../design-system';
+import { Breadcrumb } from '../components/ui';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
@@ -254,7 +255,7 @@ const BulkRateManager: React.FC<BulkRateManagerProps> = ({ transactions, onRateU
                         min="0"
                         value={currentRate}
                         onChange={(e) => handleRateChange(date, e.target.value)}
-                        className="w-24 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-24 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
                         placeholder="Rate"
                         autoFocus
                       />
@@ -275,7 +276,7 @@ const BulkRateManager: React.FC<BulkRateManagerProps> = ({ transactions, onRateU
                     <div className="flex items-center gap-2">
                       <div className="text-sm">
                         {currentRate > 0 ? (
-                          <span className="font-medium text-blue-600">
+                          <span className="font-medium text-gray-600">
                             {currentRate.toFixed(4)} TRY
                           </span>
                         ) : (
@@ -284,7 +285,7 @@ const BulkRateManager: React.FC<BulkRateManagerProps> = ({ transactions, onRateU
                       </div>
                       <button
                         onClick={() => handleRateEdit(date)}
-                        className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="px-3 py-1 text-xs bg-gray-600 text-white rounded hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500"
                       >
                         {currentRate > 0 ? 'Edit' : 'Set Rate'}
                       </button>
@@ -2411,7 +2412,7 @@ export default function Clients() {
   // Error boundary for critical errors
   if (error && !clientsError) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="text-red-500 mb-4">
             <AlertCircle className="h-16 w-16 mx-auto" />
@@ -2483,10 +2484,10 @@ export default function Clients() {
     return groupedTransactions.map((dateGroup, groupIndex) => (
       <div key={dateGroup.dateKey} className='border-b border-gray-100 last:border-b-0'>
         {/* Date Header */}
-        <div className='px-6 py-4 bg-gradient-to-r from-blue-50/50 to-purple-50/50 border-b border-gray-100'>
+        <div className='px-6 py-4 bg-gradient-to-r from-gray-50/50 to-purple-50/50 border-b border-gray-100'>
           <div className='flex items-center justify-between'>
             <div className='flex items-center gap-3'>
-              <div className='w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center shadow-sm'>
+              <div className='w-8 h-8 bg-gradient-to-br from-gray-500 to-purple-600 rounded-lg flex items-center justify-center shadow-sm'>
                 <Calendar className='h-4 w-4 text-white' />
               </div>
               <div>
@@ -2559,8 +2560,8 @@ export default function Clients() {
                 <tr key={transaction.id} className='hover:bg-gray-50 transition-colors duration-200'>
                   <td className='px-6 py-4 whitespace-nowrap border-b border-gray-100'>
                     <div className='flex items-center'>
-                      <div className='w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3'>
-                        <User className='h-4 w-4 text-blue-600' />
+                      <div className='w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center mr-3'>
+                        <User className='h-4 w-4 text-gray-600' />
                       </div>
                       <div className='text-sm font-medium text-gray-900'>
                         {transaction.client_name || 'Unknown'}
@@ -2583,7 +2584,7 @@ export default function Clients() {
                   <td className='px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600 text-right border-b border-gray-100'>
                     {formatCurrencyPositive(transaction.commission || 0, transaction.currency)}
                   </td>
-                  <td className='px-6 py-4 whitespace-nowrap text-sm font-semibold text-blue-600 text-right border-b border-gray-100'>
+                  <td className='px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-600 text-right border-b border-gray-100'>
                     {formatCurrencyPositive(transaction.net_amount || 0, transaction.currency)}
                   </td>
                   <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900 border-b border-gray-100'>
@@ -2596,7 +2597,7 @@ export default function Clients() {
                     <div className='flex items-center justify-center gap-1'>
                       <button
                         onClick={() => handleViewTransaction(transaction)}
-                        className='text-blue-600 hover:text-blue-900 p-1 hover:bg-blue-50 rounded transition-colors duration-200'
+                        className='text-gray-600 hover:text-gray-900 p-1 hover:bg-gray-50 rounded transition-colors duration-200'
                         title='View Details'
                       >
                         <Eye className='h-3 w-3' />
@@ -2691,32 +2692,37 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
     }
   };
 
-  return (
-    <div className="min-h-screen bg-slate-50 relative">
-      {/* Loading Overlay */}
-      {loading && (
-        <div className="fixed inset-0 bg-white bg-opacity-90 flex items-center justify-center z-50">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-6"></div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">Loading Data</h3>
-            <p className="text-gray-600 mb-4">Please wait while we fetch all information</p>
-            <div className="flex items-center justify-center space-x-2">
-              <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce"></div>
-              <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-              <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
-            </div>
-          </div>
+  // Loading state
+  if (loading) {
+    return (
+      <div className='min-h-screen flex items-center justify-center bg-gray-50'>
+        <div className='text-center'>
+          <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto'></div>
+          <p className='mt-4 text-gray-600'>Loading clients...</p>
         </div>
-      )}
-      
-      {/* Modern Header */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="px-6 py-6">
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-                <Users className="h-8 w-8 text-blue-600" />
-                {t('clients.title')}
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-6">
+      {/* Breadcrumb Navigation */}
+      <div className="mb-6">
+        <Breadcrumb 
+          items={[
+            { label: 'Dashboard', href: '/' },
+            { label: 'Clients', current: true }
+          ]} 
+        />
+      </div>
+
+      {/* Page Header */}
+      <div className="mb-6">
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
+            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+              <Users className="h-8 w-8 text-gray-600" />
+              {t('clients.title')}
               </h1>
               <p className="text-gray-600">{t('clients.description')}</p>
             </div>
@@ -2747,7 +2753,7 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                 onClick={() => setShowImportGuide(true)}
                 icon={<Info className="h-4 w-4" />}
                 iconPosition="left"
-                className="bg-blue-50 border-blue-300 text-blue-700 hover:bg-blue-100"
+                className="bg-gray-50 border-gray-300 text-gray-700 hover:bg-gray-100"
               >
                 Guide
               </UnifiedButton>
@@ -2807,7 +2813,7 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                 }}
                 icon={<RefreshCw className="h-4 w-4" />}
                 iconPosition="left"
-                className="bg-blue-50 border-blue-300 text-blue-700 hover:bg-blue-100"
+                className="bg-gray-50 border-gray-300 text-gray-700 hover:bg-gray-100"
               >
                 Fetch
               </UnifiedButton>
@@ -2823,21 +2829,20 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="p-6 space-y-6">
+      <div className="space-y-6">
 
       
 
       {/* Status Indicators */}
-      <div className="bg-blue-50/50 border border-blue-200/60 rounded-xl p-4">
-        <div className='flex items-center gap-6 text-sm text-blue-700'>
+      <div className="bg-gray-50/50 border border-gray-200/60 rounded-xl p-4">
+        <div className='flex items-center gap-6 text-sm text-gray-700'>
           <div className='flex items-center gap-2'>
             <div className='w-2 h-2 bg-green-500 rounded-full'></div>
                             <span className="font-medium">{t('dashboard.active_clients')}: {clients.length}</span>
           </div>
           <div className='flex items-center gap-2'>
-            <div className='w-2 h-2 bg-blue-500 rounded-full'></div>
+            <div className='w-2 h-2 bg-gray-500 rounded-full'></div>
             <span className="font-medium">Total Volume: {formatCurrency(totalVolume, '₺')}</span>
           </div>
         </div>
@@ -2874,7 +2879,7 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
           <UnifiedCard variant="elevated" className="mb-6">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <BarChart3 className="h-5 w-5 text-blue-600" />
+                <BarChart3 className="h-5 w-5 text-gray-600" />
                 Financial Overview
               </CardTitle>
               <CardDescription>
@@ -2908,7 +2913,7 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                 value={formatCurrency(totalDeposits - totalWithdrawals, '₺')}
                 subtitle="Tot DEP - Tot WD"
                 icon={DollarSign}
-                color={totalDeposits - totalWithdrawals >= 0 ? "blue" : "red"}
+                color={totalDeposits - totalWithdrawals >= 0 ? "gray" : "red"}
                 change={totalDeposits - totalWithdrawals !== 0 ? "N/A" : "0%"}
                 trend={totalDeposits - totalWithdrawals !== 0 ? (totalDeposits - totalWithdrawals >= 0 ? "up" : "down") : "neutral"}
               />
@@ -2930,7 +2935,7 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
           <UnifiedCard variant="elevated" className="mb-6">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5 text-blue-600" />
+                <Users className="h-5 w-5 text-gray-600" />
                 Client Insights
               </CardTitle>
               <CardDescription>
@@ -2944,7 +2949,7 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                 value={clients.length}
                 subtitle={`${clients.filter(c => Array.isArray(c.currencies) && c.currencies.length > 1).length} multi-currency`}
                 icon={Users}
-                color="blue"
+                color="gray"
                 change="N/A"
                 trend="up"
               />
@@ -2966,7 +2971,7 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
           <UnifiedCard variant="elevated" className="mb-6">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <CreditCard className="h-5 w-5 text-blue-600" />
+                <CreditCard className="h-5 w-5 text-gray-600" />
                 Payment Method Analysis
               </CardTitle>
               <CardDescription>
@@ -3033,7 +3038,7 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                   <div>
                     <CardTitle className="flex items-center gap-3">
                       Transaction Management
-                      <UnifiedBadge variant="secondary" size="sm" className="bg-blue-100 text-blue-800">
+                      <UnifiedBadge variant="secondary" size="sm" className="bg-gray-100 text-gray-800">
                         Enhanced Filters Available
                       </UnifiedBadge>
                     </CardTitle>
@@ -3048,8 +3053,8 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                     icon={<Filter className="h-4 w-4" />}
                     className={`transition-all duration-200 ${
                       showFilters 
-                        ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg' 
-                        : 'border-blue-300 text-blue-600 hover:bg-blue-50 hover:border-blue-400'
+                        ? 'bg-gray-600 hover:bg-gray-700 text-white shadow-lg' 
+                        : 'border-gray-300 text-gray-600 hover:bg-gray-50 hover:border-gray-400'
                     }`}
                   >
                     {showFilters ? 'Hide Filters' : `Show Filters${getActiveFilterCount() > 0 ? ` (${getActiveFilterCount()})` : ''}`}
@@ -3062,12 +3067,12 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
             {/* Comprehensive Filter Card */}
             {showFilters && (
               <div className="mb-6 animate-in slide-in-from-top-4 duration-300">
-                <UnifiedCard variant="outlined" className="overflow-hidden shadow-lg border-blue-200">
-                  <CardHeader className="bg-gradient-to-r from-slate-50 to-gray-50 border-b">
+                <UnifiedCard variant="outlined" className="overflow-hidden shadow-lg border-gray-200">
+                  <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-50 border-b">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="p-2 bg-blue-100 rounded-lg">
-                          <Filter className="h-5 w-5 text-blue-600" />
+                        <div className="p-2 bg-gray-100 rounded-lg">
+                          <Filter className="h-5 w-5 text-gray-600" />
                         </div>
                         <div>
                           <CardTitle className="text-lg font-semibold text-gray-900">
@@ -3076,7 +3081,7 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                           <CardDescription className="text-gray-600">
                             Refine your search with comprehensive filtering options
                             {getActiveFilterCount() > 0 && (
-                              <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                              <span className="ml-2 px-2 py-1 bg-gray-100 text-gray-800 text-xs rounded-full">
                                 {getActiveFilterCount()} active
                               </span>
                             )}
@@ -3118,7 +3123,7 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                             variant="outline"
                             size="sm"
                             onClick={() => applyQuickFilter('today')}
-                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                            className="text-gray-600 hover:text-gray-700 hover:bg-gray-50"
                           >
                             Today
                           </UnifiedButton>
@@ -3126,7 +3131,7 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                             variant="outline"
                             size="sm"
                             onClick={() => applyQuickFilter('thisWeek')}
-                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                            className="text-gray-600 hover:text-gray-700 hover:bg-gray-50"
                           >
                             This Week
                           </UnifiedButton>
@@ -3164,7 +3169,7 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                           onClick={() => toggleFilterSection('basic')}
                         >
                           <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
-                            <div className={`w-2 h-2 rounded-full ${expandedFilterSections.basic ? 'bg-blue-500' : 'bg-gray-300'}`}></div>
+                            <div className={`w-2 h-2 rounded-full ${expandedFilterSections.basic ? 'bg-gray-500' : 'bg-gray-300'}`}></div>
                             Basic Filters
                           </h3>
                           <div className="flex items-center gap-2">
@@ -3194,7 +3199,7 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                 <select
                   value={filters.category}
                                 onChange={e => handleFilterChange('category', e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
                 >
                   <option value="">All Categories</option>
                                 <option value="DEP">Deposit (DEP)</option>
@@ -3206,7 +3211,7 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                               <select
                                 value={filters.status}
                                 onChange={e => handleFilterChange('status', e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
                               >
                                 <option value="">All Status</option>
                                 <option value="completed">Completed</option>
@@ -3247,7 +3252,7 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                               <select
                                 value={filters.psp}
                                 onChange={e => handleFilterChange('psp', e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
                               >
                                 <option value="">All PSPs</option>
                                 {dropdownOptions.psps.map((psp: string) => (
@@ -3260,7 +3265,7 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                               <select
                                 value={filters.company}
                                 onChange={e => handleFilterChange('company', e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
                               >
                                 <option value="">All Companies</option>
                                 {dropdownOptions.companies.map((company: string) => (
@@ -3273,7 +3278,7 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                               <select
                                 value={filters.payment_method}
                                 onChange={e => handleFilterChange('payment_method', e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
                               >
                                 <option value="">All Methods</option>
                                 {dropdownOptions.payment_methods.map((method: string) => (
@@ -3286,7 +3291,7 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                               <select
                                 value={filters.currency}
                                 onChange={e => handleFilterChange('currency', e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
                               >
                                 <option value="">All Currencies</option>
                                 {dropdownOptions.currencies.map((currency: string) => (
@@ -3407,7 +3412,7 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                               <select
                                 value={filters.sort_by}
                                 onChange={e => handleFilterChange('sort_by', e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
                               >
                                 <option value="created_at">Date Created</option>
                                 <option value="amount">Amount</option>
@@ -3421,7 +3426,7 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                               <select
                                 value={filters.sort_order}
                                 onChange={e => handleFilterChange('sort_order', e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
                               >
                                 <option value="desc">Descending</option>
                                 <option value="asc">Ascending</option>
@@ -3433,11 +3438,11 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
 
                       {/* Active Filters Summary */}
                       {getActiveFilterCount() > 0 && (
-                        <div className="space-y-3 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                          <h4 className="text-sm font-medium text-blue-900">Active Filters</h4>
+                        <div className="space-y-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                          <h4 className="text-sm font-medium text-gray-900">Active Filters</h4>
                           <div className="flex flex-wrap gap-2">
                             {filters.search && (
-                              <UnifiedBadge variant="secondary" size="sm" className="bg-blue-100 text-blue-800">
+                              <UnifiedBadge variant="secondary" size="sm" className="bg-gray-100 text-gray-800">
                                 Search: "{filters.search}"
                               </UnifiedBadge>
                             )}
@@ -3500,7 +3505,7 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                         <div className="text-sm text-gray-600">
                           {getActiveFilterCount() > 0 ? (
                             <span className="flex items-center gap-2">
-                              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                              <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
                               {getActiveFilterCount()} filter{getActiveFilterCount() !== 1 ? 's' : ''} applied
                             </span>
                           ) : (
@@ -3539,7 +3544,7 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
             )}
             {loading ? (
               <div className='p-12 text-center'>
-                <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4'></div>
+                <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-gray-600 mx-auto mb-4'></div>
                 <p className='text-gray-600 text-lg'>Loading transactions...</p>
               </div>
             ) : error ? (
@@ -3619,7 +3624,7 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                             page: 1 // Reset to first page when changing page size
                           }));
                         }}
-                        className='px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+                        className='px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500'
                       >
                         <option value={50}>50</option>
                         <option value={100}>100</option>
@@ -3958,7 +3963,7 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                             index === 0 ? 'bg-gradient-to-br from-yellow-400 to-orange-500' :
                             index === 1 ? 'bg-gradient-to-br from-gray-300 to-gray-400' :
                             index === 2 ? 'bg-gradient-to-br from-amber-600 to-yellow-600' :
-                            'bg-gradient-to-br from-blue-400 to-purple-500'
+                            'bg-gradient-to-br from-gray-400 to-purple-500'
                           }`}>
                             <User className='h-5 w-5 text-white' />
                           </div>
@@ -3987,8 +3992,8 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
             <div className='px-8 py-6 border-b border-gray-100'>
               <div className='flex items-center justify-between'>
                 <div className='flex items-center gap-3'>
-                  <div className='w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center'>
-                    <Users className='w-5 h-5 text-blue-600' />
+                  <div className='w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center'>
+                    <Users className='w-5 h-5 text-gray-600' />
                   </div>
                   <div>
                     <h2 className='text-xl font-semibold text-gray-900'>Clients</h2>
@@ -3998,7 +4003,7 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                 <div className='flex items-center gap-3'>
                   <Button
                     onClick={() => setShowAddModal(true)}
-                    className='bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2'
+                    className='bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg flex items-center gap-2'
                   >
                     <Plus className='w-4 h-4' />
                     Add Client
@@ -4009,7 +4014,7 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
             <div className='p-8'>
               {loading ? (
                 <div className='flex items-center justify-center py-12'>
-                  <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600'></div>
+                  <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600'></div>
                 </div>
               ) : (
                 <div className='overflow-x-auto'>
@@ -4030,8 +4035,8 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                           <tr className='border-b border-gray-50 hover:bg-gray-50'>
                             <td className='py-4 px-4'>
                               <div className='flex items-center gap-3'>
-                                <div className='w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center'>
-                                  <span className='text-sm font-medium text-blue-600'>
+                                <div className='w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center'>
+                                  <span className='text-sm font-medium text-gray-600'>
                                     {client.client_name.charAt(0).toUpperCase()}
                                   </span>
                                 </div>
@@ -4066,7 +4071,7 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                                   variant="outline"
                                   size="sm"
                                   onClick={() => handleViewClient(client)}
-                                  className='text-blue-600 hover:text-blue-700'
+                                  className='text-gray-600 hover:text-gray-700'
                                 >
                                   <Eye className='w-4 h-4' />
                                 </Button>
@@ -4112,8 +4117,8 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
               </div>
 
               {/* Debug: Show transactions count */}
-              <div className="mb-4 p-2 bg-blue-50 border border-blue-200 rounded">
-                <p className="text-sm text-blue-700">
+              <div className="mb-4 p-2 bg-gray-50 border border-gray-200 rounded">
+                <p className="text-sm text-gray-700">
                   Debug: Transactions count: {transactions.length}, 
                   USD transactions: {transactions.filter(t => t.currency?.toUpperCase() === 'USD').length}
                 </p>
@@ -4160,14 +4165,14 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
               </div>
 
               {/* Total Commissions */}
-              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-200">
+              <div className="bg-gradient-to-br from-gray-50 to-indigo-50 rounded-xl p-6 border border-gray-200">
                 <div className="flex items-center justify-between mb-4">
-                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <CreditCard className="h-6 w-6 text-blue-600" />
+                  <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
+                    <CreditCard className="h-6 w-6 text-gray-600" />
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-medium text-blue-600">Total Commissions</p>
-                    <p className="text-2xl font-bold text-blue-900">
+                    <p className="text-sm font-medium text-gray-600">Total Commissions</p>
+                    <p className="text-2xl font-bold text-gray-900">
                       {formatCurrency(
                         filteredClients.reduce((sum, client) => sum + client.total_commission, 0),
                         'TL'
@@ -4175,7 +4180,7 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center text-sm text-blue-700">
+                <div className="flex items-center text-sm text-gray-700">
                   <TrendingUp className="h-4 w-4 mr-1" />
                   <span>Commission earned</span>
                 </div>
@@ -4252,15 +4257,15 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
               {/* Commission Report */}
               <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <CreditCard className="h-5 w-5 text-blue-600" />
+                  <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                    <CreditCard className="h-5 w-5 text-gray-600" />
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-900">Commission Report</h3>
                     <p className="text-sm text-gray-500">Commission analysis by client</p>
                   </div>
                 </div>
-                <button className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">
+                <button className="w-full bg-gray-600 text-white py-2 px-4 rounded-lg hover:bg-gray-700 transition-colors">
                   Generate Report
                 </button>
               </div>
@@ -4307,8 +4312,8 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                     <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
                       <td className="py-4 px-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                            <span className="text-sm font-medium text-blue-600">
+                          <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                            <span className="text-sm font-medium text-gray-600">
                               {client.client_name.charAt(0).toUpperCase()}
                             </span>
                           </div>
@@ -4324,7 +4329,7 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                         </div>
                       </td>
                       <td className="py-4 px-4">
-                        <div className="text-sm font-medium text-blue-600">
+                        <div className="text-sm font-medium text-gray-600">
                           {formatCurrency(client.total_commission, 'TL')}
                         </div>
                       </td>
@@ -4620,7 +4625,7 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
       {/* Daily Summary Modal */}
       {showDailySummaryModal && dailySummaryData && (
         <div className='fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4'>
-          <div className='bg-white rounded-2xl shadow-xl max-w-5xl w-full max-h-[85vh] overflow-hidden border border-gray-100'>
+          <div className='bg-white rounded-2xl shadow-lg max-w-5xl w-full max-h-[85vh] overflow-hidden border border-gray-100'>
             {/* Modal Header */}
             <div className='bg-gray-50 border-b border-gray-200 p-6'>
               <div className='flex items-center justify-between'>
@@ -4701,10 +4706,10 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                           {/* Net Flow */}
                           <div className='bg-white border border-gray-200 rounded-xl p-4 hover:shadow-sm transition-shadow duration-200'>
                             <div className='flex items-center justify-between mb-3'>
-                              <div className='w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center'>
-                                <Activity className='h-4 w-4 text-blue-600' />
+                              <div className='w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center'>
+                                <Activity className='h-4 w-4 text-gray-600' />
                               </div>
-                              <span className='text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full'>
+                              <span className='text-xs font-medium text-gray-600 bg-gray-50 px-2 py-1 rounded-full'>
                                 Net
                               </span>
                             </div>
@@ -4752,8 +4757,8 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                   {dailySummaryData.usd_rate !== null && dailySummaryData.usd_rate !== undefined && (
                     <div className='bg-gray-50 border border-gray-200 rounded-xl p-4'>
                       <div className='flex items-center gap-3'>
-                        <div className='w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center'>
-                          <DollarSign className='h-4 w-4 text-blue-600' />
+                        <div className='w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center'>
+                          <DollarSign className='h-4 w-4 text-gray-600' />
                         </div>
                         <div>
                           <p className='text-sm font-medium text-gray-700'>USD Rate</p>
@@ -4931,8 +4936,8 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
             <div className='px-8 py-6 border-b border-gray-100'>
               <div className='flex items-center justify-between'>
                 <div className='flex items-center gap-3'>
-                  <div className='w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center'>
-                    <Users className='h-5 w-5 text-blue-600' />
+                  <div className='w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center'>
+                    <Users className='h-5 w-5 text-gray-600' />
     </div>
                   <div>
                     <h3 className='text-xl font-bold text-gray-900'>
@@ -4953,7 +4958,7 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                   </button>
                   <button
                     onClick={() => navigate('/transactions/add')}
-                    className='inline-flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 hover:shadow-lg transition-all duration-200 font-medium shadow-md'
+                    className='inline-flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-gray-600 to-purple-600 text-white rounded-xl hover:from-gray-700 hover:to-purple-700 hover:shadow-lg transition-all duration-200 font-medium shadow-md'
                   >
                     <Plus className='h-4 w-4' />
                     Add Transaction
@@ -5039,7 +5044,7 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                                   ▶
                                 </div>
                               </button>
-                              <div className='w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mr-3'>
+                              <div className='w-8 h-8 bg-gradient-to-br from-gray-500 to-purple-600 rounded-full flex items-center justify-center mr-3'>
                                 <User className='h-4 w-4 text-white' />
                               </div>
                               <div>
@@ -5073,7 +5078,7 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                             <div className='flex items-center gap-2'>
                               <button
                                 onClick={() => handleViewClient(client)}
-                                className='text-blue-600 hover:text-blue-900 p-1 hover:bg-blue-50 rounded transition-colors duration-200'
+                                className='text-gray-600 hover:text-gray-900 p-1 hover:bg-gray-50 rounded transition-colors duration-200'
                                 title='View Details'
                               >
                                 <Eye className='h-4 w-4' />
@@ -5107,7 +5112,7 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                                   </h4>
                                   <button
                                     onClick={() => navigate('/transactions/add', { state: { clientName: client.client_name } })}
-                                    className='inline-flex items-center gap-2 px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-all duration-200'
+                                    className='inline-flex items-center gap-2 px-3 py-1.5 bg-gray-600 text-white text-sm rounded-lg hover:bg-gray-700 transition-all duration-200'
                                   >
                                     <Plus className='h-3 w-3' />
                                     Add Transaction
@@ -5116,7 +5121,7 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                                 
                                 {loadingClientTransactions[client.client_name] ? (
                                   <div className='text-center py-4'>
-                                    <div className='animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto'></div>
+                                    <div className='animate-spin rounded-full h-6 w-6 border-b-2 border-gray-600 mx-auto'></div>
                                     <p className='text-sm text-gray-500 mt-2'>Loading transactions...</p>
                                   </div>
                                 ) : clientTransactions[client.client_name]?.length > 0 ? (
@@ -5166,7 +5171,7 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                                               <div className='flex items-center gap-1'>
                                                 <button
                                                   onClick={() => handleViewTransaction(transaction)}
-                                                  className='text-blue-600 hover:text-blue-900 p-1 hover:bg-blue-50 rounded transition-colors duration-200'
+                                                  className='text-gray-600 hover:text-gray-900 p-1 hover:bg-gray-50 rounded transition-colors duration-200'
                                                   title='View Details'
                                                 >
                                                   <Eye className='h-3 w-3' />
@@ -5277,7 +5282,7 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
           <div className="space-y-6 max-h-96 overflow-y-auto">
             {/* File Format Support */}
             <div>
-              <h5 className="text-sm font-medium text-blue-800 mb-2">✅ Supported File Formats:</h5>
+              <h5 className="text-sm font-medium text-gray-800 mb-2">✅ Supported File Formats:</h5>
               <div className="flex flex-wrap gap-2">
                 <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full font-medium">CSV (Fully Supported)</span>
                 <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full font-medium">XLSX (Fully Supported)</span>
@@ -5288,7 +5293,7 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
 
             {/* Essential vs Optional Fields */}
             <div>
-              <h5 className="text-sm font-medium text-blue-800 mb-2">🎯 Essential vs Optional Fields:</h5>
+              <h5 className="text-sm font-medium text-gray-800 mb-2">🎯 Essential vs Optional Fields:</h5>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                 <div>
                   <h6 className="font-medium text-green-700 mb-1">✅ Essential Fields (Recommended):</h6>
@@ -5304,8 +5309,8 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                   </ul>
                 </div>
                 <div>
-                  <h6 className="font-medium text-blue-700 mb-1">❓ Optional Fields:</h6>
-                  <ul className="text-blue-600 space-y-1">
+                  <h6 className="font-medium text-gray-700 mb-1">❓ Optional Fields:</h6>
+                  <ul className="text-gray-600 space-y-1">
                     <li>• <strong>Commission</strong> - Auto-calculated if not provided</li>
                     <li>• <strong>Net Amount</strong> - Auto-calculated if not provided</li>
                     <li>• <strong>Notes</strong> - Additional transaction details</li>
@@ -5316,9 +5321,9 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
 
             {/* Column Structure */}
             <div>
-              <h5 className="text-sm font-medium text-blue-800 mb-2">📋 Essential Column Structure (in exact order):</h5>
-              <div className="bg-white border border-blue-200 rounded-lg p-3 text-xs font-mono text-gray-700 overflow-x-auto">
-                <div className="grid grid-cols-9 gap-1 text-center font-medium text-blue-600 mb-2">
+              <h5 className="text-sm font-medium text-gray-800 mb-2">📋 Essential Column Structure (in exact order):</h5>
+              <div className="bg-white border border-gray-200 rounded-lg p-3 text-xs font-mono text-gray-700 overflow-x-auto">
+                <div className="grid grid-cols-9 gap-1 text-center font-medium text-gray-600 mb-2">
                   <div className="col-span-1">1</div>
                   <div className="col-span-1">2</div>
                   <div className="col-span-1">3</div>
@@ -5359,21 +5364,21 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
 
             {/* Example Formats */}
             <div>
-              <h5 className="text-sm font-medium text-blue-800 mb-2">💡 Example File Formats:</h5>
+              <h5 className="text-sm font-medium text-gray-800 mb-2">💡 Example File Formats:</h5>
               
               {/* CSV Format */}
               <div className="mb-3">
-                <h6 className="text-sm font-medium text-blue-700 mb-2">📄 CSV Format (Essential Columns):</h6>
-                <div className="bg-white border border-blue-200 rounded-lg p-3 text-xs font-mono text-gray-700 overflow-x-auto">
-                  <div className="text-blue-600 font-medium mb-1">Essential Header Row:</div>
+                <h6 className="text-sm font-medium text-gray-700 mb-2">📄 CSV Format (Essential Columns):</h6>
+                <div className="bg-white border border-gray-200 rounded-lg p-3 text-xs font-mono text-gray-700 overflow-x-auto">
+                  <div className="text-gray-600 font-medium mb-1">Essential Header Row:</div>
                   <div className="text-gray-800">Client,Company,Payment Method,Category,Amount,Currency,PSP,Date</div>
-                  <div className="text-blue-600 font-medium mt-2 mb-1">Essential Data Row (Example):</div>
+                  <div className="text-gray-600 font-medium mt-2 mb-1">Essential Data Row (Example):</div>
                   <div className="text-gray-800">John Doe,ABC Corp,Credit Card,DEP,1000.50,USD,Stripe,2025-08-18</div>
                   
                   <div className="mt-3 pt-2 border-t border-gray-200">
-                    <div className="text-blue-600 font-medium mb-1">Full Header Row (with optional columns):</div>
+                    <div className="text-gray-600 font-medium mb-1">Full Header Row (with optional columns):</div>
                     <div className="text-gray-800">Client,Company,Payment Method,Category,Amount,Commission,Net Amount,Currency,PSP,Date,Notes</div>
-                    <div className="text-blue-600 font-medium mt-2 mb-1">Full Data Row (Example):</div>
+                    <div className="text-gray-600 font-medium mt-2 mb-1">Full Data Row (Example):</div>
                     <div className="text-gray-800">John Doe,ABC Corp,Credit Card,DEP,1000.50,25.00,975.50,USD,Stripe,2025-08-18,Monthly payment</div>
                   </div>
                 </div>
@@ -5381,25 +5386,25 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
               
               {/* Excel Format */}
               <div>
-                <h6 className="text-sm font-medium text-blue-700 mb-2">📊 Excel Format (XLSX/XLS/XLSM):</h6>
-                <div className="bg-white border border-blue-200 rounded-lg p-3 text-xs font-mono text-gray-700 overflow-x-auto">
-                  <div className="text-blue-600 font-medium mb-1">Essential Column Structure:</div>
+                <h6 className="text-sm font-medium text-gray-700 mb-2">📊 Excel Format (XLSX/XLS/XLSM):</h6>
+                <div className="bg-white border border-gray-200 rounded-lg p-3 text-xs font-mono text-gray-700 overflow-x-auto">
+                  <div className="text-gray-600 font-medium mb-1">Essential Column Structure:</div>
                   <div className="text-gray-800">Column A: Client | Column B: Company | Column C: Payment Method</div>
                   <div className="text-gray-800">Column D: Category | Column E: Amount | Column F: Currency | Column G: PSP | Column H: Date</div>
                   
                   <div className="mt-3 pt-2 border-t border-gray-200">
-                    <div className="text-blue-600 font-medium mb-1">Optional Columns (if needed):</div>
+                    <div className="text-gray-600 font-medium mb-1">Optional Columns (if needed):</div>
                     <div className="text-gray-800">Column J: Commission | Column K: Net Amount | Column L: Notes</div>
                   </div>
                   
-                  <div className="text-blue-600 font-medium mt-2 mb-1">💡 Tip: Excel files are automatically parsed - just ensure your first row contains headers!</div>
+                  <div className="text-gray-600 font-medium mt-2 mb-1">💡 Tip: Excel files are automatically parsed - just ensure your first row contains headers!</div>
                 </div>
               </div>
             </div>
 
             {/* Downloadable Template Examples */}
             <div>
-              <h5 className="text-sm font-medium text-blue-800 mb-2">📥 Download Template Examples:</h5>
+              <h5 className="text-sm font-medium text-gray-800 mb-2">📥 Download Template Examples:</h5>
               
               {/* Essential Template */}
               <div className="mb-3">
@@ -5429,22 +5434,22 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
               
               {/* Full Template */}
               <div>
-                <h6 className="text-sm font-medium text-blue-700 mb-2">📋 Full Template (12 columns):</h6>
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                  <div className="text-sm text-blue-800 mb-2">
+                <h6 className="text-sm font-medium text-gray-700 mb-2">📋 Full Template (12 columns):</h6>
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                  <div className="text-sm text-gray-800 mb-2">
                     <strong>Complete template:</strong> Includes all columns including commission, net amount, and notes for advanced users.
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <button
                       onClick={() => downloadTemplate('full', 'csv')}
-                      className="px-3 py-1.5 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center gap-1"
+                      className="px-3 py-1.5 bg-gray-600 text-white text-xs rounded-lg hover:bg-gray-700 transition-colors duration-200 flex items-center gap-1"
                     >
                       <Download className="w-3 h-3" />
                       Download CSV Template
                     </button>
                     <button
                       onClick={() => downloadTemplate('full', 'xlsx')}
-                      className="px-3 py-1.5 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center gap-1"
+                      className="px-3 py-1.5 bg-gray-600 text-white text-xs rounded-lg hover:bg-gray-700 transition-colors duration-200 flex items-center gap-1"
                     >
                       <Download className="w-3 h-3" />
                       Download Excel Template
@@ -5480,16 +5485,16 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
            >
              <div className="space-y-6">
                {/* Summary */}
-               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                 <h5 className="text-sm font-medium text-blue-800 mb-2">📊 Import Summary:</h5>
+               <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                 <h5 className="text-sm font-medium text-gray-800 mb-2">📊 Import Summary:</h5>
                  <div className="grid grid-cols-2 gap-4 text-sm">
                    <div>
-                     <span className="text-blue-600 font-medium">Total Transactions:</span>
-                     <span className="ml-2 text-blue-800">{importData.length}</span>
+                     <span className="text-gray-600 font-medium">Total Transactions:</span>
+                     <span className="ml-2 text-gray-800">{importData.length}</span>
                    </div>
                    <div>
-                     <span className="text-blue-600 font-medium">File Type:</span>
-                     <span className="ml-2 text-blue-800">CSV</span>
+                     <span className="text-gray-600 font-medium">File Type:</span>
+                     <span className="ml-2 text-gray-800">CSV</span>
                    </div>
                  </div>
                </div>
@@ -5527,14 +5532,14 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
                  <button
                    onClick={() => setShowImportPreview(false)}
-                   className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                   className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
                  >
                    Cancel
                  </button>
                  <button
                    onClick={handleFinalImport}
                    disabled={importing}
-                   className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                   className="px-4 py-2 text-sm font-medium text-white bg-gray-600 border border-transparent rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50 disabled:cursor-not-allowed"
                  >
                    {importing ? 'Importing...' : `Import ${importData.length} Transactions`}
                  </button>
@@ -5575,7 +5580,7 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                    value={confirmationCode}
                    onChange={(e) => setConfirmationCode(e.target.value)}
                    placeholder="Enter 4-digit code"
-                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500"
                    maxLength={4}
                    autoComplete="off"
                  />
@@ -5588,7 +5593,7 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
                  <button
                    onClick={() => setShowBulkDeleteModal(false)}
-                   className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                   className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
                  >
                    Cancel
                  </button>

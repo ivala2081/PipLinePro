@@ -187,7 +187,7 @@ export function AdvancedMenu({
       case 'error':
         return 'bg-red-100 text-red-800';
       case 'info':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-gray-100 text-gray-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -269,7 +269,7 @@ export function AdvancedMenu({
                   placeholder="Search menu items..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full pl-10 pr-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500"
                 />
               </div>
             </div>
@@ -396,7 +396,7 @@ export function SidebarNavigation({
       case 'error':
         return 'bg-red-100 text-red-800';
       case 'info':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-gray-100 text-gray-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -717,7 +717,7 @@ export function DemoNavigationSystem() {
                 </p>
                 <button
                   onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                  className="mt-3 px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200"
+                  className="mt-3 px-3 py-1 text-sm bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors duration-200"
                 >
                   {sidebarCollapsed ? 'Expand' : 'Collapse'} Sidebar
                 </button>
@@ -750,8 +750,8 @@ export function ProfessionalNavigationShowcase() {
       {/* Features Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div className="text-center p-6 bg-white rounded-lg border border-gray-200">
-          <div className="bg-blue-100 w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-4">
-            <MapPin className="w-6 h-6 text-blue-600" />
+          <div className="bg-gray-100 w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-4">
+            <MapPin className="w-6 h-6 text-gray-600" />
           </div>
           <h4 className="font-semibold text-gray-900 mb-2">Smart Breadcrumbs</h4>
           <p className="text-sm text-gray-600">Intelligent breadcrumb navigation with collapsible items and home support</p>

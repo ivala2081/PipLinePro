@@ -7,151 +7,122 @@ export default {
   theme: {
     extend: {
       colors: {
-        // shadcn/ui Design System Colors
+        // Professional Business Color System - Minimal & Corporate
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
+        
+        // Primary - Professional Navy
         primary: {
-          DEFAULT: "hsl(var(--primary))",
-          foreground: "hsl(var(--primary-foreground))",
+          DEFAULT: "#1e293b", // Navy 800
+          foreground: "#ffffff",
+          50: "#f8fafc",
+          100: "#f1f5f9",
+          200: "#e2e8f0",
+          300: "#cbd5e1",
+          400: "#94a3b8",
+          500: "#64748b",
+          600: "#475569",
+          700: "#334155",
+          800: "#1e293b",
+          900: "#0f172a",
         },
+        
+        // Secondary - Professional Gray
         secondary: {
-          DEFAULT: "hsl(var(--secondary))",
-          foreground: "hsl(var(--secondary-foreground))",
+          DEFAULT: "#f8fafc", // Gray 50
+          foreground: "#334155",
+          50: "#f8fafc",
+          100: "#f1f5f9",
+          200: "#e2e8f0",
+          300: "#cbd5e1",
+          400: "#94a3b8",
+          500: "#64748b",
+          600: "#475569",
+          700: "#334155",
+          800: "#1e293b",
+          900: "#0f172a",
         },
-        destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))",
-        },
+        
+        // Muted - Subtle Gray
         muted: {
-          DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))",
+          DEFAULT: "#f1f5f9", // Gray 100
+          foreground: "#64748b",
         },
+        
+        // Accent - Subtle Blue
         accent: {
-          DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))",
+          DEFAULT: "#3b82f6", // Blue 500
+          foreground: "#ffffff",
         },
-        popover: {
-          DEFAULT: "hsl(var(--popover))",
-          foreground: "hsl(var(--popover-foreground))",
+        
+        // Status Colors - Professional & Muted
+        success: {
+          DEFAULT: "#059669", // Green 600
+          foreground: "#ffffff",
+          50: "#ecfdf5",
+          100: "#d1fae5",
+          500: "#059669",
+          600: "#047857",
         },
+        
+        warning: {
+          DEFAULT: "#d97706", // Amber 600
+          foreground: "#ffffff",
+          50: "#fffbeb",
+          100: "#fef3c7",
+          500: "#d97706",
+          600: "#b45309",
+        },
+        
+        destructive: {
+          DEFAULT: "#dc2626", // Red 600
+          foreground: "#ffffff",
+          50: "#fef2f2",
+          100: "#fee2e2",
+          500: "#dc2626",
+          600: "#b91c1c",
+        },
+        
+        // Card Colors
         card: {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        // Professional Business Colors - Serious & Corporate
-        business: {
-          50: '#f8fafc',
-          100: '#f1f5f9',
-          200: '#e2e8f0',
-          300: '#cbd5e1',
-          400: '#94a3b8',
-          500: '#64748b',
-          600: '#475569',
-          700: '#334155',
-          800: '#1e293b',
-          900: '#0f172a',
-          950: '#020617',
+        
+        popover: {
+          DEFAULT: "hsl(var(--popover))",
+          foreground: "hsl(var(--popover-foreground))",
         },
-        // Professional Navy - Primary Brand Color
-        navy: {
-          50: '#f8fafc',
-          100: '#f1f5f9',
-          200: '#e2e8f0',
-          300: '#cbd5e1',
-          400: '#94a3b8',
-          500: '#64748b',
-          600: '#475569',
-          700: '#334155',
-          800: '#1e293b',
-          900: '#0f172a',
-          950: '#020617',
+        
+        // Professional Gray Scale - Main Colors
+        gray: {
+          50: "#f8fafc",
+          100: "#f1f5f9",
+          200: "#e2e8f0",
+          300: "#cbd5e1",
+          400: "#94a3b8",
+          500: "#64748b",
+          600: "#475569",
+          700: "#334155",
+          800: "#1e293b",
+          900: "#0f172a",
         },
-        // Professional Slate - Secondary Color
+        
+        // Slate - Alternative Gray
         slate: {
-          50: '#f8fafc',
-          100: '#f1f5f9',
-          200: '#e2e8f0',
-          300: '#cbd5e1',
-          400: '#94a3b8',
-          500: '#64748b',
-          600: '#475569',
-          700: '#334155',
-          800: '#1e293b',
-          900: '#0f172a',
-          950: '#020617',
-        },
-        // Professional Success - Muted Green
-        success: {
-          50: '#ecfdf5',
-          100: '#d1fae5',
-          200: '#a7f3d0',
-          300: '#6ee7b7',
-          400: '#34d399',
-          500: '#059669',
-          600: '#047857',
-          700: '#065f46',
-          800: '#064e3b',
-          900: '#064e3b',
-          950: '#022c22',
-        },
-        // Professional Warning - Muted Amber
-        warning: {
-          50: '#fffbeb',
-          100: '#fef3c7',
-          200: '#fde68a',
-          300: '#fcd34d',
-          400: '#fbbf24',
-          500: '#d97706',
-          600: '#b45309',
-          700: '#92400e',
-          800: '#78350f',
-          900: '#451a03',
-          950: '#292524',
-        },
-        // Professional Danger - Muted Red
-        danger: {
-          50: '#fef2f2',
-          100: '#fee2e2',
-          200: '#fecaca',
-          300: '#fca5a5',
-          400: '#f87171',
-          500: '#dc2626',
-          600: '#b91c1c',
-          700: '#991b1b',
-          800: '#7f1d1d',
-          900: '#450a0a',
-          950: '#2d1b1b',
-        },
-        // Professional Blue Scale - Corporate and Trustworthy
-        blue: {
-          50: '#eff6ff',
-          100: '#dbeafe',
-          200: '#bfdbfe',
-          300: '#93c5fd',
-          400: '#60a5fa',
-          500: '#1e40af',
-          600: '#1d4ed8',
-          700: '#1e3a8a',
-          800: '#1e40af',
-          900: '#1e3a8a',
-          950: '#172554',
-        },
-        // Professional Indigo Scale - Corporate and Professional
-        indigo: {
-          50: '#eef2ff',
-          100: '#e0e7ff',
-          200: '#c7d2fe',
-          300: '#a5b4fc',
-          400: '#818cf8',
-          500: '#4338ca',
-          600: '#3730a3',
-          700: '#312e81',
-          800: '#3730a3',
-          900: '#312e81',
-          950: '#1e1b4b',
+          50: "#f8fafc",
+          100: "#f1f5f9",
+          200: "#e2e8f0",
+          300: "#cbd5e1",
+          400: "#94a3b8",
+          500: "#64748b",
+          600: "#475569",
+          700: "#334155",
+          800: "#1e293b",
+          900: "#0f172a",
         },
       },
       fontFamily: {
@@ -162,115 +133,54 @@ export default {
         heading: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
       },
       fontSize: {
-        // Professional Business Font Sizes
-        'xs': ['0.75rem', { lineHeight: '1.5', letterSpacing: '0.02em' }],
-        'sm': ['0.875rem', { lineHeight: '1.5', letterSpacing: '0.01em' }],
-        'base': ['1rem', { lineHeight: '1.625', letterSpacing: '0.01em' }],
-        'lg': ['1.125rem', { lineHeight: '1.6', letterSpacing: '0.01em' }],
-        'xl': ['1.25rem', { lineHeight: '1.4', letterSpacing: '-0.01em' }],
-        '2xl': ['1.5rem', { lineHeight: '1.4', letterSpacing: '-0.015em' }],
-        '3xl': ['1.875rem', { lineHeight: '1.3', letterSpacing: '-0.02em' }],
-        '4xl': ['2.25rem', { lineHeight: '1.2', letterSpacing: '-0.025em' }],
-        '5xl': ['3rem', { lineHeight: '1.1', letterSpacing: '-0.03em' }],
-        '6xl': ['3.75rem', { lineHeight: '1.1', letterSpacing: '-0.035em' }],
+        // Professional Typography - 4 Sizes Only
+        'xs': ['0.75rem', { lineHeight: '1.5' }],      // 12px - Small text
+        'sm': ['0.875rem', { lineHeight: '1.5' }],     // 14px - Body text
+        'base': ['1rem', { lineHeight: '1.6' }],       // 16px - Default text
+        'lg': ['1.125rem', { lineHeight: '1.5' }],     // 18px - Large text
+        'xl': ['1.25rem', { lineHeight: '1.4' }],      // 20px - Headings
+        '2xl': ['1.5rem', { lineHeight: '1.3' }],      // 24px - Large headings
+        '3xl': ['1.875rem', { lineHeight: '1.2' }],    // 30px - Page titles
       },
       fontWeight: {
-        // Professional Business Font Weights
-        'thin': '100',
-        'extralight': '200',
-        'light': '300',
-        'normal': '400',
-        'medium': '500',
-        'semibold': '600',
-        'bold': '700',
-        'extrabold': '800',
-        'black': '900',
+        // Professional Font Weights - 4 Weights Only
+        'normal': '400',    // Regular text
+        'medium': '500',    // Emphasized text
+        'semibold': '600',  // Headings
+        'bold': '700',      // Important headings
       },
       lineHeight: {
-        // Professional Business Line Heights
-        'none': '1',
-        'tight': '1.2',
-        'snug': '1.3',
-        'normal': '1.4',
-        'relaxed': '1.5',
-        'loose': '1.6',
-        'business': '1.625',
-        'heading': '1.2',
-        'body': '1.6',
+        // Professional Line Heights - 3 Only
+        'tight': '1.2',     // Headings
+        'normal': '1.5',    // Body text
+        'relaxed': '1.6',   // Large text
       },
       letterSpacing: {
-        // Professional Business Letter Spacing
-        'tighter': '-0.05em',
-        'tight': '-0.025em',
-        'normal': '0em',
-        'wide': '0.01em',
-        'wider': '0.02em',
-        'widest': '0.05em',
-        'business': '0.01em',
-        'heading': '-0.02em',
+        // Professional Letter Spacing - 2 Only
+        'normal': '0em',    // Default
+        'tight': '-0.025em', // Headings
       },
       animation: {
-        'fade-in': 'fadeIn 0.5s ease-in-out',
-        'slide-up': 'slideUp 0.3s ease-out',
-        'slide-down': 'slideDown 0.3s ease-out',
-        'slide-in-from-right': 'slideInFromRight 0.3s ease-out',
-        'zoom-in': 'zoomIn 0.2s ease-out',
-        'float': 'float 6s ease-in-out infinite',
-        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-        'bounce-gentle': 'bounceGentle 2s ease-in-out infinite',
+        // Professional Animations - Minimal Only
+        'fade-in': 'fadeIn 0.3s ease-out',
+        'slide-up': 'slideUp 0.2s ease-out',
       },
       keyframes: {
+        // Professional Keyframes - Minimal Only
         fadeIn: {
           '0%': { opacity: '0' },
           '100%': { opacity: '1' },
         },
         slideUp: {
-          '0%': { transform: 'translateY(10px)', opacity: '0' },
+          '0%': { transform: 'translateY(8px)', opacity: '0' },
           '100%': { transform: 'translateY(0)', opacity: '1' },
-        },
-        slideDown: {
-          '0%': { transform: 'translateY(-10px)', opacity: '0' },
-          '100%': { transform: 'translateY(0)', opacity: '1' },
-        },
-        slideInFromRight: {
-          '0%': { transform: 'translateX(10px)', opacity: '0' },
-          '100%': { transform: 'translateX(0)', opacity: '1' },
-        },
-        zoomIn: {
-          '0%': { transform: 'scale(0.95)', opacity: '0' },
-          '100%': { transform: 'scale(1)', opacity: '1' },
-        },
-        float: {
-          '0%, 100%': { transform: 'translateY(0px)' },
-          '50%': { transform: 'translateY(-10px)' },
-        },
-        bounceGentle: {
-          '0%, 100%': { transform: 'translateY(0)' },
-          '50%': { transform: 'translateY(-5px)' },
         },
       },
       boxShadow: {
-        // Enhanced Professional Shadows
-        'xs': '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
-        'sm': '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
-        'md': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-        'lg': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-        'xl': '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-        '2xl': '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-        // Professional Card Shadows
-        'card': '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
-        'card-hover': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-        'card-lg': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-        // Professional Button Shadows
-        'button': '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
-        'button-hover': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-        'button-active': '0 1px 2px 0 rgba(0, 0, 0, 0.1)',
-        // Professional Input Shadows
-        'input': '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
-        'input-focus': '0 0 0 3px rgba(59, 130, 246, 0.1)',
-        // Professional Modal Shadows
-        'modal': '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-        'modal-lg': '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+        // Professional Shadows - Minimal & Clean
+        'sm': '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+        'md': '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+        'lg': '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
       },
       borderRadius: {
         lg: "var(--radius)",

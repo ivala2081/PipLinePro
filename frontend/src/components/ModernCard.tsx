@@ -12,7 +12,7 @@ interface ModernCardProps {
     isPositive?: boolean;
   };
   variant?: 'default' | 'gradient' | 'glass' | 'elevated';
-  color?: 'blue' | 'green' | 'red' | 'purple' | 'amber' | 'gray';
+  color?: 'gray' | 'green' | 'red' | 'purple' | 'amber' | 'gray';
   size?: 'sm' | 'md' | 'lg';
   className?: string;
   children?: React.ReactNode;
@@ -25,17 +25,17 @@ export const ModernCard: React.FC<ModernCardProps> = ({
   icon: Icon,
   trend,
   variant = 'default',
-  color = 'blue',
+  color = 'gray',
   size = 'md',
   className = '',
   children
 }) => {
   const colorClasses = {
-    blue: {
-      gradient: 'from-blue-500/10 to-blue-600/5',
-      border: 'border-blue-200/60',
-      icon: 'text-blue-600 bg-blue-100',
-      trend: 'text-blue-600'
+    gray: {
+      gradient: 'from-gray-500/10 to-gray-600/5',
+      border: 'border-gray-200/60',
+      icon: 'text-gray-600 bg-gray-100',
+      trend: 'text-gray-600'
     },
     green: {
       gradient: 'from-emerald-500/10 to-emerald-600/5',

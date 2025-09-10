@@ -245,7 +245,7 @@ export const MobileOptimizedChart: React.FC<MobileOptimizedChartProps> = ({
                 {/* Zoom Control */}
                 <button
                   onClick={handleZoom}
-                  className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200"
+                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-all duration-200"
                   title={isZoomed ? 'Zoom Out' : 'Zoom In'}
                 >
                   {isZoomed ? (
@@ -258,7 +258,7 @@ export const MobileOptimizedChart: React.FC<MobileOptimizedChartProps> = ({
                 {/* Reset Control */}
                 <button
                   onClick={handleReset}
-                  className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200"
+                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-all duration-200"
                   title="Reset View"
                 >
                   <RotateCcw className="h-4 w-4" />
@@ -267,7 +267,7 @@ export const MobileOptimizedChart: React.FC<MobileOptimizedChartProps> = ({
                 {/* Download Control */}
                 <button
                   onClick={handleDownload}
-                  className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200"
+                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-all duration-200"
                   title="Download Chart"
                 >
                   <Download className="h-4 w-4" />
@@ -302,10 +302,10 @@ export const MobileOptimizedChart: React.FC<MobileOptimizedChartProps> = ({
 
       {/* Active Data Point Info */}
       {activeDataPoint && (
-        <div className="px-6 py-3 bg-blue-50 border-t border-blue-200">
+        <div className="px-6 py-3 bg-gray-50 border-t border-gray-200">
           <div className="text-sm">
-            <span className="font-medium text-blue-900">Selected: </span>
-            <span className="text-blue-700">
+            <span className="font-medium text-gray-900">Selected: </span>
+            <span className="text-gray-700">
               {activeDataPoint.name}: {activeDataPoint[config[0]?.dataKey]}
             </span>
           </div>

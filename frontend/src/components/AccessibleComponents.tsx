@@ -59,7 +59,7 @@ export const AccessibleButton: React.FC<AccessibleButtonProps> = ({
   const baseClasses = 'inline-flex items-center justify-center gap-2 font-medium rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
   
   const variantClasses = {
-    primary: 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 active:bg-blue-800',
+    primary: 'bg-gray-600 text-white hover:bg-gray-700 focus:ring-gray-500 active:bg-gray-800',
     secondary: 'bg-gray-100 text-gray-900 hover:bg-gray-200 focus:ring-gray-500 active:bg-gray-300',
     danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500 active:bg-red-800',
     ghost: 'text-gray-600 hover:bg-gray-100 focus:ring-gray-500 active:bg-gray-200'
@@ -222,10 +222,10 @@ export const AccessibleToast: React.FC<AccessibleToastProps> = ({
     },
     info: {
       icon: Info,
-      bgColor: 'bg-blue-50',
-      borderColor: 'border-blue-200',
-      iconColor: 'text-blue-600',
-      textColor: 'text-blue-800'
+      bgColor: 'bg-gray-50',
+      borderColor: 'border-gray-200',
+      iconColor: 'text-gray-600',
+      textColor: 'text-gray-800'
     }
   };
 
@@ -324,7 +324,7 @@ export const AccessibleFormField: React.FC<AccessibleFormFieldProps> = ({
           disabled:opacity-50 disabled:cursor-not-allowed
           ${hasError
             ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
-            : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'
+            : 'border-gray-300 focus:border-gray-500 focus:ring-gray-500'
           }
         `}
       />

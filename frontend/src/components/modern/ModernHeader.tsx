@@ -10,7 +10,10 @@ import {
   X,
   Search,
   Globe,
-  LogOut
+  LogOut,
+  Info,
+  AlertTriangle,
+  CheckCircle
 } from 'lucide-react';
 import { GlobalSearch } from './GlobalSearch';
 import { NotificationSystem } from './NotificationSystem';
@@ -59,24 +62,16 @@ export const ModernHeader: React.FC<ModernHeaderProps> = ({
     return notifications.filter(n => !n.read).length;
   };
 
-  const getNotificationIcon = (type: string) => {
-    switch (type) {
-      case 'info': return '🔵';
-      case 'warning': return '🟡';
-      case 'success': return '🟢';
-      default: return '🔵';
-    }
-  };
 
   return (
-    <header className="h-16 border-b border-slate-200 bg-white flex items-center justify-between px-6">
+    <header className="h-16 border-b border-gray-200 bg-white flex items-center justify-between px-6">
       {/* Left Section */}
       <div className="flex items-center gap-4">
         <Button
           variant="ghost"
           size="sm"
           onClick={onMenuClick}
-          className="lg:hidden text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+          className="lg:hidden text-gray-600 hover:text-gray-900 hover:bg-gray-100"
         >
           <Menu className="w-5 h-5" />
         </Button>
@@ -102,7 +97,7 @@ export const ModernHeader: React.FC<ModernHeaderProps> = ({
             variant="ghost"
             size="sm"
             onClick={() => setNotificationsOpen(!notificationsOpen)}
-            className="relative text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+            className="relative text-gray-600 hover:text-gray-900 hover:bg-gray-100"
           >
             <Bell className="w-5 h-5" />
             {getUnreadCount() > 0 && (
@@ -116,15 +111,15 @@ export const ModernHeader: React.FC<ModernHeaderProps> = ({
           </Button>
 
           {notificationsOpen && (
-            <div className="absolute right-0 mt-2 w-80 bg-white border border-slate-200 rounded-lg shadow-lg z-50">
-              <div className="p-4 border-b border-slate-200">
+            <div className="absolute right-0 mt-2 w-80 bg-white border border-gray-200 rounded-lg shadow-md z-50">
+              <div className="p-4 border-b border-gray-200">
                 <div className="flex items-center justify-between">
-                  <h3 className="professional-heading-4">Notifications</h3>
+                  <h3 className="text-lg font-semibold text-gray-900">Notifications</h3>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => setNotificationsOpen(false)}
-                    className="text-slate-500 hover:text-slate-700"
+                    className="text-gray-500 hover:text-gray-700"
                   >
                     <X className="w-4 h-4" />
                   </Button>
@@ -133,28 +128,30 @@ export const ModernHeader: React.FC<ModernHeaderProps> = ({
               
               <div className="max-h-96 overflow-y-auto">
                 {notifications.length === 0 ? (
-                  <div className="p-6 text-center text-slate-500">
-                    <Bell className="w-8 h-8 mx-auto mb-2 text-slate-300" />
-                    <p className="professional-body-small">No notifications</p>
+                  <div className="p-6 text-center text-gray-500">
+                    <Bell className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                    <p className="text-sm">No notifications</p>
                   </div>
                 ) : (
                   notifications.map((notification) => (
                     <div
                       key={notification.id}
-                      className={`p-4 border-b border-slate-200 last:border-b-0 hover:bg-slate-50 cursor-pointer transition-colors ${
-                        !notification.read ? 'bg-slate-50' : ''
+                      className={`p-4 border-b border-gray-200 last:border-b-0 hover:bg-gray-50 cursor-pointer transition-colors ${
+                        !notification.read ? 'bg-gray-50' : ''
                       }`}
                     >
                       <div className="flex items-start gap-3">
-                        <span className="text-lg">{getNotificationIcon(notification.type)}</span>
+                        {notification.type === 'info' && <Info className="w-4 h-4 text-gray-500 mt-0.5" />}
+                        {notification.type === 'warning' && <AlertTriangle className="w-4 h-4 text-amber-500 mt-0.5" />}
+                        {notification.type === 'success' && <CheckCircle className="w-4 h-4 text-green-500 mt-0.5" />}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between mb-1">
-                            <h4 className="professional-body-small font-medium text-slate-900">{notification.title}</h4>
-                            <span className="professional-caption">{notification.time}</span>
+                            <h4 className="text-sm font-medium text-gray-900">{notification.title}</h4>
+                            <span className="text-xs text-gray-500">{notification.time}</span>
                           </div>
-                          <p className="professional-body-small text-slate-600">{notification.message}</p>
+                          <p className="text-sm text-gray-600">{notification.message}</p>
                           {!notification.read && (
-                            <Badge variant="outline" className="mt-2 text-xs border-blue-200 text-blue-700">
+                            <Badge variant="outline" className="mt-2 text-xs border-gray-200 text-gray-700">
                               New
                             </Badge>
                           )}
@@ -173,21 +170,21 @@ export const ModernHeader: React.FC<ModernHeaderProps> = ({
           <Button
             variant="ghost"
             onClick={() => setUserMenuOpen(!userMenuOpen)}
-            className="flex items-center gap-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100"
           >
-            <div className="w-8 h-8 bg-slate-700 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-gray-700 rounded-lg flex items-center justify-center">
               <User className="w-4 h-4 text-white" />
             </div>
-            <span className="hidden md:block professional-body-small font-medium">Admin</span>
+            <span className="hidden md:block text-sm font-medium">Admin</span>
             <ChevronDown className="w-4 h-4" />
           </Button>
 
           {userMenuOpen && (
-            <div className="absolute right-0 mt-2 w-48 bg-white border border-slate-200 rounded-lg shadow-lg z-50">
+            <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-md z-50">
               <div className="p-2">
                 <Button
                   variant="ghost"
-                  className="w-full justify-start text-slate-700 hover:text-slate-900 hover:bg-slate-50"
+                  className="w-full justify-start text-gray-700 hover:text-gray-900 hover:bg-gray-50"
                   onClick={() => {
                     setUserMenuOpen(false);
                     // Navigate to profile
@@ -198,7 +195,7 @@ export const ModernHeader: React.FC<ModernHeaderProps> = ({
                 </Button>
                 <Button
                   variant="ghost"
-                  className="w-full justify-start text-slate-700 hover:text-slate-900 hover:bg-slate-50"
+                  className="w-full justify-start text-gray-700 hover:text-gray-900 hover:bg-gray-50"
                   onClick={() => {
                     setUserMenuOpen(false);
                     // Navigate to settings
@@ -207,7 +204,7 @@ export const ModernHeader: React.FC<ModernHeaderProps> = ({
                   <Settings className="w-4 h-4 mr-2" />
                   Settings
                 </Button>
-                <div className="border-t border-slate-200 my-1" />
+                <div className="border-t border-gray-200 my-1" />
                 <Button
                   variant="ghost"
                   className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"

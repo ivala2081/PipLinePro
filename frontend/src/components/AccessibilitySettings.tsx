@@ -114,7 +114,7 @@ const AccessibilitySettings: React.FC = () => {
       {/* Accessibility Button */}
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 z-40"
+        className="fixed bottom-6 right-6 w-14 h-14 bg-gray-600 text-white rounded-full shadow-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-all duration-200 z-40"
         aria-label="Open accessibility settings"
       >
         <Settings className="w-6 h-6 mx-auto" />
@@ -127,8 +127,8 @@ const AccessibilitySettings: React.FC = () => {
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-                  <Eye className="w-5 h-5 text-blue-600" />
+                <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center">
+                  <Eye className="w-5 h-5 text-gray-600" />
                 </div>
                 <div>
                   <h2 className="text-xl font-bold text-gray-900">Accessibility</h2>
@@ -157,7 +157,7 @@ const AccessibilitySettings: React.FC = () => {
                     type="checkbox"
                     checked={settings.highContrast}
                     onChange={(e) => handleSettingChange('highContrast', e.target.checked)}
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    className="w-4 h-4 text-gray-600 border-gray-300 rounded focus:ring-gray-500"
                   />
                   <span className="text-sm text-gray-700">Enable high contrast mode</span>
                 </label>
@@ -176,7 +176,7 @@ const AccessibilitySettings: React.FC = () => {
                       onClick={() => handleSettingChange('fontSize', size)}
                       className={`px-3 py-2 text-sm rounded-lg border transition-colors ${
                         settings.fontSize === size
-                          ? 'bg-blue-600 text-white border-blue-600'
+                          ? 'bg-gray-600 text-white border-gray-600'
                           : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
                       }`}
                     >
@@ -197,7 +197,7 @@ const AccessibilitySettings: React.FC = () => {
                     type="checkbox"
                     checked={settings.reducedMotion}
                     onChange={(e) => handleSettingChange('reducedMotion', e.target.checked)}
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    className="w-4 h-4 text-gray-600 border-gray-300 rounded focus:ring-gray-500"
                   />
                   <span className="text-sm text-gray-700">Reduce animations and motion</span>
                 </label>
@@ -214,7 +214,7 @@ const AccessibilitySettings: React.FC = () => {
                     type="checkbox"
                     checked={settings.focusIndicator}
                     onChange={(e) => handleSettingChange('focusIndicator', e.target.checked)}
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    className="w-4 h-4 text-gray-600 border-gray-300 rounded focus:ring-gray-500"
                   />
                   <span className="text-sm text-gray-700">Show focus indicators</span>
                 </label>
@@ -233,7 +233,7 @@ const AccessibilitySettings: React.FC = () => {
                       onClick={() => handleSettingChange('theme', theme)}
                       className={`px-3 py-2 text-sm rounded-lg border transition-colors ${
                         settings.theme === theme
-                          ? 'bg-blue-600 text-white border-blue-600'
+                          ? 'bg-gray-600 text-white border-gray-600'
                           : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
                       }`}
                     >

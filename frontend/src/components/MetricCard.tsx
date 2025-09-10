@@ -9,16 +9,16 @@ interface MetricCardProps {
   change?: string;
   trend?: 'up' | 'down' | 'neutral';
   icon: LucideIcon;
-  color: 'blue' | 'green' | 'purple' | 'orange' | 'red' | 'teal' | 'indigo' | 'pink';
+  color: 'gray' | 'green' | 'purple' | 'orange' | 'red' | 'teal' | 'indigo' | 'pink';
   subtitle?: string;
   className?: string;
 }
 
 const colorMap = {
-  blue: {
-    text: 'text-blue-600',
-    bg: 'bg-blue-50',
-    iconBg: 'bg-blue-100'
+  gray: {
+    text: 'text-gray-600',
+    bg: 'bg-gray-50',
+    iconBg: 'bg-gray-100'
   },
   green: {
     text: 'text-green-600',

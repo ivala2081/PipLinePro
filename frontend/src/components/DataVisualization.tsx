@@ -15,7 +15,7 @@ interface MetricCardProps {
 interface ProgressRingProps {
   percentage: number;
   size?: 'sm' | 'md' | 'lg';
-  color?: 'blue' | 'green' | 'red' | 'slate';
+  color?: 'gray' | 'green' | 'red' | 'slate';
   strokeWidth?: number;
   showLabel?: boolean;
   label?: string;
@@ -108,7 +108,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
           {formatValue(value)}
         </div>
         {previousValue && (
-          <div className="professional-body-small text-slate-500">
+          <div className="text-sm text-slate-500">
             Previous: {formatValue(previousValue)}
           </div>
         )}
@@ -126,7 +126,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
 export const ProgressRing: React.FC<ProgressRingProps> = ({
   percentage,
   size = 'md',
-  color = 'blue',
+  color = 'gray',
   strokeWidth = 8,
   showLabel = true,
   label
@@ -138,7 +138,7 @@ export const ProgressRing: React.FC<ProgressRingProps> = ({
   };
 
   const colorMap = {
-    blue: '#3b82f6',
+    gray: '#6b7280',
     green: '#059669',
     red: '#dc2626',
     slate: '#64748b'

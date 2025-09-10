@@ -4,6 +4,7 @@ import { api } from '../utils/apiClient';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { PageHeader, Section, ContentArea, CardGrid } from '../components/ProfessionalLayout';
 import { Button } from '../components/ProfessionalButtons';
+import { Breadcrumb } from '../components/ui';
 
 interface TranslationKey {
   id: number;
@@ -346,7 +347,7 @@ export default function TranslationManager() {
               placeholder="Search keys..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent"
             />
           </div>
           <Button
@@ -400,7 +401,7 @@ export default function TranslationManager() {
               setSelectedLanguage(e.target.value);
               loadTranslations();
             }}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent"
           >
             {Object.entries(SUPPORTED_LANGUAGES).map(([code, lang]) => (
               <option key={code} value={code}>
@@ -589,29 +590,40 @@ export default function TranslationManager() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Enhanced Header */}
-        <PageHeader
-          title="Translation Manager"
-          subtitle="Manage translations and dictionaries"
-          actions={
-            <div className='flex items-center gap-3'>
-              <Button variant="outline" size="sm" className="flex items-center gap-2">
-                <span>🔄</span>
-                Sync
-              </Button>
-              <Button variant="outline" size="sm" className="flex items-center gap-2">
-                <span>📤</span>
-                Export
-              </Button>
-              <Button variant="primary" size="sm" className="flex items-center gap-2">
-                <span>➕</span>
-                Add Key
-              </Button>
-            </div>
-          }
+    <div className="p-6">
+      {/* Breadcrumb Navigation */}
+      <div className="mb-6">
+        <Breadcrumb 
+          items={[
+            { label: 'Dashboard', href: '/' },
+            { label: 'Translation Manager', current: true }
+          ]} 
         />
+      </div>
+
+      {/* Page Header */}
+      <div className="mb-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Translation Manager</h1>
+            <p className="text-gray-600">Manage translations and dictionaries</p>
+          </div>
+          <div className='flex items-center gap-3'>
+            <Button variant="outline" size="sm" className="flex items-center gap-2">
+              <span>🔄</span>
+              Sync
+            </Button>
+            <Button variant="outline" size="sm" className="flex items-center gap-2">
+              <span>📤</span>
+              Export
+            </Button>
+            <Button variant="primary" size="sm" className="flex items-center gap-2">
+              <span>➕</span>
+              Add Key
+            </Button>
+          </div>
+        </div>
+      </div>
 
         {/* Tabs */}
         <div className='bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-8'>
@@ -652,21 +664,21 @@ export default function TranslationManager() {
                     placeholder="Key path (e.g., common.loading)"
                     value={newKeyData.key_path}
                     onChange={(e) => setNewKeyData({ ...newKeyData, key_path: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
                   />
                   <input
                     type="text"
                     placeholder="Description"
                     value={newKeyData.description}
                     onChange={(e) => setNewKeyData({ ...newKeyData, description: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
                   />
                   <input
                     type="text"
                     placeholder="Context (optional)"
                     value={newKeyData.context}
                     onChange={(e) => setNewKeyData({ ...newKeyData, context: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
                   />
                 </div>
                 <div className="flex justify-end space-x-3 mt-6">
@@ -699,12 +711,12 @@ export default function TranslationManager() {
                     placeholder="Key path"
                     value={newTranslationData.key_path}
                     onChange={(e) => setNewTranslationData({ ...newTranslationData, key_path: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
                   />
                   <select
                     value={newTranslationData.language}
                     onChange={(e) => setNewTranslationData({ ...newTranslationData, language: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
                   >
                     <option value="">Select Language</option>
                     {Object.entries(SUPPORTED_LANGUAGES).map(([code, lang]) => (
@@ -717,7 +729,7 @@ export default function TranslationManager() {
                     placeholder="Translation text"
                     value={newTranslationData.text}
                     onChange={(e) => setNewTranslationData({ ...newTranslationData, text: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
                     rows={3}
                   />
                   <label className="flex items-center">
@@ -758,7 +770,7 @@ export default function TranslationManager() {
                   <select
                     value={newDictionaryData.source_language}
                     onChange={(e) => setNewDictionaryData({ ...newDictionaryData, source_language: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
                   >
                     {Object.entries(SUPPORTED_LANGUAGES).map(([code, lang]) => (
                       <option key={code} value={code}>
@@ -769,7 +781,7 @@ export default function TranslationManager() {
                   <select
                     value={newDictionaryData.target_language}
                     onChange={(e) => setNewDictionaryData({ ...newDictionaryData, target_language: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
                   >
                     {Object.entries(SUPPORTED_LANGUAGES).map(([code, lang]) => (
                       <option key={code} value={code}>
@@ -782,21 +794,21 @@ export default function TranslationManager() {
                     placeholder="Source term"
                     value={newDictionaryData.source_term}
                     onChange={(e) => setNewDictionaryData({ ...newDictionaryData, source_term: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
                   />
                   <input
                     type="text"
                     placeholder="Target term"
                     value={newDictionaryData.target_term}
                     onChange={(e) => setNewDictionaryData({ ...newDictionaryData, target_term: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
                   />
                   <input
                     type="text"
                     placeholder="Context (optional)"
                     value={newDictionaryData.context}
                     onChange={(e) => setNewDictionaryData({ ...newDictionaryData, context: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
                   />
                 </div>
                 <div className="flex justify-end space-x-3 mt-6">

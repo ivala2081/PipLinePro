@@ -74,7 +74,7 @@ export const MobileOptimizedTable: React.FC<MobileOptimizedTableProps> = ({
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-600 border-t-transparent"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-gray-600 border-t-transparent"></div>
         <span className="ml-2 text-gray-600">Loading...</span>
       </div>
     );
@@ -102,7 +102,7 @@ export const MobileOptimizedTable: React.FC<MobileOptimizedTableProps> = ({
                   className={clsx(
                     'px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider',
                     sortable && column.sortable && 'cursor-pointer hover:bg-gray-100',
-                    column.key === sortKey && 'bg-blue-50'
+                    column.key === sortKey && 'bg-gray-50'
                   )}
                   onClick={() => handleSort(column.key)}
                 >
@@ -114,7 +114,7 @@ export const MobileOptimizedTable: React.FC<MobileOptimizedTableProps> = ({
                           className={clsx(
                             'h-3 w-3',
                             sortKey === column.key && sortDirection === 'asc' 
-                              ? 'text-blue-600' 
+                              ? 'text-gray-600' 
                               : 'text-gray-400'
                           )}
                         />
@@ -122,7 +122,7 @@ export const MobileOptimizedTable: React.FC<MobileOptimizedTableProps> = ({
                           className={clsx(
                             'h-3 w-3 -mt-1',
                             sortKey === column.key && sortDirection === 'desc' 
-                              ? 'text-blue-600' 
+                              ? 'text-gray-600' 
                               : 'text-gray-400'
                           )}
                         />
@@ -158,7 +158,7 @@ export const MobileOptimizedTable: React.FC<MobileOptimizedTableProps> = ({
                             e.stopPropagation();
                             actions.view!(row);
                           }}
-                          className="p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition-colors duration-150"
+                          className="p-1 text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded transition-colors duration-150"
                         >
                           <Eye className="h-4 w-4" />
                         </button>
@@ -269,7 +269,7 @@ export const MobileOptimizedTable: React.FC<MobileOptimizedTableProps> = ({
                         {actions.view && (
                           <button
                             onClick={() => actions.view!(row)}
-                            className="flex-1 flex items-center justify-center px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors duration-150"
+                            className="flex-1 flex items-center justify-center px-3 py-2 text-sm font-medium text-gray-600 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-150"
                           >
                             <Eye className="h-4 w-4 mr-2" />
                             View

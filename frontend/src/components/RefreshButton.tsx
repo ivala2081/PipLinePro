@@ -23,7 +23,7 @@ const RefreshButton: React.FC<RefreshButtonProps> = ({
   };
 
   const variantClasses = {
-    primary: 'bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg',
+    primary: 'bg-gray-600 hover:bg-gray-700 text-white shadow-md hover:shadow-lg',
     secondary: 'bg-gray-600 hover:bg-gray-700 text-white shadow-md hover:shadow-lg',
     outline: 'bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 hover:border-gray-400 shadow-sm hover:shadow-md'
   };

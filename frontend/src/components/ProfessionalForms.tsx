@@ -71,14 +71,14 @@ export function InputField({
   const getStatusClasses = () => {
     if (error) return 'border-red-300 focus:border-red-500 focus:ring-red-500';
     if (success) return 'border-green-300 focus:border-green-500 focus:ring-green-500';
-    if (info) return 'border-blue-300 focus:border-blue-500 focus:ring-blue-500';
-    return 'border-gray-300 focus:border-blue-500 focus:ring-blue-500';
+    if (info) return 'border-gray-300 focus:border-gray-500 focus:ring-gray-500';
+    return 'border-gray-300 focus:border-gray-500 focus:ring-gray-500';
   };
 
   const getStatusIcon = () => {
     if (error) return <X className="w-4 h-4 text-red-500" />;
     if (success) return <Check className="w-4 h-4 text-green-500" />;
-    if (info) return <Info className="w-4 h-4 text-blue-500" />;
+    if (info) return <Info className="w-4 h-4 text-gray-500" />;
     return null;
   };
 
@@ -92,7 +92,7 @@ export function InputField({
   const getStatusTextColor = () => {
     if (error) return 'text-red-600';
     if (success) return 'text-green-600';
-    if (info) return 'text-blue-600';
+    if (info) return 'text-gray-600';
     return 'text-gray-500';
   };
 
@@ -200,8 +200,8 @@ export function SelectField({
   const getStatusClasses = () => {
     if (error) return 'border-red-300 focus:border-red-500 focus:ring-red-500';
     if (success) return 'border-green-300 focus:border-green-500 focus:ring-green-500';
-    if (info) return 'border-blue-300 focus:border-blue-500 focus:ring-blue-500';
-    return 'border-gray-300 focus:border-blue-500 focus:ring-blue-500';
+    if (info) return 'border-gray-300 focus:border-gray-500 focus:ring-gray-500';
+    return 'border-gray-300 focus:border-gray-500 focus:ring-gray-500';
   };
 
   const getStatusText = () => {
@@ -214,7 +214,7 @@ export function SelectField({
   const getStatusTextColor = () => {
     if (error) return 'text-red-600';
     if (success) return 'text-green-600';
-    if (info) return 'text-blue-600';
+    if (info) return 'text-gray-600';
     return 'text-gray-500';
   };
 
@@ -259,7 +259,7 @@ export function SelectField({
                   disabled={option.disabled}
                   className={`
                     block w-full px-3 py-2 text-left text-sm
-                    ${option.value === value ? 'bg-blue-50 text-blue-900' : 'text-gray-900 hover:bg-gray-50'}
+                    ${option.value === value ? 'bg-gray-50 text-gray-900' : 'text-gray-900 hover:bg-gray-50'}
                     ${option.disabled ? 'text-gray-400 cursor-not-allowed' : 'cursor-pointer'}
                   `}
                 >
@@ -315,8 +315,8 @@ export function TextareaField({
   const getStatusClasses = () => {
     if (error) return 'border-red-300 focus:border-red-500 focus:ring-red-500';
     if (success) return 'border-green-300 focus:border-green-500 focus:ring-green-500';
-    if (info) return 'border-blue-300 focus:border-blue-500 focus:ring-blue-500';
-    return 'border-gray-300 focus:border-blue-500 focus:ring-blue-500';
+    if (info) return 'border-gray-300 focus:border-gray-500 focus:ring-gray-500';
+    return 'border-gray-300 focus:border-gray-500 focus:ring-gray-500';
   };
 
   const getStatusText = () => {
@@ -329,7 +329,7 @@ export function TextareaField({
   const getStatusTextColor = () => {
     if (error) return 'text-red-600';
     if (success) return 'text-green-600';
-    if (info) return 'text-blue-600';
+    if (info) return 'text-gray-600';
     return 'text-gray-500';
   };
 
@@ -395,8 +395,8 @@ export function CheckboxField({
           onChange={(e) => onChange(e.target.checked)}
           disabled={disabled}
           className={`
-            w-4 h-4 text-blue-600 border-gray-300 rounded
-            focus:ring-blue-500 focus:ring-2
+            w-4 h-4 text-gray-600 border-gray-300 rounded
+            focus:ring-gray-500 focus:ring-2
             ${error ? 'border-red-300' : ''}
             ${disabled ? 'bg-gray-100 cursor-not-allowed' : 'cursor-pointer'}
           `}
@@ -462,8 +462,8 @@ export function RadioGroup({
               onChange={(e) => onChange(e.target.value)}
               disabled={disabled || option.disabled}
               className={`
-                w-4 h-4 text-blue-600 border-gray-300
-                focus:ring-blue-500 focus:ring-2
+                w-4 h-4 text-gray-600 border-gray-300
+                focus:ring-gray-500 focus:ring-2
                 ${error ? 'border-red-300' : ''}
                 ${disabled || option.disabled ? 'bg-gray-100 cursor-not-allowed' : 'cursor-pointer'}
               `}
@@ -546,7 +546,7 @@ export function FileUpload({
       <div
         className={`
           relative border-2 border-dashed rounded-lg p-6 text-center transition-colors duration-200
-          ${dragActive ? 'border-blue-400 bg-blue-50' : 'border-gray-300 hover:border-gray-400'}
+          ${dragActive ? 'border-gray-400 bg-gray-50' : 'border-gray-300 hover:border-gray-400'}
           ${error ? 'border-red-300 bg-red-50' : ''}
           ${disabled ? 'border-gray-200 bg-gray-50 cursor-not-allowed' : 'cursor-pointer'}
         `}
@@ -564,7 +564,7 @@ export function FileUpload({
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
         />
         
-        <Upload className={`mx-auto h-12 w-12 text-gray-400 ${dragActive ? 'text-blue-400' : ''} ${error ? 'text-red-400' : ''}`} />
+        <Upload className={`mx-auto h-12 w-12 text-gray-400 ${dragActive ? 'text-gray-400' : ''} ${error ? 'text-red-400' : ''}`} />
         
         <div className="mt-4">
           <p className={`text-sm ${error ? 'text-red-600' : 'text-gray-600'}`}>
@@ -614,7 +614,7 @@ export function FormButton({
   const getVariantClasses = () => {
     switch (variant) {
       case 'primary':
-        return 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500';
+        return 'bg-gray-600 text-white hover:bg-gray-700 focus:ring-gray-500';
       case 'secondary':
         return 'bg-gray-600 text-white hover:bg-gray-700 focus:ring-gray-500';
       case 'success':
@@ -624,7 +624,7 @@ export function FormButton({
       case 'warning':
         return 'bg-yellow-600 text-white hover:bg-yellow-700 focus:ring-yellow-500';
       default:
-        return 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500';
+        return 'bg-gray-600 text-white hover:bg-gray-700 focus:ring-gray-500';
     }
   };
 
@@ -901,8 +901,8 @@ export function ProfessionalFormsShowcase() {
       {/* Features Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div className="text-center p-6 bg-white rounded-lg border border-gray-200">
-          <div className="bg-blue-100 w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-4">
-            <Check className="w-6 h-6 text-blue-600" />
+          <div className="bg-gray-100 w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-4">
+            <Check className="w-6 h-6 text-gray-600" />
           </div>
           <h4 className="font-semibold text-gray-900 mb-2">Smart Validation</h4>
           <p className="text-sm text-gray-600">Real-time validation with clear error messages and success states</p>

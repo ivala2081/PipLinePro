@@ -282,7 +282,7 @@ export default function ProfessionalForm({
             onChange={(e) => handleInputChange('terms', e.target.checked)}
           />
           <label htmlFor="terms" className="business-checkbox-label">
-            I agree to the <a href="#" className="text-blue-600 hover:text-blue-700 underline">Terms and Conditions</a> and <a href="#" className="text-blue-600 hover:text-blue-700 underline">Privacy Policy</a>
+            I agree to the <a href="#" className="text-gray-600 hover:text-gray-700 underline">Terms and Conditions</a> and <a href="#" className="text-gray-600 hover:text-gray-700 underline">Privacy Policy</a>
           </label>
         </div>
         {errors.terms && (
@@ -293,10 +293,10 @@ export default function ProfessionalForm({
         )}
       </div>
 
-      <div className="business-card bg-blue-50 border-blue-200 p-4">
+      <div className="business-card bg-gray-50 border-gray-200 p-4">
         <div className="flex items-start space-business-x-sm">
-          <Info className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
-          <div className="text-sm text-blue-800">
+          <Info className="w-5 h-5 text-gray-600 mt-0.5 flex-shrink-0" />
+          <div className="text-sm text-gray-800">
             <p className="font-medium">Important Information</p>
             <p className="mt-1">By submitting this form, you agree to our terms and acknowledge that you have read our privacy policy. We may contact you regarding your submission.</p>
           </div>

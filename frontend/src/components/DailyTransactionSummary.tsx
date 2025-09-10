@@ -385,8 +385,8 @@ const DailyTransactionSummary: React.FC<DailyTransactionSummaryProps> = ({
             <div className="border-b border-gray-100 px-6 py-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <Calendar className="h-5 w-5 text-blue-600" />
+                  <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                    <Calendar className="h-5 w-5 text-gray-600" />
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900">{formatDate(group.date)}</h3>
@@ -414,11 +414,11 @@ const DailyTransactionSummary: React.FC<DailyTransactionSummaryProps> = ({
                     <span className="text-xs text-gray-500">{group.transactions.length} transactions</span>
                   </div>
                   
-                  <div className="bg-blue-50 rounded-lg p-4">
+                  <div className="bg-gray-50 rounded-lg p-4">
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-blue-700">Native TRY</span>
-                        <span className="text-md font-medium text-blue-900">
+                        <span className="text-sm text-gray-700">Native TRY</span>
+                        <span className="text-md font-medium text-gray-900">
                           ₺{group.transactions
                             .filter(t => t.currency === 'TRY' || t.currency === 'TL')
                             .reduce((sum, t) => sum + t.amount, 0)
@@ -427,8 +427,8 @@ const DailyTransactionSummary: React.FC<DailyTransactionSummaryProps> = ({
                       </div>
                       {group.hasUSDTransactions && (
                         <div className="flex items-center justify-between">
-                          <span className="text-sm text-blue-700">USD → TRY</span>
-                          <span className="text-md font-medium text-blue-900">
+                          <span className="text-sm text-gray-700">USD → TRY</span>
+                          <span className="text-md font-medium text-gray-900">
                             ₺{group.transactions
                               .filter(t => t.currency === 'USD')
                               .reduce((sum, t) => {
@@ -445,8 +445,8 @@ const DailyTransactionSummary: React.FC<DailyTransactionSummaryProps> = ({
                       )}
                       {group.hasEURTransactions && (
                         <div className="flex items-center justify-between">
-                          <span className="text-sm text-blue-700">EUR → TRY</span>
-                          <span className="text-md font-medium text-blue-900">
+                          <span className="text-sm text-gray-700">EUR → TRY</span>
+                          <span className="text-md font-medium text-gray-900">
                             ₺{group.transactions
                               .filter(t => t.currency === 'EUR')
                               .reduce((sum, t) => {
@@ -463,8 +463,8 @@ const DailyTransactionSummary: React.FC<DailyTransactionSummaryProps> = ({
                       )}
                       {group.nonUSDCurrencies.length > 0 && (
                         <div className="flex items-center justify-between">
-                          <span className="text-sm text-blue-700">{group.nonUSDCurrencies.join(', ')} → TRY</span>
-                          <span className="text-md font-medium text-blue-900">
+                          <span className="text-sm text-gray-700">{group.nonUSDCurrencies.join(', ')} → TRY</span>
+                          <span className="text-md font-medium text-gray-900">
                             ₺{group.transactions
                               .filter(t => t.currency && group.nonUSDCurrencies.includes(t.currency))
                               .reduce((sum, t) => {
@@ -479,10 +479,10 @@ const DailyTransactionSummary: React.FC<DailyTransactionSummaryProps> = ({
                           </span>
                         </div>
                       )}
-                      <div className="border-t border-blue-200 pt-2 mt-2">
+                      <div className="border-t border-gray-200 pt-2 mt-2">
                         <div className="flex items-center justify-between">
-                          <span className="text-sm font-semibold text-blue-800">Total (All Converted to TRY)</span>
-                          <span className="text-lg font-bold text-blue-900">₺{group.totalTRY.toFixed(2)}</span>
+                          <span className="text-sm font-semibold text-gray-800">Total (All Converted to TRY)</span>
+                          <span className="text-lg font-bold text-gray-900">₺{group.totalTRY.toFixed(2)}</span>
                         </div>
                         <div className="flex items-center justify-between mt-1">
                           <span className="text-sm font-semibold text-green-800">Net Balance (Daily Summary)</span>
@@ -511,7 +511,7 @@ const DailyTransactionSummary: React.FC<DailyTransactionSummaryProps> = ({
                               {(!editingDate || editingDate !== group.date || editingCurrency !== 'USD') && (
                                 <button
                                   onClick={() => handleEditRate(group.date, 'USD', group.avgExchangeRate)}
-                                  className="flex items-center space-x-1 text-xs text-blue-600 hover:text-blue-800 transition-colors"
+                                  className="flex items-center space-x-1 text-xs text-gray-600 hover:text-gray-800 transition-colors"
                                 >
                                   <Edit3 className="h-3 w-3" />
                                   <span>Edit USD</span>
@@ -527,7 +527,7 @@ const DailyTransactionSummary: React.FC<DailyTransactionSummaryProps> = ({
                                   min="0"
                                   value={newRate}
                                   onChange={(e) => setNewRate(e.target.value)}
-                                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500"
                                   placeholder="Enter USD/TRY rate"
                                 />
                                 <div className="flex items-center space-x-2">
@@ -564,7 +564,7 @@ const DailyTransactionSummary: React.FC<DailyTransactionSummaryProps> = ({
                               {(!editingDate || editingDate !== group.date || editingCurrency !== 'EUR') && (
                                 <button
                                   onClick={() => handleEditRate(group.date, 'EUR', undefined, group.avgEURRate)}
-                                  className="flex items-center space-x-1 text-xs text-blue-600 hover:text-blue-800 transition-colors"
+                                  className="flex items-center space-x-1 text-xs text-gray-600 hover:text-gray-800 transition-colors"
                                 >
                                   <Edit3 className="h-3 w-3" />
                                   <span>Edit EUR</span>
@@ -580,7 +580,7 @@ const DailyTransactionSummary: React.FC<DailyTransactionSummaryProps> = ({
                                   min="0"
                                   value={newEURRate}
                                   onChange={(e) => setNewEURRate(e.target.value)}
-                                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500"
                                   placeholder="Enter EUR/TRY rate"
                                 />
                                 <div className="flex items-center space-x-2">

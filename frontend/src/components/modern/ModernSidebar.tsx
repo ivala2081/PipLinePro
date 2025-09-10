@@ -82,18 +82,18 @@ export const ModernSidebar: React.FC<ModernSidebarProps> = ({
   ];
 
   return (
-    <div className="flex flex-col h-full bg-white border-r border-slate-200">
+    <div className="flex flex-col h-full bg-white border-r border-gray-200">
       {/* Logo Section */}
-      <div className="p-6 border-b border-slate-200">
+      <div className="p-6 border-b border-gray-200">
         <div className="flex items-center gap-3">
           <img 
             src="/plogo.png" 
             alt="PipeLine Pro Logo" 
-            className="w-10 h-10 object-contain"
+            className="w-8 h-8 object-contain"
           />
           <div>
-            <h1 className="professional-heading-4">PipLinePro</h1>
-            <p className="professional-caption">Treasury System</p>
+            <h1 className="text-lg font-semibold text-gray-900">PipLinePro</h1>
+            <p className="text-xs text-gray-500">Treasury System</p>
           </div>
         </div>
       </div>
@@ -105,10 +105,10 @@ export const ModernSidebar: React.FC<ModernSidebarProps> = ({
             key={item.name}
             to={item.href}
             onClick={() => onPageChange(item.name.toLowerCase())}
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${
               item.current
-                ? 'bg-slate-800 text-white shadow-sm'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                ? 'bg-gray-900 text-white'
+                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
             }`}
           >
             <item.icon className="w-4 h-4" />
@@ -117,18 +117,18 @@ export const ModernSidebar: React.FC<ModernSidebarProps> = ({
         ))}
       </nav>
 
-      {/* Minimal User Footer */}
-      <div className="p-4 border-t border-slate-200 bg-slate-50">
+      {/* User Footer */}
+      <div className="p-4 border-t border-gray-200 bg-gray-50">
         {/* User Profile */}
-        <div className="bg-white border border-slate-200 rounded-lg p-3">
+        <div className="bg-white border border-gray-200 rounded-md p-3">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-slate-600 rounded-md flex items-center justify-center">
+              <div className="w-8 h-8 bg-gray-600 rounded-md flex items-center justify-center">
                 <User className="w-4 h-4 text-white" />
               </div>
               <div>
-                <p className="text-sm font-medium text-slate-900">Admin User</p>
-                <p className="text-xs text-slate-500">Administrator</p>
+                <p className="text-sm font-medium text-gray-900">Admin User</p>
+                <p className="text-xs text-gray-500">Administrator</p>
               </div>
             </div>
             
@@ -137,20 +137,20 @@ export const ModernSidebar: React.FC<ModernSidebarProps> = ({
                 variant="ghost"
                 size="sm"
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
-                className="h-6 w-6 p-0 hover:bg-slate-100"
+                className="h-6 w-6 p-0 hover:bg-gray-100"
               >
                 <ChevronDown className={`w-3 h-3 ${userMenuOpen ? 'rotate-180' : ''}`} />
               </Button>
               
               {/* User Menu Dropdown */}
               {userMenuOpen && (
-                <div className="absolute bottom-full right-0 mb-2 w-40 bg-white rounded-md shadow-lg border border-slate-200 py-1 z-50">
+                <div className="absolute bottom-full right-0 mb-2 w-40 bg-white rounded-md shadow-md border border-gray-200 py-1 z-50">
                   <button
                     onClick={() => {
                       navigate('/settings');
                       setUserMenuOpen(false);
                     }}
-                    className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                    className="flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
                   >
                     <Settings className="w-3 h-3" />
                     Settings
@@ -171,7 +171,7 @@ export const ModernSidebar: React.FC<ModernSidebarProps> = ({
           </div>
           
           {/* System Status */}
-          <div className="flex items-center justify-between text-xs text-slate-500 pt-2 border-t border-slate-100">
+          <div className="flex items-center justify-between text-xs text-gray-500 pt-2 border-t border-gray-100">
             <div className="flex items-center gap-1">
               <div className={`w-2 h-2 rounded-full ${
                 systemStatus === 'online' ? 'bg-green-500' : 'bg-amber-500'

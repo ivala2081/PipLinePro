@@ -98,16 +98,16 @@ export const RevenueChart: React.FC<RevenueChartProps> = ({
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
-        <div className="bg-white border border-slate-200 rounded-lg shadow-lg p-4 min-w-[200px]">
+        <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-4 min-w-[200px]">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-              <span className="font-semibold text-slate-900">{label}</span>
+              <span className="font-semibold text-gray-900">{label}</span>
             </div>
             
-            <div className="border-t border-slate-100 pt-2 space-y-1">
+            <div className="border-t border-gray-100 pt-2 space-y-1">
               <div className="flex justify-between items-center">
-                <span className="text-sm text-slate-600">Net Revenue:</span>
+                <span className="text-sm text-gray-600">Net Revenue:</span>
                 <span className={`font-semibold ${data.amount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                   {formatCurrency(data.amount || data.revenue || 0)}
                 </span>
@@ -115,7 +115,7 @@ export const RevenueChart: React.FC<RevenueChartProps> = ({
               
               {data.deposits !== undefined && (
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-slate-600">Deposits:</span>
+                  <span className="text-sm text-gray-600">Deposits:</span>
                   <span className="text-sm font-medium text-green-600">
                     +{formatCurrency(data.deposits)}
                   </span>
@@ -124,7 +124,7 @@ export const RevenueChart: React.FC<RevenueChartProps> = ({
               
               {data.withdrawals !== undefined && (
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-slate-600">Withdrawals:</span>
+                  <span className="text-sm text-gray-600">Withdrawals:</span>
                   <span className="text-sm font-medium text-red-600">
                     -{formatCurrency(data.withdrawals)}
                   </span>
@@ -133,8 +133,8 @@ export const RevenueChart: React.FC<RevenueChartProps> = ({
               
               {data.transaction_count !== undefined && (
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-slate-600">Transactions:</span>
-                  <span className="text-sm font-medium text-slate-700">
+                  <span className="text-sm text-gray-600">Transactions:</span>
+                  <span className="text-sm font-medium text-gray-700">
                     {data.transaction_count}
                   </span>
                 </div>
@@ -142,8 +142,8 @@ export const RevenueChart: React.FC<RevenueChartProps> = ({
               
               {data.clients !== undefined && (
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-slate-600">Clients:</span>
-                  <span className="text-sm font-medium text-slate-700">
+                  <span className="text-sm text-gray-600">Clients:</span>
+                  <span className="text-sm font-medium text-gray-700">
                     {data.clients}
                   </span>
                 </div>
@@ -184,8 +184,8 @@ export const RevenueChart: React.FC<RevenueChartProps> = ({
     return (
       <div className="flex items-center justify-center" style={{ height: `${height}px` }}>
         <div className="text-center">
-          <p className="professional-body-small text-slate-500">No revenue data available</p>
-          <p className="professional-caption mt-1">Data will appear when transactions are available</p>
+          <p className="text-sm text-gray-500">No revenue data available</p>
+          <p className="text-xs mt-1">Data will appear when transactions are available</p>
         </div>
       </div>
     );
@@ -287,11 +287,11 @@ export const RevenueChart: React.FC<RevenueChartProps> = ({
                 const date = new Date(dateStr + 'T00:00:00'); // Add time to avoid timezone issues
                 
                 return (
-                  <div className="bg-white border border-slate-200 rounded-xl shadow-xl p-4 min-w-[200px] backdrop-blur-sm">
+                  <div className="bg-white border border-gray-200 rounded-xl shadow-lg p-4 min-w-[200px] backdrop-blur-sm">
                     <div className="space-y-2">
                       <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-slate-500" />
-                        <span className="font-semibold text-slate-900">
+                        <Calendar className="h-4 w-4 text-gray-500" />
+                        <span className="font-semibold text-gray-900">
                           {date.toLocaleDateString('en-US', { 
                             weekday: 'long', 
                             year: 'numeric', 
@@ -301,17 +301,17 @@ export const RevenueChart: React.FC<RevenueChartProps> = ({
                         </span>
                       </div>
                       
-                      <div className="border-t border-slate-100 pt-2 space-y-1">
+                      <div className="border-t border-gray-100 pt-2 space-y-1">
                         <div className="flex justify-between items-center">
-                          <span className="text-sm text-slate-600">Net Cash:</span>
+                          <span className="text-sm text-gray-600">Net Cash:</span>
                           <span className="font-semibold text-blue-600">
                             {formatCurrency(data.amount || 0)}
                           </span>
                         </div>
                         
                         <div className="flex justify-between items-center">
-                          <span className="text-sm text-slate-600">Transactions:</span>
-                          <span className="text-sm font-medium text-slate-700">
+                          <span className="text-sm text-gray-600">Transactions:</span>
+                          <span className="text-sm font-medium text-gray-700">
                             {data.transaction_count || 0}
                           </span>
                         </div>

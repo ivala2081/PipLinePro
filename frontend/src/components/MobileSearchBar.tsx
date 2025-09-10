@@ -148,7 +148,7 @@ export const MobileSearchBar: React.FC<MobileSearchBarProps> = ({
       {/* Search Bar */}
       <div className={clsx(
         'flex items-center bg-white border border-gray-300 rounded-xl transition-all duration-300',
-        isExpanded ? 'shadow-lg border-blue-500' : 'hover:border-gray-400'
+        isExpanded ? 'shadow-lg border-gray-500' : 'hover:border-gray-400'
       )}>
         {/* Search Icon */}
         <div className="pl-4 pr-2">
@@ -187,7 +187,7 @@ export const MobileSearchBar: React.FC<MobileSearchBarProps> = ({
           {showFilters && onFilter && (
             <button
               onClick={onFilter}
-              className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200"
+              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-all duration-200"
             >
               <Filter className="h-4 w-4" />
             </button>
@@ -196,7 +196,7 @@ export const MobileSearchBar: React.FC<MobileSearchBarProps> = ({
           {showSort && onSort && (
             <button
               onClick={onSort}
-              className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200"
+              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-all duration-200"
             >
               <SortAsc className="h-4 w-4" />
             </button>
@@ -209,7 +209,7 @@ export const MobileSearchBar: React.FC<MobileSearchBarProps> = ({
         <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-xl z-50 max-h-96 overflow-y-auto">
           {isSearching ? (
             <div className="p-4 text-center">
-              <div className="animate-spin rounded-full h-6 w-6 border-2 border-blue-600 border-t-transparent mx-auto mb-2"></div>
+              <div className="animate-spin rounded-full h-6 w-6 border-2 border-gray-600 border-t-transparent mx-auto mb-2"></div>
               <p className="text-gray-500">Searching...</p>
             </div>
           ) : results.length > 0 ? (

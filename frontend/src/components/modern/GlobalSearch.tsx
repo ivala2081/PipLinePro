@@ -113,7 +113,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ onResultClick }) => 
     const statusConfig = {
       completed: { variant: 'default' as const, color: 'bg-green-100 text-green-800' },
       pending: { variant: 'secondary' as const, color: 'bg-yellow-100 text-yellow-800' },
-      processing: { variant: 'outline' as const, color: 'bg-blue-100 text-blue-800' }
+      processing: { variant: 'outline' as const, color: 'bg-gray-100 text-gray-800' }
     };
     
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;

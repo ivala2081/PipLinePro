@@ -122,7 +122,7 @@ const ExchangeRateNotifications: React.FC<ExchangeRateNotificationsProps> = ({
       case 'volatility':
         return <AlertTriangle className="h-4 w-4 text-yellow-600" />;
       default:
-        return <Info className="h-4 w-4 text-blue-600" />;
+        return <Info className="h-4 w-4 text-gray-600" />;
     }
   };
 
@@ -137,7 +137,7 @@ const ExchangeRateNotifications: React.FC<ExchangeRateNotificationsProps> = ({
       case 'volatility':
         return `bg-yellow-50 border-yellow-200 ${opacity}`;
       default:
-        return `bg-blue-50 border-blue-200 ${opacity}`;
+        return `bg-gray-50 border-gray-200 ${opacity}`;
     }
   };
 
@@ -174,7 +174,7 @@ const ExchangeRateNotifications: React.FC<ExchangeRateNotificationsProps> = ({
           <div className="border-b border-gray-100 px-4 py-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <DollarSign className="h-5 w-5 text-blue-600" />
+                <DollarSign className="h-5 w-5 text-gray-600" />
                 <h3 className="text-sm font-semibold text-gray-900">Exchange Rate Alerts</h3>
                 {unreadCount > 0 && (
                   <span className="bg-red-100 text-red-700 text-xs px-2 py-1 rounded-full">
@@ -193,7 +193,7 @@ const ExchangeRateNotifications: React.FC<ExchangeRateNotificationsProps> = ({
             {unreadCount > 0 && (
               <button
                 onClick={markAllAsRead}
-                className="text-xs text-blue-600 hover:text-blue-800 mt-2 transition-colors"
+                className="text-xs text-gray-600 hover:text-gray-800 mt-2 transition-colors"
               >
                 Mark all as read
               </button>
@@ -204,7 +204,7 @@ const ExchangeRateNotifications: React.FC<ExchangeRateNotificationsProps> = ({
           <div className="max-h-80 overflow-y-auto">
             {loading ? (
               <div className="flex items-center justify-center py-8">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-600"></div>
                 <span className="ml-2 text-sm text-gray-600">Loading...</span>
               </div>
             ) : notifications.length === 0 ? (
@@ -219,7 +219,7 @@ const ExchangeRateNotifications: React.FC<ExchangeRateNotificationsProps> = ({
                   <div
                     key={notification.id}
                     className={`p-4 hover:bg-gray-50 transition-colors cursor-pointer ${
-                      !notification.isRead ? 'bg-blue-50/30' : ''
+                      !notification.isRead ? 'bg-gray-50/30' : ''
                     }`}
                     onClick={() => !notification.isRead && markAsRead(notification.id)}
                   >
@@ -257,7 +257,7 @@ const ExchangeRateNotifications: React.FC<ExchangeRateNotificationsProps> = ({
                             </div>
                             
                             {!notification.isRead && (
-                              <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                              <div className="w-2 h-2 bg-gray-600 rounded-full"></div>
                             )}
                           </div>
                         </div>
@@ -285,7 +285,7 @@ const ExchangeRateNotifications: React.FC<ExchangeRateNotificationsProps> = ({
               <div className="text-center">
                 <button
                   onClick={fetchNotifications}
-                  className="text-xs text-blue-600 hover:text-blue-800 transition-colors"
+                  className="text-xs text-gray-600 hover:text-gray-800 transition-colors"
                 >
                   Refresh notifications
                 </button>

@@ -29,7 +29,7 @@ const ModernLayout: React.FC<ModernLayoutProps> = ({ children }) => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-gray-50">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div 
@@ -41,7 +41,7 @@ const ModernLayout: React.FC<ModernLayoutProps> = ({ children }) => {
       )}
 
       {/* Mobile sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200 transform transition-transform duration-300 ease-in-out lg:hidden ${
+      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out lg:hidden ${
         sidebarOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
         <ModernSidebar
@@ -69,7 +69,7 @@ const ModernLayout: React.FC<ModernLayoutProps> = ({ children }) => {
         />
 
         {/* Page content */}
-        <main className="min-h-[calc(100vh-4rem)] bg-slate-50">
+        <main className="min-h-[calc(100vh-4rem)] bg-gray-50">
           {children || <Outlet />}
         </main>
       </div>

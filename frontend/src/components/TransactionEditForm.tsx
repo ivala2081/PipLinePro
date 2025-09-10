@@ -210,7 +210,7 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
               type="text"
               value={formData.client_name}
               onChange={(e) => handleInputChange('client_name', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-gray-500 focus:border-gray-500"
               required
             />
           </div>
@@ -221,7 +221,7 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
             <select
               value={formData.company}
               onChange={(e) => handleInputChange('company', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-gray-500 focus:border-gray-500"
             >
               <option value="">Select Company</option>
               {dropdownOptions?.companies?.map((company) => (
@@ -239,7 +239,7 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
             <select
               value={formData.payment_method}
               onChange={(e) => handleInputChange('payment_method', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-gray-500 focus:border-gray-500"
             >
               <option value="">Select Payment Method</option>
               {dropdownOptions?.payment_methods?.map((method) => (
@@ -263,7 +263,7 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
             <select
               value={formData.category}
               onChange={(e) => handleInputChange('category', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-gray-500 focus:border-gray-500"
               required
             >
               <option value="">Select Category</option>
@@ -281,7 +281,7 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
             <select
               value={formData.psp}
               onChange={(e) => handleInputChange('psp', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-gray-500 focus:border-gray-500"
             >
               <option value="">Select PSP</option>
               {dropdownOptions?.psps?.map((psp) => (
@@ -301,7 +301,7 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
               min="0"
               value={formData.amount}
               onChange={(e) => handleInputChange('amount', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-gray-500 focus:border-gray-500"
               required
             />
           </div>
@@ -312,7 +312,7 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
             <select
               value={formData.currency}
               onChange={(e) => handleInputChange('currency', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-gray-500 focus:border-gray-500"
             >
               <option value="TL">TL</option>
               <option value="USD">USD</option>
@@ -327,7 +327,7 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
               type="date"
               value={formData.date}
               onChange={(e) => handleInputChange('date', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-gray-500 focus:border-gray-500"
             />
           </div>
         </div>
@@ -335,12 +335,12 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
 
       {/* Exchange Rate Section */}
       {showExchangeRateSection && (
-        <div className="bg-blue-50 rounded-lg p-4">
-          <h4 className="text-sm font-medium text-blue-700 mb-4">Exchange Rate</h4>
+        <div className="bg-gray-50 rounded-lg p-4">
+          <h4 className="text-sm font-medium text-gray-700 mb-4">Exchange Rate</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {formData.currency === 'EUR' && (
               <div>
-                <label className="block text-sm font-medium text-blue-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   EUR Rate (1 EUR = ? TL)
                 </label>
                                   <input
@@ -353,14 +353,14 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
                       setConvertedAmounts(null);
                       setRateApplied(false);
                     }}
-                    className="w-full px-3 py-2 border border-blue-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-gray-500 focus:border-gray-500"
                     required
                   />
               </div>
             )}
             {formData.currency === 'USD' && (
               <div>
-                <label className="block text-sm font-medium text-blue-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   USD Rate (1 USD = ? TL)
                 </label>
                 <div className="flex space-x-3">
@@ -374,20 +374,20 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
                       setConvertedAmounts(null);
                       setRateApplied(false);
                     }}
-                    className="flex-1 px-3 py-2 border border-blue-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-gray-500 focus:border-gray-500"
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowCurrencyModal(true)}
-                    className="px-4 py-2 bg-blue-100 text-blue-700 border border-blue-300 rounded-md hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 flex items-center space-x-2"
+                    className="px-4 py-2 bg-gray-100 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-colors duration-200 flex items-center space-x-2"
                   >
                     <DollarSign className="h-4 w-4" />
                     <span className="text-sm font-medium">Get Rate</span>
                   </button>
                 </div>
                 {usdRate && (
-                  <p className="text-xs text-blue-600 mt-1">
+                  <p className="text-xs text-gray-600 mt-1">
                     ${formData.amount || 0} USD = ₺{((parseFloat(formData.amount) || 0) * (parseFloat(usdRate) || 0)).toFixed(2)}
                   </p>
                 )}
@@ -405,7 +405,7 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
                 (formData.currency === 'USD' && !usdRate) || 
                 (formData.currency === 'EUR' && !eurRate)
               }
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+              className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
             >
               <span>Apply Exchange Rate</span>
             </button>
@@ -460,7 +460,7 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
             value={formData.notes}
             onChange={(e) => handleInputChange('notes', e.target.value)}
             rows={3}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-gray-500 focus:border-gray-500"
             placeholder="Enter transaction notes..."
           />
         </div>
@@ -471,7 +471,7 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
         >
           <X className="h-4 w-4 mr-2 inline" />
           Cancel
@@ -479,7 +479,7 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
         <button
           type="submit"
           disabled={loading}
-          className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? (
             <div className="flex items-center">

@@ -204,7 +204,7 @@ const BulkUSDRates: React.FC<BulkUSDRatesProps> = ({ onRatesApplied }) => {
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
-        <RefreshCw className="h-6 w-6 animate-spin text-blue-600" />
+        <RefreshCw className="h-6 w-6 animate-spin text-gray-600" />
         <span className="ml-2 text-gray-600">Loading USD transaction dates...</span>
       </div>
     );
@@ -234,14 +234,14 @@ const BulkUSDRates: React.FC<BulkUSDRatesProps> = ({ onRatesApplied }) => {
           <button
             onClick={fetchUSDDates}
             disabled={loading}
-            className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+            className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50"
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             Refresh
           </button>
           <button
             onClick={() => setShowModal(true)}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
           >
             <Save className="h-4 w-4 mr-2" />
             Apply All Rates
@@ -280,8 +280,8 @@ const BulkUSDRates: React.FC<BulkUSDRatesProps> = ({ onRatesApplied }) => {
             <div key={usdDate.date} className="px-6 py-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
-                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <Calendar className="h-5 w-5 text-blue-600" />
+                  <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                    <Calendar className="h-5 w-5 text-gray-600" />
                   </div>
                   <div>
                     <h4 className="text-lg font-semibold text-gray-900">
@@ -306,7 +306,7 @@ const BulkUSDRates: React.FC<BulkUSDRatesProps> = ({ onRatesApplied }) => {
                       min="0"
                       value={rates[usdDate.date] || ''}
                       onChange={(e) => handleRateChange(usdDate.date, e.target.value)}
-                      className="w-24 px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-24 px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500"
                       placeholder="0.0000"
                     />
                     <span className="text-sm text-gray-500">TRY/USD</span>
@@ -364,14 +364,14 @@ const BulkUSDRates: React.FC<BulkUSDRatesProps> = ({ onRatesApplied }) => {
               <div className="flex items-center justify-end space-x-3">
                 <button
                   onClick={() => setShowModal(false)}
-                  className="px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  className="px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={applyRates}
                   disabled={applying}
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50"
                 >
                   {applying ? (
                     <RefreshCw className="h-4 w-4 mr-2 animate-spin" />

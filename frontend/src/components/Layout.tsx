@@ -213,7 +213,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         <div className="business-card-footer">
           <div className="flex items-center gap-4 p-2">
             <div className="relative user-avatar">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg ring-2 ring-white/20 ring-offset-1 ring-offset-gray-100">
+              <div className="w-12 h-12 bg-gradient-to-br from-gray-500 via-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg ring-2 ring-white/20 ring-offset-1 ring-offset-gray-100">
                 <User className="h-6 w-6 text-white" />
               </div>
               <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-emerald-400 border-2 border-white rounded-full status-indicator shadow-sm"></div>
@@ -277,7 +277,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           <div className="business-card-footer">
             <div className="flex items-center gap-4 p-2">
               <div className="relative user-avatar user-avatar-hover">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg ring-2 ring-white/20 ring-offset-1 ring-offset-gray-100">
+                <div className="w-12 h-12 bg-gradient-to-br from-gray-500 via-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg ring-2 ring-white/20 ring-offset-1 ring-offset-gray-100">
                   <User className="h-6 w-6 text-white" />
                 </div>
                 <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-emerald-400 border-2 border-white rounded-full status-indicator shadow-sm"></div>
@@ -312,7 +312,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           <div className="flex items-center gap-3">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="lg:hidden p-2.5 rounded-xl text-gray-500 hover:text-gray-700 hover:bg-gradient-to-r hover:from-gray-50 hover:to-blue-50/30 border border-gray-200/50 hover:border-gray-300/70 transition-all duration-300 hover:shadow-md hover:shadow-gray-200/50 hover:-translate-y-0.5 group mobile-menu-button"
+              className="lg:hidden p-2.5 rounded-xl text-gray-500 hover:text-gray-700 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-50/30 border border-gray-200/50 hover:border-gray-300/70 transition-all duration-300 hover:shadow-md hover:shadow-gray-200/50 hover:-translate-y-0.5 group mobile-menu-button"
             >
               <Menu className="h-6 w-6 group-hover:scale-110 transition-transform duration-300" />
             </button>
@@ -335,9 +335,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
           {/* World Clocks - Mobile */}
           <div className="lg:hidden flex items-center">
-            <div className="relative flex items-center gap-3 px-4 py-2.5 bg-gradient-to-r from-white/95 to-blue-50/90 backdrop-blur-md rounded-xl border border-gray-200/60 shadow-lg hover:shadow-xl transition-all duration-300 group">
+            <div className="relative flex items-center gap-3 px-4 py-2.5 bg-gradient-to-r from-white/95 to-gray-50/90 backdrop-blur-md rounded-xl border border-gray-200/60 shadow-lg hover:shadow-xl transition-all duration-300 group">
               {/* Animated background */}
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-purple-500/5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-gray-500/5 to-purple-500/5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               
               {/* Turkey Clock */}
               <div className="relative flex items-center gap-2">
@@ -352,22 +352,22 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               </div>
               
               {/* Divider with gradient */}
-              <div className="w-px h-8 bg-gradient-to-b from-gray-200 via-blue-200 to-gray-200 group-hover:from-blue-300 group-hover:via-purple-300 group-hover:to-blue-300 transition-colors duration-300"></div>
+              <div className="w-px h-8 bg-gradient-to-b from-gray-200 via-gray-200 to-gray-200 group-hover:from-gray-300 group-hover:via-purple-300 group-hover:to-gray-300 transition-colors duration-300"></div>
               
               {/* New York Clock */}
               <div className="relative flex items-center gap-2">
                 <div className="relative">
                   <span className="text-xl drop-shadow-sm group-hover:scale-110 transition-transform duration-300">🇺🇸</span>
-                  <div className="absolute -inset-1 bg-gradient-to-r from-blue-400/20 to-red-400/20 rounded-full blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <div className="absolute -inset-1 bg-gradient-to-r from-gray-400/20 to-red-400/20 rounded-full blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-xs font-bold text-gray-800 group-hover:text-blue-600 transition-colors duration-300">New York</span>
-                  <span className="text-xs font-mono font-semibold text-gray-600 group-hover:text-blue-500 transition-colors duration-300 animate-pulse" id="mobile-ny-time">--:--</span>
+                  <span className="text-xs font-bold text-gray-800 group-hover:text-gray-600 transition-colors duration-300">New York</span>
+                  <span className="text-xs font-mono font-semibold text-gray-600 group-hover:text-gray-500 transition-colors duration-300 animate-pulse" id="mobile-ny-time">--:--</span>
                 </div>
               </div>
               
               {/* Subtle glow effect */}
-              <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+              <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-gray-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
             </div>
           </div>
 
@@ -376,7 +376,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             <div className="relative">
               <button 
                 onClick={() => navigate('/admin/users')}
-                className="relative p-3 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg border border-gray-200 hover:border-blue-300 transition-all duration-200 hover:shadow-md group header-nav-button"
+                className="relative p-3 text-gray-600 hover:text-gray-600 hover:bg-gray-50 rounded-lg border border-gray-200 hover:border-gray-300 transition-all duration-200 hover:shadow-md group header-nav-button"
                 title="Admin Panel"
               >
                 <Building2 className="h-5 w-5 group-hover:scale-110 transition-transform duration-300" />
@@ -387,7 +387,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             <div className="relative notifications-container">
               <button 
                 onClick={() => setNotificationsOpen(!notificationsOpen)}
-                className="relative p-3 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg border border-gray-200 hover:border-blue-300 transition-all duration-200 hover:shadow-md group header-nav-button"
+                className="relative p-3 text-gray-600 hover:text-gray-600 hover:bg-gray-50 rounded-lg border border-gray-200 hover:border-gray-300 transition-all duration-200 hover:shadow-md group header-nav-button"
               >
                 <Bell className="h-5 w-5 group-hover:scale-110 transition-transform duration-300" />
                 {getUnreadCount() > 0 && (
@@ -422,13 +422,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                         <div 
                           key={notification.id}
                           className={`p-4 border-b border-gray-50 last:border-b-0 hover:bg-gray-50/50 transition-colors duration-200 cursor-pointer notification-item ${
-                            !notification.read ? 'bg-blue-50/30' : ''
+                            !notification.read ? 'bg-gray-50/30' : ''
                           }`}
                           onClick={() => markNotificationAsRead(notification.id)}
                         >
                           <div className="flex items-start gap-3">
                             <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
-                              notification.type === 'info' ? 'bg-blue-400' :
+                              notification.type === 'info' ? 'bg-gray-400' :
                               notification.type === 'warning' ? 'bg-yellow-400' :
                               notification.type === 'success' ? 'bg-green-400' : 'bg-gray-400'
                             }`}></div>
@@ -440,7 +440,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                               <p className="text-sm text-gray-600 leading-relaxed">{notification.message}</p>
                               {!notification.read && (
                                 <div className="mt-2">
-                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
                                     New
                                   </span>
                                 </div>
@@ -456,7 +456,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     <div className="p-3 border-t border-gray-100 bg-gray-50/30">
                       <button 
                         onClick={markAllAsRead}
-                        className="w-full text-center text-sm text-blue-600 hover:text-blue-700 font-medium py-2 rounded-lg hover:bg-blue-50 transition-colors duration-200"
+                        className="w-full text-center text-sm text-gray-600 hover:text-gray-700 font-medium py-2 rounded-lg hover:bg-gray-50 transition-colors duration-200"
                       >
                         Mark all as read
                       </button>
@@ -470,10 +470,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             <div className="relative">
               <button
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
-                className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg text-gray-700 hover:text-gray-900 hover:bg-blue-50 border border-gray-200 hover:border-blue-300 transition-all duration-200 hover:shadow-md group"
+                className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg text-gray-700 hover:text-gray-900 hover:bg-gray-50 border border-gray-200 hover:border-gray-300 transition-all duration-200 hover:shadow-md group"
               >
                 <div className="relative">
-                  <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center shadow-md group-hover:scale-105 transition-transform duration-200">
+                  <div className="w-9 h-9 bg-gradient-to-br from-gray-500 to-purple-600 rounded-lg flex items-center justify-center shadow-md group-hover:scale-105 transition-transform duration-200">
                     <User className="h-5 w-5 text-white" />
                   </div>
                   <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-400 border-2 border-white rounded-full shadow-sm"></div>

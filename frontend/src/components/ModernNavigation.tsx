@@ -56,7 +56,7 @@ export const ModernBreadcrumbs: React.FC<ModernBreadcrumbsProps> = ({
             {item.href && !isLast ? (
               <a
                 href={item.href}
-                className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200"
+                className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-gray-600 hover:text-gray-600 hover:bg-gray-50 transition-all duration-200"
               >
                 {Icon && <Icon className="h-4 w-4" />}
                 <span>{item.label}</span>
@@ -122,7 +122,7 @@ export const QuickSearch: React.FC<QuickSearchProps> = ({
           onChange={(e) => handleInputChange(e.target.value)}
           onKeyPress={(e) => e.key === 'Enter' && handleSearch(query)}
           placeholder={placeholder}
-          className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 placeholder-gray-400"
+          className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl bg-white focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-all duration-200 placeholder-gray-400"
         />
       </div>
       
@@ -152,7 +152,7 @@ export const NotificationBadge: React.FC<NotificationBadgeProps> = ({
   if (count === 0) return null;
 
   const variantClasses = {
-    default: 'bg-blue-500 text-white',
+    default: 'bg-gray-500 text-white',
     danger: 'bg-red-500 text-white',
     warning: 'bg-amber-500 text-white'
   };
@@ -214,7 +214,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500"
       >
         {/* Avatar */}
         <div className="relative">
@@ -225,7 +225,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({
               className="h-8 w-8 rounded-full object-cover"
             />
           ) : (
-            <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-sm font-medium">
+            <div className="h-8 w-8 rounded-full bg-gradient-to-br from-gray-500 to-gray-600 flex items-center justify-center text-white text-sm font-medium">
               {user.name.charAt(0).toUpperCase()}
             </div>
           )}

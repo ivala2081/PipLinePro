@@ -31,6 +31,7 @@ import {
   UnifiedSection, 
   UnifiedGrid 
 } from '../design-system';
+import { Breadcrumb } from '../components/ui';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
@@ -252,38 +253,46 @@ export default function Agents() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Modern Header */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="px-6 py-6">
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-                <Users className="h-8 w-8 text-blue-600" />
-                Agent Management
-              </h1>
-              <p className="text-gray-600">Team management</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <UnifiedButton
-                variant="outline"
-                size="sm"
-                onClick={handleExportAgents}
-                icon={<Download className="h-4 w-4" />}
-                iconPosition="left"
-              >
-                Export
-              </UnifiedButton>
-              <UnifiedButton
-                variant="primary"
-                size="sm"
-                onClick={handleAddAgent}
-                icon={<Plus className="h-4 w-4" />}
-                iconPosition="left"
-              >
-                Add Agent
-              </UnifiedButton>
-            </div>
+    <div className="p-6">
+      {/* Breadcrumb Navigation */}
+      <div className="mb-6">
+        <Breadcrumb 
+          items={[
+            { label: 'Dashboard', href: '/' },
+            { label: 'Agent Management', current: true }
+          ]} 
+        />
+      </div>
+
+      {/* Page Header */}
+      <div className="mb-6">
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
+            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+              <Users className="h-8 w-8 text-gray-600" />
+              Agent Management
+            </h1>
+            <p className="text-gray-600">Team management</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <UnifiedButton
+              variant="outline"
+              size="sm"
+              onClick={handleExportAgents}
+              icon={<Download className="h-4 w-4" />}
+              iconPosition="left"
+            >
+              Export
+            </UnifiedButton>
+            <UnifiedButton
+              variant="primary"
+              size="sm"
+              onClick={handleAddAgent}
+              icon={<Plus className="h-4 w-4" />}
+              iconPosition="left"
+            >
+              Add Agent
+            </UnifiedButton>
           </div>
         </div>
       </div>
@@ -291,14 +300,14 @@ export default function Agents() {
       <div className="p-6 space-y-6">
 
       {/* Status Indicators */}
-      <div className="bg-blue-50/50 border border-blue-200/60 rounded-xl p-4">
-        <div className='flex items-center gap-6 text-sm text-blue-700'>
+      <div className="bg-gray-50/50 border border-gray-200/60 rounded-xl p-4">
+        <div className='flex items-center gap-6 text-sm text-gray-700'>
           <div className='flex items-center gap-2'>
             <div className='w-2 h-2 bg-green-500 rounded-full'></div>
             <span className="font-medium">Active Agents: {activeAgents}</span>
           </div>
           <div className='flex items-center gap-2'>
-            <div className='w-2 h-2 bg-blue-500 rounded-full'></div>
+            <div className='w-2 h-2 bg-gray-500 rounded-full'></div>
                             <span className="font-medium">{t('dashboard.total_transactions')}: {totalTransactions.toLocaleString()}</span>
           </div>
         </div>
@@ -313,7 +322,7 @@ export default function Agents() {
                 onClick={() => setActiveTab('overview')}
                 className={`tab-button px-6 py-3 rounded-xl font-medium text-sm transition-all duration-200 flex items-center gap-2 ${
                   activeTab === 'overview'
-                    ? 'bg-white text-blue-600 shadow-md border border-gray-200'
+                    ? 'bg-white text-gray-600 shadow-md border border-gray-200'
                     : 'text-gray-600 hover:text-gray-800 hover:bg-white/50'
                 }`}
               >
@@ -338,7 +347,7 @@ export default function Agents() {
                 onClick={() => setActiveTab('agents')}
                 className={`tab-button px-6 py-3 rounded-xl font-medium text-sm transition-all duration-200 flex items-center gap-2 ${
                   activeTab === 'agents'
-                    ? 'bg-white text-blue-600 shadow-md border border-gray-200'
+                    ? 'bg-white text-gray-600 shadow-md border border-gray-200'
                     : 'text-gray-600 hover:text-gray-800 hover:bg-white/50'
                 }`}
               >
@@ -363,7 +372,7 @@ export default function Agents() {
                 onClick={() => setActiveTab('analytics')}
                 className={`tab-button px-6 py-3 rounded-xl font-medium text-sm transition-all duration-200 flex items-center gap-2 ${
                   activeTab === 'analytics'
-                    ? 'bg-white text-blue-600 shadow-md border border-gray-200'
+                    ? 'bg-white text-gray-600 shadow-md border border-gray-200'
                     : 'text-gray-600 hover:text-gray-800 hover:bg-white/50'
                 }`}
               >
@@ -394,7 +403,7 @@ export default function Agents() {
           <UnifiedCard variant="elevated" className="mb-6">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <BarChart3 className="h-5 w-5 text-blue-600" />
+                <BarChart3 className="h-5 w-5 text-gray-600" />
                 Performance Overview
               </CardTitle>
               <CardDescription>
@@ -450,7 +459,7 @@ export default function Agents() {
           <UnifiedCard variant="elevated" className="mb-6">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5 text-blue-600" />
+                <Users className="h-5 w-5 text-gray-600" />
                 Agent Management
               </CardTitle>
               <CardDescription>
@@ -514,7 +523,7 @@ export default function Agents() {
                           placeholder='Search by name or email...'
                           value={searchTerm}
                           onChange={e => setSearchTerm(e.target.value)}
-                          className='w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200'
+                          className='w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-colors duration-200'
                         />
                       </div>
                     </div>
@@ -525,7 +534,7 @@ export default function Agents() {
                       <select
                         value={statusFilter}
                         onChange={e => setStatusFilter(e.target.value)}
-                        className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200'
+                        className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-colors duration-200'
                       >
                         <option value='all'>All Status</option>
                         <option value='active'>Active</option>
@@ -539,7 +548,7 @@ export default function Agents() {
                       <select
                         value={departmentFilter}
                         onChange={e => setDepartmentFilter(e.target.value)}
-                        className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200'
+                        className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-colors duration-200'
                       >
                         <option value='all'>All Departments</option>
                         {departments.map(dept => (
@@ -558,7 +567,7 @@ export default function Agents() {
                 <div className='flex items-center justify-between'>
                   <div className='flex items-center gap-6'>
                     <div className='flex items-center gap-3'>
-                      <div className='w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-sm'>
+                      <div className='w-10 h-10 bg-gradient-to-br from-gray-500 to-purple-600 rounded-xl flex items-center justify-center shadow-sm'>
                         <Users className='h-5 w-5 text-white' />
                       </div>
                       <div>
@@ -588,7 +597,7 @@ export default function Agents() {
                   onClick={() => setActiveDepartmentTab('all')}
                   className={`tab-button px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 flex items-center gap-2 whitespace-nowrap ${
                     activeDepartmentTab === 'all'
-                      ? 'bg-blue-600 text-white shadow-md'
+                      ? 'bg-gray-600 text-white shadow-md'
                       : 'text-gray-600 hover:text-gray-800 hover:bg-white/50'
                   }`}
                 >
@@ -606,7 +615,7 @@ export default function Agents() {
                       onClick={() => setActiveDepartmentTab(dept)}
                       className={`tab-button px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 flex items-center gap-2 whitespace-nowrap ${
                         activeDepartmentTab === dept
-                          ? 'bg-blue-600 text-white shadow-md'
+                          ? 'bg-gray-600 text-white shadow-md'
                           : 'text-gray-600 hover:text-gray-800 hover:bg-white/50'
                       }`}
                     >
@@ -673,11 +682,11 @@ export default function Agents() {
                   {filteredAgents.map((agent, index) => (
                     <tr
                       key={agent.id}
-                      className={`hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-purple-50/50 transition-all duration-200 group ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'}`}
+                      className={`hover:bg-gradient-to-r hover:from-gray-50/50 hover:to-purple-50/50 transition-all duration-200 group ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'}`}
                     >
                       <td className='px-8 py-5 whitespace-nowrap'>
                     <div className='flex items-center'>
-                          <div className='w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-sm'>
+                          <div className='w-12 h-12 bg-gradient-to-br from-gray-500 to-gray-600 rounded-xl flex items-center justify-center shadow-sm'>
                             <span className='text-white font-semibold text-sm'>
                           {agent.name
                             .split(' ')
@@ -754,7 +763,7 @@ export default function Agents() {
                   </td>
                       <td className='px-8 py-5 whitespace-nowrap text-sm font-medium'>
                         <div className='flex items-center gap-1'>
-                          <button className='p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors duration-200' title='View Details'>
+                          <button className='p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded transition-colors duration-200' title='View Details'>
                             <Eye className='h-3.5 w-3.5' />
                       </button>
                           <button className='p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded transition-colors duration-200' title='Edit Agent'>
@@ -788,7 +797,7 @@ export default function Agents() {
                 </p>
                 <button 
                   onClick={handleAddAgent}
-                  className='inline-flex items-center px-6 py-3 border border-transparent rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors shadow-sm'
+                  className='inline-flex items-center px-6 py-3 border border-transparent rounded-lg text-sm font-medium text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors shadow-sm'
                 >
                   <Plus className='h-4 w-4 mr-2' />
                   Add Your First Agent
@@ -858,7 +867,7 @@ export default function Agents() {
                       type='text'
                       value={newAgent.name}
                       onChange={e => handleInputChange('name', e.target.value)}
-                      className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200'
+                      className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-colors duration-200'
                       placeholder='Enter full name'
                     />
                   </div>
@@ -870,7 +879,7 @@ export default function Agents() {
                       type='email'
                       value={newAgent.email}
                       onChange={e => handleInputChange('email', e.target.value)}
-                      className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200'
+                      className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-colors duration-200'
                       placeholder='Enter email address'
                     />
                   </div>
@@ -882,7 +891,7 @@ export default function Agents() {
                       type='tel'
                       value={newAgent.phone}
                       onChange={e => handleInputChange('phone', e.target.value)}
-                      className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200'
+                      className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-colors duration-200'
                       placeholder='Enter phone number'
                     />
                   </div>
@@ -894,7 +903,7 @@ export default function Agents() {
                       type='date'
                       value={newAgent.startDate}
                       onChange={e => handleInputChange('startDate', e.target.value)}
-                      className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200'
+                      className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-colors duration-200'
                     />
                   </div>
                 </div>
@@ -912,7 +921,7 @@ export default function Agents() {
                       type='text'
                       value={newAgent.companyName}
                       onChange={e => handleInputChange('companyName', e.target.value)}
-                      className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200'
+                      className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-colors duration-200'
                       placeholder='Enter company name'
                     />
                   </div>
@@ -924,7 +933,7 @@ export default function Agents() {
                       type='text'
                       value={newAgent.nickname}
                       onChange={e => handleInputChange('nickname', e.target.value)}
-                      className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200'
+                      className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-colors duration-200'
                       placeholder='Enter nickname'
                     />
                   </div>
@@ -942,7 +951,7 @@ export default function Agents() {
                     <select
                       value={newAgent.role}
                       onChange={e => handleInputChange('role', e.target.value)}
-                      className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200'
+                      className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-colors duration-200'
                     >
                       <option value=''>Select role</option>
                       <option value='Senior Agent'>Senior Agent</option>
@@ -958,7 +967,7 @@ export default function Agents() {
                     <select
                       value={newAgent.department}
                       onChange={e => handleInputChange('department', e.target.value)}
-                      className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200'
+                      className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-colors duration-200'
                     >
                       <option value=''>Select department</option>
                       {departments.map(dept => (
@@ -981,7 +990,7 @@ export default function Agents() {
                       type='number'
                       value={newAgent.salary}
                       onChange={e => handleInputChange('salary', parseFloat(e.target.value) || 0)}
-                      className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200'
+                      className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-colors duration-200'
                       placeholder='Enter salary amount'
                     />
                   </div>
@@ -996,7 +1005,7 @@ export default function Agents() {
                           name='insurance'
                           checked={newAgent.insurance === true}
                           onChange={() => handleInputChange('insurance', true)}
-                          className='h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300'
+                          className='h-4 w-4 text-gray-600 focus:ring-gray-500 border-gray-300'
                         />
                         <span className='ml-2 text-sm text-gray-700'>Yes</span>
                       </label>
@@ -1006,7 +1015,7 @@ export default function Agents() {
                           name='insurance'
                           checked={newAgent.insurance === false}
                           onChange={() => handleInputChange('insurance', false)}
-                          className='h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300'
+                          className='h-4 w-4 text-gray-600 focus:ring-gray-500 border-gray-300'
                         />
                         <span className='ml-2 text-sm text-gray-700'>No</span>
                       </label>
@@ -1026,7 +1035,7 @@ export default function Agents() {
                 <button
                   onClick={handleSubmitAgent}
                   disabled={!newAgent.name || !newAgent.email || !newAgent.phone || !newAgent.startDate || !newAgent.role || !newAgent.department}
-                  className='flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed'
+                  className='flex-1 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed'
                 >
                 Add Agent
               </button>

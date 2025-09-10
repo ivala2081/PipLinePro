@@ -530,7 +530,7 @@ export default function AddTransaction() {
     return (
       <div className='min-h-screen flex items-center justify-center bg-gray-50'>
         <div className='text-center'>
-          <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto'></div>
+          <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-gray-600 mx-auto'></div>
           <p className='mt-4 text-gray-600'>Loading...</p>
         </div>
       </div>
@@ -553,13 +553,13 @@ export default function AddTransaction() {
           <div className='flex gap-3 justify-center'>
             <button
               onClick={() => (window.location.href = '/transactions')}
-              className='inline-flex items-center px-6 py-3 border border-transparent rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors shadow-sm'
+              className='inline-flex items-center px-6 py-3 border border-transparent rounded-lg text-sm font-medium text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors shadow-sm'
             >
               View Clients
             </button>
             <button
               onClick={resetForm}
-              className='inline-flex items-center px-6 py-3 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors'
+              className='inline-flex items-center px-6 py-3 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors'
             >
               Add Another
             </button>
@@ -572,7 +572,7 @@ export default function AddTransaction() {
   return (
     <div className='space-y-8'>
       {/* Enhanced Header */}
-      <div className='bg-gradient-to-r from-blue-50 via-white to-purple-50 rounded-2xl p-8 border border-gray-100 shadow-sm'>
+      <div className='bg-gradient-to-r from-gray-50 via-white to-purple-50 rounded-2xl p-8 border border-gray-100 shadow-sm'>
         <div className='flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6'>
           <div className='space-y-3'>
             <div className='flex items-center gap-3'>
@@ -585,7 +585,7 @@ export default function AddTransaction() {
               </button>
             </div>
             <div className='flex items-center gap-3'>
-              <div className='w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg'>
+              <div className='w-12 h-12 bg-gradient-to-br from-gray-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg'>
                 <FileText className='h-6 w-6 text-white' />
               </div>
               <div>
@@ -628,7 +628,7 @@ export default function AddTransaction() {
                     type='text'
                     value={formData.client_name}
                     onChange={e => handleInputChange('client_name', e.target.value)}
-                    className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200'
+                    className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-colors duration-200'
                     placeholder='Enter client name'
                     required
                   />
@@ -641,7 +641,7 @@ export default function AddTransaction() {
                     type='date'
                     value={formData.date}
                     onChange={e => handleInputChange('date', e.target.value)}
-                    className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200'
+                    className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-colors duration-200'
                     required
                   />
                 </div>
@@ -654,7 +654,7 @@ export default function AddTransaction() {
                     step='0.01'
                     value={formData.amount}
                     onChange={e => handleInputChange('amount', e.target.value)}
-                    className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200'
+                    className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-colors duration-200'
                     placeholder='0.00'
                     required
                   />
@@ -666,7 +666,7 @@ export default function AddTransaction() {
                   <select
                     value={formData.currency}
                     onChange={e => handleInputChange('currency', e.target.value)}
-                    className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200'
+                    className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-colors duration-200'
                     required
                   >
                     <option value=''>Select Currency</option>
@@ -691,7 +691,7 @@ export default function AddTransaction() {
                   <select
                     value={formData.payment_method}
                     onChange={e => handleInputChange('payment_method', e.target.value)}
-                    className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200'
+                    className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-colors duration-200'
                     required
                   >
                     <option value=''>Select Payment Method</option>
@@ -709,7 +709,7 @@ export default function AddTransaction() {
                   <select
                     value={formData.category}
                     onChange={e => handleInputChange('category', e.target.value)}
-                    className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200'
+                    className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-colors duration-200'
                     required
                   >
                     <option value=''>Select Category</option>
@@ -727,7 +727,7 @@ export default function AddTransaction() {
                   <select
                     value={formData.psp}
                     onChange={e => handleInputChange('psp', e.target.value)}
-                    className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200'
+                    className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-colors duration-200'
                   >
                     <option value=''>Select PSP/KASA</option>
                     {dropdownOptions.psp?.map(option => (
@@ -751,7 +751,7 @@ export default function AddTransaction() {
                   <select
                     value={formData.company}
                     onChange={e => handleInputChange('company', e.target.value)}
-                    className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200'
+                    className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-colors duration-200'
                   >
                     <option value=''>Select Company</option>
                     {dropdownOptions.company?.map(option => (
@@ -774,7 +774,7 @@ export default function AddTransaction() {
                 <textarea
                   value={formData.notes}
                   onChange={e => handleInputChange('notes', e.target.value)}
-                  className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200'
+                  className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-colors duration-200'
                   placeholder='Enter any additional notes or comments about this transaction'
                   rows={4}
                 />
@@ -818,7 +818,7 @@ export default function AddTransaction() {
                           min='0'
                           value={formData.eur_rate}
                           onChange={e => handleInputChange('eur_rate', e.target.value)}
-                          className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200'
+                          className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-colors duration-200'
                           placeholder='0.0000'
                           required={formData.currency === 'EUR'}
                         />
@@ -840,7 +840,7 @@ export default function AddTransaction() {
                             min='0'
                             value={formData.usd_rate}
                             onChange={e => handleInputChange('usd_rate', e.target.value)}
-                            className='flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200'
+                            className='flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-colors duration-200'
                             placeholder='0.0000'
                           />
                           <button
@@ -854,7 +854,7 @@ export default function AddTransaction() {
                           <button
                             type='button'
                             onClick={applyUsdRate}
-                            className='px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200'
+                            className='px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors duration-200'
                           >
                             Apply
                           </button>
@@ -873,10 +873,10 @@ export default function AddTransaction() {
 
                   {/* Rate Validation Status */}
                   {rateValidationMessage && (
-                    <div className='mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg'>
+                    <div className='mt-4 p-3 bg-gray-50 border border-gray-200 rounded-lg'>
                       <div className='flex items-center gap-2'>
-                        <Info className='h-4 w-4 text-blue-600' />
-                        <span className='text-blue-800 text-sm'>
+                        <Info className='h-4 w-4 text-gray-600' />
+                        <span className='text-gray-800 text-sm'>
                           <strong>Rate Validation:</strong> {rateValidationMessage}
                         </span>
                       </div>
@@ -900,7 +900,7 @@ export default function AddTransaction() {
               <button
                 type='submit'
                 disabled={submitting}
-                className='flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed'
+                className='flex-1 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed'
               >
                 {submitting ? 'Adding Transaction...' : 'Add Transaction'}
               </button>
@@ -919,8 +919,8 @@ export default function AddTransaction() {
             <Settings className='h-4 w-4' />
             Manage Dropdown Options
           </a>
-          <div className='mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg'>
-            <div className='flex items-center gap-2 text-blue-800'>
+          <div className='mt-4 p-4 bg-gray-50 border border-gray-200 rounded-lg'>
+            <div className='flex items-center gap-2 text-gray-800'>
               <Info className='h-4 w-4' />
               <div className='text-sm'>
                 <strong>Need to customize dropdown options?</strong>

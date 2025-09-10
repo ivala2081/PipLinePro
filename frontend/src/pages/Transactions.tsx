@@ -894,9 +894,9 @@ export default function Transactions() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="p-6">
       {/* Breadcrumb Navigation */}
-      <div className="px-6 py-4 bg-white border-b border-slate-200">
+      <div className="mb-6">
         <Breadcrumb 
           items={[
             { label: 'Dashboard', href: '/' },
@@ -905,28 +905,27 @@ export default function Transactions() {
         />
       </div>
 
-      {/* Modern Header */}
-      <div className="bg-white border-b border-slate-200">
-        <div className="px-6 py-6">
-          <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <div className="flex items-center gap-3">
-                  <h1 className="text-3xl font-bold text-gray-900">{t('transactions.title')}</h1>
-                  <UnifiedBadge variant="secondary" size="sm" className="bg-blue-100 text-blue-800">
-                    Enhanced Filters Available
-                  </UnifiedBadge>
-                  <UnifiedBadge variant="success" size="sm" className="bg-green-100 text-green-800">
-                    USD Rate Management
-                  </UnifiedBadge>
-                </div>
-                <p className="text-gray-600">{t('transactions.description')}</p>
-                <div className="mt-2 p-2 bg-green-100 border border-green-300 rounded-lg">
-                  <p className="text-sm text-green-800">
-                    <strong>📍 Bulk USD Rate Management is located below the Daily Transaction Summary section.</strong> 
-                    Look for the green-themed card with "Bulk USD Rate Management" title.
-                  </p>
-                </div>
+      {/* Page Header */}
+      <div className="mb-6">
+        <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <div className="flex items-center gap-3">
+                <h1 className="text-3xl font-bold text-gray-900">{t('transactions.title')}</h1>
+                <UnifiedBadge variant="secondary" size="sm" className="bg-blue-100 text-blue-800">
+                  Enhanced Filters Available
+                </UnifiedBadge>
+                <UnifiedBadge variant="success" size="sm" className="bg-green-100 text-green-800">
+                  USD Rate Management
+                </UnifiedBadge>
               </div>
+              <p className="text-gray-600">{t('transactions.description')}</p>
+              <div className="mt-2 p-2 bg-green-100 border border-green-300 rounded-lg">
+                <p className="text-sm text-green-800">
+                  <strong>📍 Bulk USD Rate Management is located below the Daily Transaction Summary section.</strong> 
+                  Look for the green-themed card with "Bulk USD Rate Management" title.
+                </p>
+              </div>
+            </div>
             <div className="flex items-center gap-3">
               <QuickActions actions={[
                 {
@@ -981,7 +980,7 @@ export default function Transactions() {
                 className={`transition-all duration-200 ${
                   showFilters 
                     ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg' 
-                    : 'border-blue-300 text-blue-600 hover:bg-blue-50 hover:border-blue-400'
+                    : 'border-gray-300 text-gray-600 hover:bg-gray-50 hover:border-gray-400'
                 }`}
               >
                 {showFilters ? 'Hide Filters' : `Show Filters${getActiveFilterCount() > 0 ? ` (${getActiveFilterCount()})` : ''}`}
@@ -1366,7 +1365,7 @@ export default function Transactions() {
       {/* Comprehensive Filter Card */}
       {showFilters && (
         <div className="px-6 pb-6 animate-in slide-in-from-top-4 duration-300">
-          <UnifiedCard variant="outlined" className="overflow-hidden shadow-lg border-blue-200">
+          <UnifiedCard variant="outlined" className="overflow-hidden shadow-lg border-gray-200">
             <CardHeader className="bg-gradient-to-r from-slate-50 to-gray-50 border-b">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -1501,7 +1500,7 @@ export default function Transactions() {
                         <select
                           value={filters.category}
                           onChange={e => handleFilterChange('category', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
                         >
                           <option value="">All Categories</option>
                           <option value="DEP">Deposit (DEP)</option>
@@ -1513,7 +1512,7 @@ export default function Transactions() {
                         <select
                           value={filters.status}
                           onChange={e => handleFilterChange('status', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
                         >
                           <option value="">All Status</option>
                           <option value="completed">Completed</option>
@@ -1554,7 +1553,7 @@ export default function Transactions() {
                         <select
                           value={filters.psp}
                           onChange={e => handleFilterChange('psp', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
                         >
                           <option value="">All PSPs</option>
                           {dropdownOptions.psps?.map((psp: any) => (
@@ -1569,7 +1568,7 @@ export default function Transactions() {
                         <select
                           value={filters.company}
                           onChange={e => handleFilterChange('company', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
                         >
                           <option value="">All Companies</option>
                           {dropdownOptions.companies?.map((company: any) => (
@@ -1584,7 +1583,7 @@ export default function Transactions() {
                         <select
                           value={filters.payment_method}
                           onChange={e => handleFilterChange('payment_method', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
                         >
                           <option value="">All Methods</option>
                           {dropdownOptions.payment_methods?.map((method: any) => (
@@ -1599,7 +1598,7 @@ export default function Transactions() {
                         <select
                           value={filters.currency}
                           onChange={e => handleFilterChange('currency', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
                         >
                           <option value="">All Currencies</option>
                           {dropdownOptions.currencies?.map((currency: any) => (
@@ -1722,7 +1721,7 @@ export default function Transactions() {
                         <select
                           value={filters.sort_by}
                           onChange={e => handleFilterChange('sort_by', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
                         >
                           <option value="created_at">Date</option>
                           <option value="amount">Amount</option>
@@ -1737,7 +1736,7 @@ export default function Transactions() {
                         <select
                           value={filters.sort_order}
                           onChange={e => handleFilterChange('sort_order', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
                         >
                           <option value="desc">Descending</option>
                           <option value="asc">Ascending</option>
@@ -1749,8 +1748,8 @@ export default function Transactions() {
 
                 {/* Active Filters Summary */}
                 {getActiveFilterCount() > 0 && (
-                  <div className="space-y-3 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                    <h4 className="text-sm font-medium text-blue-900">Active Filters</h4>
+                  <div className="space-y-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <h4 className="text-sm font-medium text-gray-900">Active Filters</h4>
                     <div className="flex flex-wrap gap-2">
                       {filters.search && (
                         <UnifiedBadge variant="secondary" size="sm" className="bg-blue-100 text-blue-800">
@@ -1920,7 +1919,7 @@ export default function Transactions() {
             )}
             {loading || isLoadingData ? (
               <div className="p-12 text-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-600 mx-auto mb-4"></div>
                 <p className="text-gray-600 text-lg">Loading transactions...</p>
                 <p className="text-sm text-gray-500 mt-2">
                   Loading: {loading ? 'true' : 'false'}, isLoadingData: {isLoadingData ? 'true' : 'false'}
