@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session
+from flask import Blueprint, request, redirect, url_for, flash, session
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import check_password_hash
 from app.models.user import User
@@ -17,18 +17,18 @@ def simple_login():
         
         if not username or not password:
             flash('Please enter both username and password', 'error')
-            return render_template('simple_login.html')
+            return redirect('http://localhost:3000/login')
         
         user = User.query.filter_by(username=username).first()
         
         if user and check_password_hash(user.password, password):
             if not user.is_active:
                 flash('Account is deactivated', 'error')
-                return render_template('simple_login.html')
+                return redirect('http://localhost:3000/login')
             
             if user.account_locked_until and user.account_locked_until > datetime.utcnow():
                 flash('Account is temporarily locked', 'error')
-                return render_template('simple_login.html')
+                return redirect('http://localhost:3000/login')
             
             # Reset failed attempts on successful login
             user.failed_login_attempts = 0
@@ -40,9 +40,9 @@ def simple_login():
             return redirect(url_for('dashboard'))
         else:
             flash('Invalid username or password', 'error')
-            return render_template('simple_login.html')
+            return redirect('http://localhost:3000/login')
     
-    return render_template('simple_login.html')
+    return redirect('http://localhost:3000/login')
 
 @simple_auth.route('/simple-logout')
 @login_required

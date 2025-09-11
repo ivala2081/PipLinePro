@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { GlobalSearch } from './GlobalSearch';
 import { NotificationSystem } from './NotificationSystem';
-import { ThemeSwitcher } from './ThemeSwitcher';
+import PerformanceWidget from '../PerformanceWidget';
 
 interface ModernHeaderProps {
   onMenuClick: () => void;
@@ -88,8 +88,10 @@ export const ModernHeader: React.FC<ModernHeaderProps> = ({
 
       {/* Right Section */}
       <div className="flex items-center gap-2">
-        {/* Theme Switcher */}
-        <ThemeSwitcher />
+        {/* Performance Widget - Development Only */}
+        {process.env.NODE_ENV === 'development' && (
+          <PerformanceWidget position="header" compact={true} />
+        )}
         
         {/* Notifications */}
         <div className="relative">

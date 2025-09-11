@@ -19,7 +19,6 @@ import {
 } from '../components/ui';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
-import { useTheme, type Theme } from '../contexts/ThemeContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   Banknote, 
@@ -30,9 +29,6 @@ import {
   Lock,
   User,
   Globe,
-  Sun,
-  Moon,
-  Monitor,
   KeyRound,
   Smartphone,
   Settings,
@@ -90,7 +86,6 @@ export default function Login() {
   // Contexts
   const { login, isAuthenticated } = useAuth();
   const { t, currentLanguage, setLanguage } = useLanguage();
-  const { theme, setTheme, actualTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -371,34 +366,6 @@ export default function Login() {
             </SelectContent>
           </Select>
 
-          {/* Theme Selector */}
-          <Select value={theme} onValueChange={(value: Theme) => setTheme(value)}>
-            <SelectTrigger className="w-auto border-0 bg-transparent hover:bg-muted/50 transition-colors">
-              {actualTheme === 'light' && <Sun className="w-4 h-4 mr-1" />}
-              {actualTheme === 'dark' && <Moon className="w-4 h-4 mr-1" />}
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="light">
-                <div className="flex items-center gap-2">
-                  <Sun className="w-4 h-4" />
-                  {t('settings.lightMode')}
-                </div>
-              </SelectItem>
-              <SelectItem value="dark">
-                <div className="flex items-center gap-2">
-                  <Moon className="w-4 h-4" />
-                  {t('settings.darkMode')}
-                </div>
-              </SelectItem>
-              <SelectItem value="system">
-                <div className="flex items-center gap-2">
-                  <Monitor className="w-4 h-4" />
-                  {t('settings.systemDefault')}
-                </div>
-              </SelectItem>
-            </SelectContent>
-          </Select>
         </div>
 
         {/* Security Notice */}

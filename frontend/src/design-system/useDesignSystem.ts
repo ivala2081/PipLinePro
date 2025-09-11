@@ -1,58 +1,21 @@
 import { useState, useEffect } from 'react';
 import { designTokens, componentTokens, themeVariants } from './design-tokens';
 
-// Hook for managing design system state and theme
+// Hook for managing design system state (light theme only)
 export const useDesignSystem = () => {
-  const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system');
-  const [isDark, setIsDark] = useState(false);
-
-  // Apply theme to document
+  // Force light theme
   useEffect(() => {
     const root = document.documentElement;
-    
-    if (theme === 'system') {
-      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-      setIsDark(systemTheme === 'dark');
-      root.classList.toggle('dark', systemTheme === 'dark');
-    } else {
-      setIsDark(theme === 'dark');
-      root.classList.toggle('dark', theme === 'dark');
-    }
-    
-    // Save theme preference
-    localStorage.setItem('design-system-theme', theme);
-  }, [theme]);
-
-  // Load saved theme on mount
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('design-system-theme') as 'light' | 'dark' | 'system';
-    if (savedTheme) {
-      setTheme(savedTheme);
-    }
+    root.classList.remove('dark');
   }, []);
 
-  // Listen for system theme changes
-  useEffect(() => {
-    if (theme === 'system') {
-      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-      const handleChange = (e: MediaQueryListEvent) => {
-        setIsDark(e.matches);
-        document.documentElement.classList.toggle('dark', e.matches);
-      };
-      
-      mediaQuery.addEventListener('change', handleChange);
-      return () => mediaQuery.removeEventListener('change', handleChange);
-    }
-    return undefined
-  }, [theme]);
-
   return {
-    theme,
-    setTheme,
-    isDark,
+    theme: 'light' as const,
+    setTheme: () => {}, // No-op since we only support light theme
+    isDark: false,
     tokens: designTokens,
     componentTokens,
-    themeVariants: themeVariants[isDark ? 'dark' : 'light'],
+    themeVariants: themeVariants.light,
   };
 };
 

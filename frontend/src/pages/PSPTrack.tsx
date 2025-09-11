@@ -116,16 +116,17 @@ export default function PSPTrack() {
   ];
 
   return (
-    <div className="p-6">
-      {/* Breadcrumb Navigation */}
-      <div className="mb-6">
-        <Breadcrumb 
-          items={[
-            { label: 'Dashboard', href: '/' },
-            { label: 'PSP Tracking', current: true }
-          ]} 
-        />
-      </div>
+    <>
+      <div className="p-6">
+        {/* Breadcrumb Navigation */}
+        <div className="mb-6">
+          <Breadcrumb 
+            items={[
+              { label: 'Dashboard', href: '/' },
+              { label: 'PSP Tracking', current: true }
+            ]} 
+          />
+        </div>
 
       {/* Page Header */}
       <div className="mb-6">
@@ -545,6 +546,6 @@ export default function PSPTrack() {
         </CardContent>
       </UnifiedCard>
       </div>
-    </div>
+    </>
   );
 }

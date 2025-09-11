@@ -842,8 +842,6 @@ export default function Ledger() {
                 subtitle="Active providers"
                 icon={Building}
                 color="gray"
-                change="N/A"
-                trend="up"
               />
 
               {/* Rollover Risk Overview Card */}
@@ -880,8 +878,6 @@ export default function Ledger() {
                     subtitle={riskSubtitle}
                     icon={riskIcon}
                     color={riskColor}
-                    change={hasRisk ? "+5.2%" : "-2.3%"}
-                    trend={hasRisk ? "up" : "down"}
                   />
                 );
               })()}
@@ -892,8 +888,6 @@ export default function Ledger() {
                 subtitle="Funds allocated"
                 icon={CreditCard}
                 color="orange"
-                change="+8.7%"
-                trend="up"
               />
 
               <MetricCard
@@ -902,8 +896,6 @@ export default function Ledger() {
                 subtitle="Available balance"
                 icon={Activity}
                 color="purple"
-                change="+12.4%"
-                trend="up"
               />
               </div>
             </CardContent>

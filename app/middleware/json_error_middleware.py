@@ -177,7 +177,7 @@ from app.services.decimal_float_fix_service import decimal_float_service
     except Exception as e:
         logger.error(f"Template rendering error: {e}")
         # Return safe error template
-        return render_template('errors/500.html', error=str(e))
+        return jsonify({'error': 'Internal Server Error', 'message': str(e)}), 500
 
 # Global middleware instance
 json_error_middleware = JSONErrorMiddleware() 

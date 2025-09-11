@@ -263,16 +263,17 @@ const SystemMonitor: React.FC = () => {
   };
 
   return (
-    <div className="p-6">
-      {/* Breadcrumb Navigation */}
-      <div className="mb-6">
-        <Breadcrumb 
-          items={[
-            { label: 'Dashboard', href: '/' },
-            { label: 'System Monitor', current: true }
-          ]} 
-        />
-      </div>
+    <>
+      <div className="p-6">
+        {/* Breadcrumb Navigation */}
+        <div className="mb-6">
+          <Breadcrumb 
+            items={[
+              { label: 'Dashboard', href: '/' },
+              { label: 'System Monitor', current: true }
+            ]} 
+          />
+        </div>
 
       {/* Page Header */}
       <div className="mb-6">
@@ -861,7 +862,7 @@ const SystemMonitor: React.FC = () => {
           </div>
         )}
       </div>
-    </div>
+    </>
   );
 };
 

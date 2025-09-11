@@ -1,0 +1,77 @@
+# Cleanup Manifest for PipLinePro Unit Tests
+# This file lists ONLY test artifacts that can be safely removed
+# All paths are relative to the work directory
+
+# Test directories
+tests/
+tests/unit/
+tests/fixtures/
+tests/mocks/
+
+# Test configuration files
+pytest.ini
+requirements-test.txt
+run_unit.sh
+
+# Coverage and test reports
+artifacts/coverage-unit/
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.coverage.xml
+
+# Test databases and temporary files
+test_*.db
+test_*.db-shm
+test_*.db-wal
+*.db-journal
+
+# Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Log files from tests
+test_*.log
+pytest.log
+coverage.log
+
+# Temporary test files
+test_*.tmp
+test_*.temp
+tmp/
+temp/

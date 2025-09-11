@@ -1,265 +1,326 @@
-import React, { useState, useEffect } from 'react';
+/**
+ * Professional Accessibility Settings Component
+ * Clean, business-oriented accessibility controls
+ */
+
+import React, { useState } from 'react';
+import { useAccessibility } from '../contexts/AccessibilityContext';
 import { 
+  Settings, 
   Eye, 
+  EyeOff, 
+  MousePointer, 
+  Keyboard, 
   Type, 
-  Palette, 
-  Volume2, 
-  MousePointer,
-  Sun,
-  Moon,
-  Monitor,
-  Settings,
+  Contrast,
+  RotateCcw,
+  Check,
   X
 } from 'lucide-react';
 
-interface AccessibilitySettings {
-  highContrast: boolean;
-  fontSize: 'small' | 'medium' | 'large';
-  reducedMotion: boolean;
-  focusIndicator: boolean;
-  theme: 'light' | 'dark' | 'auto';
+interface AccessibilitySettingsProps {
+  className?: string;
+  compact?: boolean;
 }
 
-const AccessibilitySettings: React.FC = () => {
+const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ 
+  className = '',
+  compact = false 
+}) => {
+  const { settings, updateSettings, resetSettings } = useAccessibility();
   const [isOpen, setIsOpen] = useState(false);
-  const [settings, setSettings] = useState<AccessibilitySettings>({
-    highContrast: false,
-    fontSize: 'medium',
-    reducedMotion: false,
-    focusIndicator: true,
-    theme: 'auto'
-  });
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
-  useEffect(() => {
-    // Load saved settings from localStorage
-    const savedSettings = localStorage.getItem('accessibilitySettings');
-    if (savedSettings) {
-      try {
-        const parsed = JSON.parse(savedSettings);
-        setSettings(prev => ({ ...prev, ...parsed }));
-      } catch (error) {
-        console.error('Failed to parse accessibility settings:', error);
-      }
-    }
-  }, []);
-
-  useEffect(() => {
-    // Apply settings to document
-    applySettings(settings);
-    
-    // Save settings to localStorage
-    localStorage.setItem('accessibilitySettings', JSON.stringify(settings));
-  }, [settings]);
-
-  const applySettings = (newSettings: AccessibilitySettings) => {
-    const root = document.documentElement;
-    
-    // High contrast
-    if (newSettings.highContrast) {
-      root.classList.add('high-contrast');
-    } else {
-      root.classList.remove('high-contrast');
-    }
-    
-    // Font size
-    root.classList.remove('text-small', 'text-medium', 'text-large');
-    root.classList.add(`text-${newSettings.fontSize}`);
-    
-    // Reduced motion
-    if (newSettings.reducedMotion) {
-      root.classList.add('reduced-motion');
-    } else {
-      root.classList.remove('reduced-motion');
-    }
-    
-    // Focus indicator
-    if (newSettings.focusIndicator) {
-      root.classList.add('focus-indicator');
-    } else {
-      root.classList.remove('focus-indicator');
-    }
-    
-    // Theme
-    if (newSettings.theme === 'dark') {
-      root.classList.add('dark');
-    } else if (newSettings.theme === 'light') {
-      root.classList.remove('dark');
-    } else {
-      // Auto theme - respect system preference
-      if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        root.classList.add('dark');
-      } else {
-        root.classList.remove('dark');
-      }
-    }
+  const handleToggle = (key: keyof typeof settings) => {
+    updateSettings({ [key]: !settings[key] });
   };
 
-  const handleSettingChange = (key: keyof AccessibilitySettings, value: any) => {
-    setSettings(prev => ({ ...prev, [key]: value }));
+  const handleFontSizeChange = (size: 'small' | 'medium' | 'large') => {
+    updateSettings({ fontSize: size });
   };
 
-  const resetSettings = () => {
-    const defaultSettings: AccessibilitySettings = {
-      highContrast: false,
-      fontSize: 'medium',
-      reducedMotion: false,
-      focusIndicator: true,
-      theme: 'auto'
-    };
-    setSettings(defaultSettings);
+  const handleReset = () => {
+    resetSettings();
+    setShowResetConfirm(false);
+    setIsOpen(false);
   };
 
-  return (
-    <>
-      {/* Accessibility Button */}
-      <button
-        onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 w-14 h-14 bg-gray-600 text-white rounded-full shadow-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-all duration-200 z-40"
-        aria-label="Open accessibility settings"
-      >
-        <Settings className="w-6 h-6 mx-auto" />
-      </button>
+  if (compact) {
+    return (
+      <div className={`accessibility-settings-compact ${className}`}>
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="btn btn-outline"
+          aria-label="Accessibility settings"
+          aria-expanded={isOpen}
+          aria-haspopup="menu"
+        >
+          <Settings className="w-4 h-4" />
+        </button>
 
-      {/* Accessibility Panel */}
-      {isOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-hidden">
-            {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center">
-                  <Eye className="w-5 h-5 text-gray-600" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-gray-900">Accessibility</h2>
-                  <p className="text-sm text-gray-600">Customize your experience</p>
-                </div>
-              </div>
+        {isOpen && (
+          <div className="accessibility-dropdown">
+            <div className="accessibility-dropdown-header">
+              <h3>Accessibility</h3>
               <button
                 onClick={() => setIsOpen(false)}
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                aria-label="Close accessibility settings"
+                className="btn-close"
+                aria-label="Close settings"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Settings Content */}
-            <div className="p-6 space-y-6 overflow-y-auto max-h-[calc(90vh-120px)]">
-              {/* High Contrast */}
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <Palette className="w-5 h-5 text-gray-600" />
-                  <h3 className="font-medium text-gray-900">High Contrast</h3>
-                </div>
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={settings.highContrast}
-                    onChange={(e) => handleSettingChange('highContrast', e.target.checked)}
-                    className="w-4 h-4 text-gray-600 border-gray-300 rounded focus:ring-gray-500"
-                  />
-                  <span className="text-sm text-gray-700">Enable high contrast mode</span>
-                </label>
+            <div className="accessibility-dropdown-content">
+              {/* High Contrast Toggle */}
+              <div className="setting-item">
+                <button
+                  onClick={() => handleToggle('highContrast')}
+                  className={`setting-toggle ${settings.highContrast ? 'active' : ''}`}
+                  aria-pressed={settings.highContrast}
+                >
+                  <Contrast className="w-4 h-4" />
+                  <span>High Contrast</span>
+                  {settings.highContrast && <Check className="w-4 h-4" />}
+                </button>
+              </div>
+
+              {/* Reduced Motion Toggle */}
+              <div className="setting-item">
+                <button
+                  onClick={() => handleToggle('reducedMotion')}
+                  className={`setting-toggle ${settings.reducedMotion ? 'active' : ''}`}
+                  aria-pressed={settings.reducedMotion}
+                >
+                  <EyeOff className="w-4 h-4" />
+                  <span>Reduce Motion</span>
+                  {settings.reducedMotion && <Check className="w-4 h-4" />}
+                </button>
+              </div>
+
+              {/* Keyboard Navigation Toggle */}
+              <div className="setting-item">
+                <button
+                  onClick={() => handleToggle('keyboardNavigation')}
+                  className={`setting-toggle ${settings.keyboardNavigation ? 'active' : ''}`}
+                  aria-pressed={settings.keyboardNavigation}
+                >
+                  <Keyboard className="w-4 h-4" />
+                  <span>Keyboard Nav</span>
+                  {settings.keyboardNavigation && <Check className="w-4 h-4" />}
+                </button>
               </div>
 
               {/* Font Size */}
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <Type className="w-5 h-5 text-gray-600" />
-                  <h3 className="font-medium text-gray-900">Font Size</h3>
-                </div>
-                <div className="grid grid-cols-3 gap-2">
+              <div className="setting-item">
+                <label className="setting-label">
+                  <Type className="w-4 h-4" />
+                  Font Size
+                </label>
+                <div className="font-size-controls">
                   {(['small', 'medium', 'large'] as const).map((size) => (
                     <button
                       key={size}
-                      onClick={() => handleSettingChange('fontSize', size)}
-                      className={`px-3 py-2 text-sm rounded-lg border transition-colors ${
-                        settings.fontSize === size
-                          ? 'bg-gray-600 text-white border-gray-600'
-                          : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
-                      }`}
+                      onClick={() => handleFontSizeChange(size)}
+                      className={`font-size-btn ${settings.fontSize === size ? 'active' : ''}`}
+                      aria-pressed={settings.fontSize === size}
                     >
-                      {size.charAt(0).toUpperCase() + size.slice(1)}
+                      {size.charAt(0).toUpperCase()}
                     </button>
                   ))}
                 </div>
               </div>
 
-              {/* Reduced Motion */}
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <MousePointer className="w-5 h-5 text-gray-600" />
-                  <h3 className="font-medium text-gray-900">Reduced Motion</h3>
-                </div>
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={settings.reducedMotion}
-                    onChange={(e) => handleSettingChange('reducedMotion', e.target.checked)}
-                    className="w-4 h-4 text-gray-600 border-gray-300 rounded focus:ring-gray-500"
-                  />
-                  <span className="text-sm text-gray-700">Reduce animations and motion</span>
-                </label>
-              </div>
-
-              {/* Focus Indicator */}
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <MousePointer className="w-5 h-5 text-gray-600" />
-                  <h3 className="font-medium text-gray-900">Focus Indicator</h3>
-                </div>
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={settings.focusIndicator}
-                    onChange={(e) => handleSettingChange('focusIndicator', e.target.checked)}
-                    className="w-4 h-4 text-gray-600 border-gray-300 rounded focus:ring-gray-500"
-                  />
-                  <span className="text-sm text-gray-700">Show focus indicators</span>
-                </label>
-              </div>
-
-              {/* Theme */}
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <Monitor className="w-5 h-5 text-gray-600" />
-                  <h3 className="font-medium text-gray-900">Theme</h3>
-                </div>
-                <div className="grid grid-cols-3 gap-2">
-                  {(['light', 'dark', 'auto'] as const).map((theme) => (
-                    <button
-                      key={theme}
-                      onClick={() => handleSettingChange('theme', theme)}
-                      className={`px-3 py-2 text-sm rounded-lg border transition-colors ${
-                        settings.theme === theme
-                          ? 'bg-gray-600 text-white border-gray-600'
-                          : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
-                      }`}
-                    >
-                      {theme === 'light' ? <Sun className="w-4 h-4 mx-auto" /> : 
-                       theme === 'dark' ? <Moon className="w-4 h-4 mx-auto" /> : 
-                       <Monitor className="w-4 h-4 mx-auto" />}
-                      <span className="block mt-1">{theme.charAt(0).toUpperCase() + theme.slice(1)}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Reset Button */}
-              <div className="pt-4 border-t border-gray-200">
+              {/* Reset */}
+              <div className="setting-item">
                 <button
-                  onClick={resetSettings}
-                  className="w-full px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                  onClick={() => setShowResetConfirm(true)}
+                  className="setting-reset"
                 >
-                  Reset to Defaults
+                  <RotateCcw className="w-4 h-4" />
+                  Reset Settings
                 </button>
               </div>
             </div>
           </div>
-        </div>
-      )}
-    </>
+        )}
+
+        {showResetConfirm && (
+          <div className="modal-overlay" onClick={() => setShowResetConfirm(false)}>
+            <div className="modal" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <h3 className="modal-title">Reset Accessibility Settings</h3>
+                <button
+                  onClick={() => setShowResetConfirm(false)}
+                  className="modal-close"
+                  aria-label="Close"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="modal-content">
+                <p>Are you sure you want to reset all accessibility settings to their defaults?</p>
+              </div>
+              <div className="modal-footer">
+                <button
+                  onClick={() => setShowResetConfirm(false)}
+                  className="btn btn-outline"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleReset}
+                  className="btn btn-primary"
+                >
+                  Reset
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Full settings panel
+  return (
+    <div className={`accessibility-settings-panel ${className}`}>
+      <div className="accessibility-panel-header">
+        <h2>Accessibility Settings</h2>
+        <p className="accessibility-description">
+          Customize your experience for better accessibility and usability.
+        </p>
+      </div>
+
+      <div className="accessibility-panel-content">
+        {/* Visual Settings */}
+        <section className="settings-section">
+          <h3>Visual</h3>
+          
+          <div className="setting-group">
+            <div className="setting-item">
+              <div className="setting-info">
+                <label className="setting-label">
+                  <Contrast className="w-5 h-5" />
+                  High Contrast
+                </label>
+                <p className="setting-description">
+                  Increase contrast for better visibility
+                </p>
+              </div>
+              <button
+                onClick={() => handleToggle('highContrast')}
+                className={`setting-toggle ${settings.highContrast ? 'active' : ''}`}
+                aria-pressed={settings.highContrast}
+              >
+                {settings.highContrast ? <Check className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
+              </button>
+            </div>
+
+            <div className="setting-item">
+              <div className="setting-info">
+                <label className="setting-label">
+                  <Type className="w-5 h-5" />
+                  Font Size
+                </label>
+                <p className="setting-description">
+                  Adjust text size for better readability
+                </p>
+              </div>
+              <div className="font-size-controls">
+                {(['small', 'medium', 'large'] as const).map((size) => (
+                  <button
+                    key={size}
+                    onClick={() => handleFontSizeChange(size)}
+                    className={`font-size-btn ${settings.fontSize === size ? 'active' : ''}`}
+                    aria-pressed={settings.fontSize === size}
+                  >
+                    {size.charAt(0).toUpperCase()}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Interaction Settings */}
+        <section className="settings-section">
+          <h3>Interaction</h3>
+          
+          <div className="setting-group">
+            <div className="setting-item">
+              <div className="setting-info">
+                <label className="setting-label">
+                  <EyeOff className="w-5 h-5" />
+                  Reduce Motion
+                </label>
+                <p className="setting-description">
+                  Minimize animations and transitions
+                </p>
+              </div>
+              <button
+                onClick={() => handleToggle('reducedMotion')}
+                className={`setting-toggle ${settings.reducedMotion ? 'active' : ''}`}
+                aria-pressed={settings.reducedMotion}
+              >
+                {settings.reducedMotion ? <Check className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
+            </div>
+
+            <div className="setting-item">
+              <div className="setting-info">
+                <label className="setting-label">
+                  <Keyboard className="w-5 h-5" />
+                  Keyboard Navigation
+                </label>
+                <p className="setting-description">
+                  Enhanced keyboard navigation support
+                </p>
+              </div>
+              <button
+                onClick={() => handleToggle('keyboardNavigation')}
+                className={`setting-toggle ${settings.keyboardNavigation ? 'active' : ''}`}
+                aria-pressed={settings.keyboardNavigation}
+              >
+                {settings.keyboardNavigation ? <Check className="w-5 h-5" /> : <MousePointer className="w-5 h-5" />}
+              </button>
+            </div>
+
+            <div className="setting-item">
+              <div className="setting-info">
+                <label className="setting-label">
+                  <MousePointer className="w-5 h-5" />
+                  Focus Indicators
+                </label>
+                <p className="setting-description">
+                  Show focus indicators for keyboard navigation
+                </p>
+              </div>
+              <button
+                onClick={() => handleToggle('focusVisible')}
+                className={`setting-toggle ${settings.focusVisible ? 'active' : ''}`}
+                aria-pressed={settings.focusVisible}
+              >
+                {settings.focusVisible ? <Check className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
+              </button>
+            </div>
+          </div>
+        </section>
+
+        {/* Actions */}
+        <section className="settings-section">
+          <div className="setting-actions">
+            <button
+              onClick={handleReset}
+              className="btn btn-outline"
+            >
+              <RotateCcw className="w-4 h-4" />
+              Reset to Defaults
+            </button>
+          </div>
+        </section>
+      </div>
+    </div>
   );
 };
 

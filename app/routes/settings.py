@@ -1,7 +1,7 @@
 """
 Settings routes blueprint
 """
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
+from flask import Blueprint, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
 from datetime import datetime, timezone
 import json
@@ -54,22 +54,12 @@ def settings():
         # Get fixed Company options from database
         fixed_company_options = CompanyOptionsService.create_fixed_company_options()
         
-        return render_template('settings_main.html', 
-                            options=grouped_options,
-                            fixed_psp_options=fixed_psp_options,
-                            fixed_company_options=fixed_company_options,
-                            fields=fields,
-                            sessions=sessions,
-                            user_settings=user_settings)
+        return redirect('http://localhost:3000/settings')
                             
     except Exception as e:
         logger.error(f"Error in settings: {str(e)}")
         flash('Error loading settings. Please try again.', 'error')
-        return render_template('settings_main.html', 
-                            options={},
-                            fields=[],
-                            sessions=[],
-                            user_settings=None)
+        return redirect('http://localhost:3000/settings')
 
 @settings_bp.route('/settings/dropdowns', methods=['GET', 'POST'])
 @login_required
@@ -186,7 +176,7 @@ def settings_dropdowns():
     # Define available fields for the dropdown (PSP and Company are now fixed from database)
     fields = ['iban', 'payment_method', 'company_order', 'currency']
     
-    return render_template('settings_dropdowns.html', grouped_options=grouped_options, fields=fields)
+    return redirect('http://localhost:3000/settings')
 
 @settings_bp.route('/edit_option/<int:id>', methods=['GET', 'POST'])
 @login_required
@@ -201,7 +191,7 @@ def edit_option(id):
             
             if not value:
                 flash('Value is required.', 'error')
-                return render_template('edit_option.html', option=option)
+                return redirect('http://localhost:3000/settings')
             
             # Validate commission rate if provided
             commission_decimal = None
@@ -210,10 +200,10 @@ def edit_option(id):
                     commission_decimal = Decimal(commission_rate)
                     if commission_decimal < 0 or commission_decimal > 1:
                         flash('Commission rate must be between 0 and 1.', 'error')
-                        return render_template('edit_option.html', option=option)
+                        return redirect('http://localhost:3000/settings')
                 except (InvalidOperation, ValueError):
                     flash('Invalid commission rate format.', 'error')
-                    return render_template('edit_option.html', option=option)
+                    return redirect('http://localhost:3000/settings')
             
             option.value = value
             option.commission_rate = commission_decimal
@@ -227,7 +217,7 @@ def edit_option(id):
             logger.error(f"Error updating option: {str(e)}")
             flash('Error updating option. Please try again.', 'error')
     
-    return render_template('edit_option.html', option=option)
+    return redirect('http://localhost:3000/settings')
 
 @settings_bp.route('/delete_option/<int:id>', methods=['POST'])
 @login_required
@@ -280,11 +270,7 @@ def exchange_rates_validation():
             if 'EUR' not in rates:
                 missing_rates.append({'date': date_str, 'currency': 'EUR', 'status': 'Missing'})
         
-        return render_template('exchange_rates_validation.html', 
-                            rates_by_date=rates_by_date,
-                            missing_rates=missing_rates,
-                            total_dates=len(rates_by_date),
-                            missing_count=len(missing_rates))
+        return redirect('http://localhost:3000/settings')
                             
     except Exception as e:
         logger.error(f"Error in exchange rates validation: {str(e)}")
@@ -476,4 +462,4 @@ def database_monitoring():
         flash('Access denied. Admin privileges required.', 'error')
         return redirect(url_for('analytics.dashboard'))
     
-    return render_template('database_monitoring.html') 
+    return redirect('http://localhost:3000/settings') 

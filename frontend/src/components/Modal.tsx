@@ -60,37 +60,40 @@ const Modal: React.FC<ModalProps> = ({
   if (!isOpen) return null;
 
   const sizeClasses = {
-    sm: 'business-modal-sm',
-    md: 'business-modal-md',
-    lg: 'business-modal-lg',
-    xl: 'business-modal-xl',
-    full: 'business-modal-full',
+    sm: 'max-w-md',
+    md: 'max-w-lg',
+    lg: 'max-w-2xl',
+    xl: 'max-w-4xl',
+    full: 'max-w-7xl',
   };
 
   return (
-    <div className="business-modal-overlay" onClick={handleBackdropClick}>
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4" 
+      onClick={handleBackdropClick}
+    >
       {/* Modal */}
       <div
         ref={modalRef}
-        className={`${sizeClasses[size]} ${className}`}
+        className={`w-full ${sizeClasses[size]} bg-white rounded-lg shadow-xl ${className}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-title"
         aria-describedby={subtitle ? "modal-subtitle" : undefined}
       >
         {/* Header */}
-        <div className="business-modal-header">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div>
             <h2
               id="modal-title"
-              className="business-modal-header-title"
+              className="text-lg font-semibold text-gray-900"
             >
               {title}
             </h2>
             {subtitle && (
               <p
                 id="modal-subtitle"
-                className="business-modal-header-subtitle"
+                className="text-sm text-gray-600 mt-1"
               >
                 {subtitle}
               </p>
@@ -99,22 +102,22 @@ const Modal: React.FC<ModalProps> = ({
           {showCloseButton && (
             <button
               onClick={onClose}
-              className="business-modal-close"
+              className="text-gray-400 hover:text-gray-600 transition-colors"
               aria-label="Close modal"
             >
-              <X className="business-modal-close-icon" />
+              <X className="h-5 w-5" />
             </button>
           )}
         </div>
 
         {/* Content */}
-        <div className="business-modal-body">
+        <div className="p-6">
           {children}
         </div>
 
         {/* Footer */}
         {footer && (
-          <div className="business-modal-footer">
+          <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 bg-gray-50 rounded-b-lg">
             {footer}
           </div>
         )}

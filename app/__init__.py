@@ -409,6 +409,10 @@ def create_app(config_name=None):
     from app.api.v1.endpoints.performance import performance_api
     app.register_blueprint(performance_api, url_prefix='/api/v1/performance')
     
+    # Register system monitoring blueprint
+    from app.api.v1.endpoints.monitoring import monitoring_api
+    app.register_blueprint(monitoring_api, url_prefix='/api/v1')
+    
     # Initialize color enhancement routes
     init_color_enhancement_routes(app)
     
@@ -427,42 +431,13 @@ def create_app(config_name=None):
         handle_enhanced_web_error, enhanced_error_handler
     )
     
-    # Root route - redirect to user's current page or dashboard
+    # Root route - redirect to React frontend
     @app.route('/')
     @login_required
     def root():
-        """Root route - redirect to user's current page or dashboard"""
-        from flask import session
-        
-        # Check if user has a current page stored in session
-        current_page = session.get('current_page')
-        
-        if current_page and current_page != '/':
-            # Validate that the current page is safe and exists
-            try:
-                # Try to redirect to the stored page
-                return redirect(current_page)
-            except:
-                # If there's an issue, fall back to dashboard
-                pass
-        
-        # Fall back to user's preferred landing page or dashboard
-        from flask_login import current_user
-        if current_user and current_user.is_authenticated:
-            from app.models.config import UserSettings
-            user_settings = UserSettings.query.filter_by(user_id=current_user.id).first()
-            if user_settings and user_settings.landing_page:
-                if user_settings.landing_page == 'dashboard':
-                    return redirect(url_for('analytics.dashboard'))
-                elif user_settings.landing_page == 'transactions':
-                    return redirect(url_for('transactions.clients'))
-                elif user_settings.landing_page == 'summary':
-                    return redirect(url_for('analytics.summary'))
-                elif user_settings.landing_page == 'analytics':
-                    return redirect(url_for('analytics.analytics'))
-        
-        # Default fallback to dashboard
-        return redirect(url_for('analytics.dashboard'))
+        """Root route - redirect to React frontend"""
+        # Redirect to React frontend (localhost:3000 in development)
+        return redirect('http://localhost:3000')
     
     # Note: format_number filter is now registered in template_helpers.py
     
@@ -713,28 +688,28 @@ def create_app(config_name=None):
     
     @app.errorhandler(404)
     def not_found_error(error):
-        return render_template('errors/404.html'), 404
+        return jsonify({'error': 'Not Found', 'message': 'The requested resource was not found'}), 404
 
     @app.errorhandler(500)
     def internal_error(error):
         db.session.rollback()
-        return render_template('errors/500.html'), 500
+        return jsonify({'error': 'Internal Server Error', 'message': 'An internal server error occurred'}), 500
 
     @app.errorhandler(403)
     def forbidden_error(error):
-        return render_template('errors/403.html'), 403
+        return jsonify({'error': 'Forbidden', 'message': 'Access to this resource is forbidden'}), 403
 
     @app.errorhandler(401)
     def unauthorized_error(error):
-        return render_template('errors/401.html'), 401
+        return jsonify({'error': 'Unauthorized', 'message': 'Authentication required'}), 401
 
     @app.errorhandler(429)
     def rate_limit_error(error):
-        return render_template('errors/429.html'), 429
+        return jsonify({'error': 'Too Many Requests', 'message': 'Rate limit exceeded'}), 429
 
     @app.errorhandler(PipLineError)
     def handle_pipeline_error(error):
-        return render_template('errors/generic.html', error=error), 400
+        return jsonify({'error': 'Pipeline Error', 'message': str(error)}), 400
 
     # CSRF Error Handler - Enhanced
     @app.errorhandler(400)
@@ -773,17 +748,21 @@ def create_app(config_name=None):
                     'new_token': result.get('token', '')
                 }), 400
             
-            # For web requests, return HTML template
+            # For web requests, return JSON response
             if result.get('disabled', False):
                 # CSRF protection temporarily disabled
                 logger.warning("CSRF protection temporarily disabled due to repeated errors")
-                return render_template('errors/csrf_disabled.html', 
-                                     error=result.get('error', 'CSRF protection disabled')), 200
+                return jsonify({
+                    'error': 'CSRF Protection Disabled',
+                    'message': result.get('error', 'CSRF protection disabled')
+                }), 200
             
-            # Return a user-friendly error page with new token
-            return render_template('errors/csrf_error.html', 
-                                 error=result.get('error', 'CSRF validation failed'),
-                                 new_token=result.get('token', '')), 400
+            # Return a JSON error response with new token
+            return jsonify({
+                'error': 'CSRF Validation Failed',
+                'message': result.get('error', 'CSRF validation failed'),
+                'new_token': result.get('token', '')
+            }), 400
         
         # Handle other 400 errors
         if request.path.startswith('/api/'):
@@ -828,7 +807,7 @@ def create_app(config_name=None):
                 'message': 'An unexpected error occurred. Please try again.'
             }), 500
         
-        return render_template('errors/500.html'), 500
+        return jsonify({'error': 'Internal Server Error', 'message': 'An unexpected error occurred'}), 500
     
         # Initialize Exchange Rate Service for automatic updates
     try:
@@ -858,5 +837,25 @@ def create_app(config_name=None):
                 app.logger.warning(f"Database optimization failed: {result.get('error', 'Unknown error')}")
     except Exception as e:
         app.logger.error(f"Failed to initialize database optimization: {e}")
+
+    # Initialize system monitoring
+    try:
+        from app.services.system_monitoring_service import get_system_monitor
+        with app.app_context():
+            system_monitor = get_system_monitor()
+            system_monitor.start_monitoring(interval=60)  # Monitor every minute
+            app.logger.info("System monitoring initialized")
+    except Exception as e:
+        app.logger.error(f"Failed to initialize system monitoring: {e}")
+
+    # Initialize scalability services
+    try:
+        from app.services.scalability_service import get_scalability_service
+        with app.app_context():
+            scalability_service = get_scalability_service()
+            scalability_service.start_services()
+            app.logger.info("Scalability services initialized")
+    except Exception as e:
+        app.logger.error(f"Failed to initialize scalability services: {e}")
 
     return app 

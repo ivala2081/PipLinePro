@@ -1,7 +1,7 @@
 """
 Admin management routes for managing admin permissions and hierarchy
 """
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
+from flask import Blueprint, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
 from werkzeug.security import generate_password_hash
 from datetime import datetime, timezone
@@ -40,11 +40,7 @@ def admin_management():
         # Get available permissions
         available_permissions = get_available_permissions()
         
-        return render_template('admin_management.html',
-                             admins=admins,
-                             manageable_levels=manageable_levels,
-                             available_permissions=available_permissions,
-                             can_manage_user=can_manage_user)
+        return redirect('http://localhost:3000/admin/management')
     except Exception as e:
         logger.error(f"Error in admin management view: {str(e)}")
         flash('Error loading admin management page.', 'error')

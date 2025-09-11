@@ -739,8 +739,8 @@ export function ProfessionalNavigationShowcase() {
           Professional Navigation & Menu Systems
         </h2>
         <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-          Business-ready navigation components with advanced features, smooth interactions, 
-          and accessibility support. Perfect for creating intuitive user experiences.
+          Business-ready navigation components with advanced features and smooth interactions. 
+          Perfect for creating intuitive user experiences.
         </p>
       </div>
 

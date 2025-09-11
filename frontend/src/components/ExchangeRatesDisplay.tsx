@@ -170,7 +170,7 @@ const ExchangeRateCard: React.FC<{
           <h4 className="font-semibold text-gray-900">
             {exchangeRatesService.formatCurrencyPair(rate.currency_pair)}
           </h4>
-          <div className="text-2xl font-bold text-gray-900">
+          <div className="text-lg font-bold text-gray-900">
             {exchangeRatesService.formatRate(rate.rate, rate.currency_pair)}
           </div>
         </div>

@@ -73,38 +73,54 @@ def setup_logging(app_name: str = "PipLinePro", log_level: str = "INFO",
     # File handlers
     handlers = []
     
-    # Main application log
+    # Main application log - with proper file handle management
     app_log_file = os.path.join(log_dir, f"{app_name.lower()}.log")
     app_handler = logging.handlers.RotatingFileHandler(
-        app_log_file, maxBytes=max_log_size, backupCount=backup_count
+        app_log_file, 
+        maxBytes=2*1024*1024,  # Reduced to 2MB
+        backupCount=3,
+        encoding='utf-8',
+        delay=True  # Delay file opening to prevent permission issues
     )
     app_handler.setLevel(level)
     app_handler.setFormatter(detailed_formatter)
     handlers.append(app_handler)
     
-    # Error log (only errors and critical)
+    # Error log - with proper file handle management
     error_log_file = os.path.join(log_dir, f"{app_name.lower()}_errors.log")
     error_handler = logging.handlers.RotatingFileHandler(
-        error_log_file, maxBytes=max_log_size, backupCount=backup_count
+        error_log_file, 
+        maxBytes=2*1024*1024,  # Reduced to 2MB
+        backupCount=3,
+        encoding='utf-8',
+        delay=True  # Delay file opening to prevent permission issues
     )
     error_handler.setLevel(logging.ERROR)
     error_handler.setFormatter(detailed_formatter)
     handlers.append(error_handler)
     
-    # Debug log (only in debug mode)
+    # Debug log - with proper file handle management
     if level <= logging.DEBUG:
         debug_log_file = os.path.join(log_dir, f"{app_name.lower()}_debug.log")
         debug_handler = logging.handlers.RotatingFileHandler(
-            debug_log_file, maxBytes=max_log_size, backupCount=backup_count
+            debug_log_file, 
+            maxBytes=2*1024*1024,  # Reduced to 2MB
+            backupCount=2,  # Minimal backup count
+            encoding='utf-8',
+            delay=True  # Delay file opening to prevent permission issues
         )
         debug_handler.setLevel(logging.DEBUG)
         debug_handler.setFormatter(detailed_formatter)
         handlers.append(debug_handler)
     
-    # Performance log
+    # Performance log - with proper file handle management
     perf_log_file = os.path.join(log_dir, f"{app_name.lower()}_performance.log")
     perf_handler = logging.handlers.RotatingFileHandler(
-        perf_log_file, maxBytes=max_log_size, backupCount=backup_count
+        perf_log_file, 
+        maxBytes=2*1024*1024,  # Reduced to 2MB
+        backupCount=2,  # Minimal backup count
+        encoding='utf-8',
+        delay=True  # Delay file opening to prevent permission issues
     )
     perf_handler.setLevel(logging.INFO)
     perf_handler.setFormatter(json_formatter)

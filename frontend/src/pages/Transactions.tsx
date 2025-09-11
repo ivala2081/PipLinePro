@@ -150,7 +150,13 @@ export default function Transactions() {
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
-  const [dropdownOptions, setDropdownOptions] = useState({
+  const [dropdownOptions, setDropdownOptions] = useState<{
+    categories: string[];
+    psps: string[];
+    payment_methods: string[];
+    companies: string[];
+    currencies: string[];
+  }>({
     categories: [],
     psps: [],
     payment_methods: [],
@@ -200,6 +206,11 @@ export default function Transactions() {
     console.log('🔄 Transactions: Loading state changed:', { loading, isLoadingData });
   }, [loading, isLoadingData]);
 
+  // Debug: Log dropdown options changes
+  useEffect(() => {
+    console.log('🔄 Transactions: Dropdown options changed:', dropdownOptions);
+  }, [dropdownOptions]);
+
   // Force data loading on component mount
   useEffect(() => {
     console.log('🔄 Transactions: Component mounted, ensuring data load...');
@@ -213,6 +224,20 @@ export default function Transactions() {
     
     return () => clearTimeout(timer);
   }, []); // Only run on mount
+
+  // Immediate call to fetch dropdown options on mount
+  useEffect(() => {
+    console.log('🔄 Transactions: Immediate dropdown options fetch on mount');
+    fetchDropdownOptions();
+  }, []); // Run immediately on mount
+
+  // Additional effect to ensure dropdown options are loaded
+  useEffect(() => {
+    if (isAuthenticated && !authLoading && dropdownOptions.currencies.length === 0) {
+      console.log('🔄 Transactions: Dropdown options empty, refetching...');
+      fetchDropdownOptions();
+    }
+  }, [isAuthenticated, authLoading, dropdownOptions.currencies.length]);
 
   // Data loading when navigating to transactions page
   useEffect(() => {
@@ -297,15 +322,55 @@ export default function Transactions() {
 
   const fetchDropdownOptions = async () => {
     try {
+      console.log('🔄 Transactions: Fetching dropdown options...');
+      console.log('🔄 Transactions: API base URL:', (api as any).defaults?.baseURL);
+      console.log('🔄 Transactions: Making API call to /api/v1/transactions/dropdown-options');
+      
       const response = await api.get('/api/v1/transactions/dropdown-options');
+      console.log('🔄 Transactions: Dropdown options response status:', response.status);
+      console.log('🔄 Transactions: Response headers:', response.headers);
+      
       if (response.ok) {
-        const result = await response.json();
-        setDropdownOptions(result);
+        const data = await response.json();
+        console.log('🔄 Transactions: Raw dropdown options data:', data);
+        if (data) {
+          // Extract just the 'value' property from each option object
+          const processedOptions = {
+            currencies: (data.currency || []).map((option: any) => option.value),
+            payment_methods: (data.payment_method || []).map((option: any) => option.value),
+            categories: (data.category || []).map((option: any) => option.value),
+            psps: (data.psp || []).map((option: any) => option.value),
+            companies: (data.company || []).map((option: any) => option.value),
+          };
+          console.log('🔄 Transactions: Processed dropdown options:', processedOptions);
+          setDropdownOptions(processedOptions);
+        } else {
+          console.warn('🔄 Transactions: No data received from dropdown options API');
+        }
       } else {
-        console.error('Failed to fetch dropdown options');
+        console.error('Failed to fetch dropdown options, status:', response.status);
+        const errorText = await response.text();
+        console.error('Error response:', errorText);
       }
     } catch (error) {
       console.error('Error fetching dropdown options:', error);
+      console.error('Error details:', {
+        message: (error as Error).message,
+        stack: (error as Error).stack,
+        name: (error as Error).name
+      });
+      
+      // Fallback to hardcoded options if API fails
+      console.log('🔄 Transactions: Using fallback hardcoded options');
+      const fallbackOptions = {
+        currencies: ['TL', 'USD', 'EUR'] as string[],
+        payment_methods: ['Bank', 'Credit card', 'Tether'] as string[],
+        categories: ['DEP', 'WD'] as string[],
+        psps: ['SİPAY', 'TETHER', 'KUYUMCU', '#60 CASHPAY', '#61 CRYPPAY', '#62 CRYPPAY'] as string[],
+        companies: ['ORDER', 'ROI', 'ROİ'] as string[]
+      };
+      console.log('🔄 Transactions: Setting fallback options:', fallbackOptions);
+      setDropdownOptions(fallbackOptions);
     }
   };
 
@@ -894,16 +959,17 @@ export default function Transactions() {
   }
 
   return (
-    <div className="p-6">
-      {/* Breadcrumb Navigation */}
-      <div className="mb-6">
-        <Breadcrumb 
-          items={[
-            { label: 'Dashboard', href: '/' },
-            { label: 'Transactions', current: true }
-          ]} 
-        />
-      </div>
+    <>
+      <div className="p-6">
+        {/* Breadcrumb Navigation */}
+        <div className="mb-6">
+          <Breadcrumb 
+            items={[
+              { label: 'Dashboard', href: '/' },
+              { label: 'Transactions', current: true }
+            ]} 
+          />
+        </div>
 
       {/* Page Header */}
       <div className="mb-6">
@@ -972,6 +1038,15 @@ export default function Transactions() {
                 {showBulkRates ? 'Hide USD Rates' : 'Manage USD Rates'}
               </button>
               
+              {/* Debug: Refresh Dropdown Options Button */}
+              <UnifiedButton
+                variant="outline"
+                onClick={fetchDropdownOptions}
+                className="border-orange-300 text-orange-600 hover:bg-orange-50 hover:border-orange-400"
+              >
+                🔄 Refresh Options
+              </UnifiedButton>
+
               {/* Prominent Filter Button */}
               <UnifiedButton
                 variant={showFilters ? "primary" : "outline"}
@@ -1348,7 +1423,7 @@ export default function Transactions() {
                             <ProgressRing 
                               percentage={(count / transactions.length) * 100} 
                               size="sm" 
-                              color="blue"
+                              color="gray"
                             />
                             <span className="text-sm font-medium">{count}</span>
                           </div>
@@ -1503,8 +1578,11 @@ export default function Transactions() {
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
                         >
                           <option value="">All Categories</option>
-                          <option value="DEP">Deposit (DEP)</option>
-                          <option value="WD">Withdrawal (WD)</option>
+                          {dropdownOptions.categories?.map((category: string) => (
+                            <option key={category} value={category}>
+                              {category}
+                            </option>
+                          ))}
                         </select>
                       </div>
                       <div className="space-y-2">
@@ -1556,9 +1634,9 @@ export default function Transactions() {
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
                         >
                           <option value="">All PSPs</option>
-                          {dropdownOptions.psps?.map((psp: any) => (
-                            <option key={psp.id} value={psp.value}>
-                              {psp.value}
+                          {dropdownOptions.psps?.map((psp: string) => (
+                            <option key={psp} value={psp}>
+                              {psp}
                             </option>
                           ))}
                         </select>
@@ -1571,9 +1649,9 @@ export default function Transactions() {
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
                         >
                           <option value="">All Companies</option>
-                          {dropdownOptions.companies?.map((company: any) => (
-                            <option key={company.id} value={company.value}>
-                              {company.value}
+                          {dropdownOptions.companies?.map((company: string) => (
+                            <option key={company} value={company}>
+                              {company}
                             </option>
                           ))}
                         </select>
@@ -1586,9 +1664,9 @@ export default function Transactions() {
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
                         >
                           <option value="">All Methods</option>
-                          {dropdownOptions.payment_methods?.map((method: any) => (
-                            <option key={method.id} value={method.value}>
-                              {method.value}
+                          {dropdownOptions.payment_methods?.map((method: string) => (
+                            <option key={method} value={method}>
+                              {method}
                             </option>
                           ))}
                         </select>
@@ -1601,9 +1679,9 @@ export default function Transactions() {
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
                         >
                           <option value="">All Currencies</option>
-                          {dropdownOptions.currencies?.map((currency: any) => (
-                            <option key={currency.id} value={currency.value}>
-                              {currency.value}
+                          {dropdownOptions.currencies?.map((currency: string) => (
+                            <option key={currency} value={currency}>
+                              {currency}
                             </option>
                           ))}
                         </select>
@@ -2345,6 +2423,6 @@ export default function Transactions() {
         label="Add Transaction"
         icon={<Plus className="h-5 w-5" />}
       />
-    </div>
+    </>
   );
 }

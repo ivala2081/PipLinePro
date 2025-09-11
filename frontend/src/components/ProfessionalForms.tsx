@@ -890,8 +890,8 @@ export function ProfessionalFormsShowcase() {
           Professional Form Components
         </h2>
         <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-          Business-ready form elements with advanced validation, accessibility features, 
-          and consistent professional styling. Perfect for creating user-friendly data entry forms.
+          Business-ready form elements with advanced validation and consistent professional styling. 
+          Perfect for creating user-friendly data entry forms.
         </p>
       </div>
 

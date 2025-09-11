@@ -1064,9 +1064,9 @@ def get_transaction(transaction_id):
             'created_at': transaction.created_at.isoformat() if transaction.created_at else None,
             'updated_at': transaction.updated_at.isoformat() if transaction.updated_at else None,
             # TL Amount fields for foreign currency transactions
-            'amount_tl': float(transaction.amount_tl) if transaction.amount_tl else None,
-            'commission_tl': float(transaction.commission_tl) if transaction.commission_tl else None,
-            'net_amount_tl': float(transaction.net_amount_tl) if transaction.net_amount_tl else None,
+            'amount_tl': float(transaction.amount_try) if transaction.amount_try else None,
+            'commission_tl': float(transaction.commission_try) if transaction.commission_try else None,
+            'net_amount_tl': float(transaction.net_amount_try) if transaction.net_amount_try else None,
             'exchange_rate': float(transaction.exchange_rate) if transaction.exchange_rate else None,
         }
         

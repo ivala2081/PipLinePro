@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import MobileBottomNavigation from './MobileBottomNavigation';
 import WorldClocks from './WorldClock';
+import { GlobalSearch } from './modern/GlobalSearch';
 
 interface LayoutProps {
   children?: React.ReactNode;
@@ -372,6 +373,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           </div>
 
           <div className="flex items-center space-business-x-md">
+            {/* Global Search */}
+            <div className="relative">
+              <GlobalSearch />
+            </div>
+
             {/* Admin Panel Button */}
             <div className="relative">
               <button 

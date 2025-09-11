@@ -56,6 +56,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [lastAuthCheck, setLastAuthCheck] = useState<number>(0);
   const navigate = useNavigate();
 
   // Check if user is authenticated on app load
@@ -63,17 +64,29 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     checkAuth();
   }, []);
 
-  const checkAuth = async () => {
+  // Throttle auth checks to prevent excessive requests
+  const shouldCheckAuth = () => {
+    const now = Date.now();
+    const timeSinceLastCheck = now - lastAuthCheck;
+    return timeSinceLastCheck > 120000; // Only check every 2 minutes (increased from 30 seconds)
+  };
+
+  const checkAuth = async (forceCheck = false) => {
+    // Throttle auth checks unless forced
+    if (!forceCheck && !shouldCheckAuth()) {
+      return;
+    }
+
     try {
       setIsLoading(true);
+      setLastAuthCheck(Date.now());
       
       // Use direct fetch to avoid CSRF token issues during auth check
       const response = await fetch('/api/v1/auth/check', {
         method: 'GET',
         credentials: 'include',
         headers: {
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache',
+          'Cache-Control': 'max-age=120', // Cache for 2 minutes (increased from 30 seconds)
           'X-Requested-With': 'XMLHttpRequest',
         },
       });

@@ -686,8 +686,8 @@ export function ProfessionalUtilitiesShowcase() {
           Professional Utility & Helper Components
         </h2>
         <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-          Essential utility components with business styling, smooth interactions, 
-          and accessibility support. Perfect for enhancing user experience.
+          Essential utility components with business styling and smooth interactions. 
+          Perfect for enhancing user experience.
         </p>
       </div>
 

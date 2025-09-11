@@ -6,8 +6,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:optimized": "vite --config vite.config.optimized.ts",
     "build": "tsc && vite build",
+    "build:optimized": "tsc && vite build --config vite.config.optimized.ts",
+    "build:analyze": "tsc && vite build --config vite.config.optimized.ts && npx vite-bundle-analyzer dist",
     "preview": "vite preview",
+    "preview:optimized": "vite preview --config vite.config.optimized.ts",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives",
     "lint:strict": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "type-check": "tsc --noEmit",
@@ -17,7 +21,10 @@
     "test:components": "vitest run src/test/comprehensive-component-tests.test.tsx",
     "test:watch": "vitest --watch",
     "format": "prettier --write src/",
-    "format:check": "prettier --check src/"
+    "format:check": "prettier --check src/",
+    "performance:audit": "lighthouse http://localhost:3000 --output html --output-path ./performance-audit.html",
+    "bundle:size": "npx bundlephobia",
+    "preload:components": "node scripts/preload-components.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.4",

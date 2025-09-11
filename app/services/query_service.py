@@ -12,7 +12,7 @@ from app import db
 from app.models.transaction import Transaction
 from app.models.user import User
 from app.models.config import Option, UserSettings, ExchangeRate
-from app.services.cache_service import cache_query, get_cache_service, invalidate_cache_pattern
+from app.utils.advanced_cache import cache_invalidate
 
 # Decimal/Float type mismatch prevention
 from app.services.decimal_float_fix_service import decimal_float_service
@@ -33,7 +33,6 @@ class QueryService:
             logger.debug(f"Query {query_name} executed in {execution_time:.3f}s")
     
     @staticmethod
-    @cache_query("transactions_by_date_range", ttl=300)
     def get_transactions_by_date_range(start_date: date, end_date: date, 
                                      page: int = 1, per_page: int = 50,
                                      filters: Dict[str, Any] = None) -> Dict[str, Any]:
@@ -85,7 +84,6 @@ class QueryService:
             raise
     
     @staticmethod
-    @cache_query("daily_summary", ttl=60)  # 1 minute cache for summaries (reduced for real-time data)
     def get_daily_summary(target_date: date, psp: str = None) -> Dict[str, Any]:
         """Get daily summary with caching"""
         start_time = time.time()
@@ -110,7 +108,6 @@ class QueryService:
             raise
     
     @staticmethod
-    @cache_query("psp_summary", ttl=600)
     def get_psp_summary(start_date: date, end_date: date, psp: str = None) -> List[Dict[str, Any]]:
         """Get PSP summary with caching"""
         start_time = time.time()
@@ -136,7 +133,6 @@ class QueryService:
             raise
     
     @staticmethod
-    @cache_query("recent_transactions", ttl=300)
     def get_recent_transactions(limit: int = 10, user_id: int = None) -> List[Dict[str, Any]]:
         """Get recent transactions with caching"""
         start_time = time.time()
@@ -158,7 +154,6 @@ class QueryService:
             raise
     
     @staticmethod
-    @cache_query("transaction_stats", ttl=900)  # 15 minutes cache for stats
     def get_transaction_stats(start_date: date, end_date: date) -> Dict[str, Any]:
         """Get comprehensive transaction statistics"""
         start_time = time.time()
@@ -246,10 +241,8 @@ class QueryService:
             "transaction_stats"
         ]
         
-        total_invalidated = 0
         for pattern in patterns:
-            count = invalidate_cache_pattern(pattern)
-            total_invalidated += count
+            cache_invalidate(pattern)
         
-        logger.info(f"Invalidated {total_invalidated} transaction cache entries")
-        return total_invalidated 
+        logger.info(f"Invalidated transaction cache entries for patterns: {patterns}")
+        return len(patterns) 

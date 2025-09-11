@@ -199,12 +199,12 @@ def create_error_response(error: PipLineError, request_format: str = None) -> tu
         })
         return response, error.status_code
     else:
-        # For HTML requests, return error template
-        response = render_template(
-            'errors/generic.html',
-            error=error,
-            status_code=error.status_code
-        )
+        # For HTML requests, return JSON error response
+        response = jsonify({
+            'error': 'Error',
+            'message': str(error),
+            'status_code': error.status_code
+        })
         return response, error.status_code
 
 def safe_execute(func, *args, **kwargs):

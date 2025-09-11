@@ -18,6 +18,10 @@ import {
   FileText,
   Globe,
   TrendingUp,
+  Save,
+  RefreshCw,
+  Shield,
+  Clock,
 } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -25,6 +29,8 @@ import { api } from '../utils/apiClient';
 import { exchangeRatesService } from '../services/exchangeRatesService';
 import { healthMonitor } from '../services/healthMonitor';
 import CurrencyConversionModal from '../components/CurrencyConversionModal';
+import { UnifiedButton } from '../design-system/UnifiedComponent';
+import { UnifiedCard } from '../design-system/UnifiedComponent';
 
 interface DropdownOption {
   id: number;
@@ -57,6 +63,7 @@ export default function AddTransaction() {
   const [showCurrencyModal, setShowCurrencyModal] = useState(false);
   const [rateValidationMessage, setRateValidationMessage] = useState('');
   const [convertedAmountTL, setConvertedAmountTL] = useState<string>('');
+  const [autoSaveStatus, setAutoSaveStatus] = useState<'saved' | 'saving' | 'error'>('saved');
 
   const [formData, setFormData] = useState({
     client_name: '',
@@ -71,6 +78,45 @@ export default function AddTransaction() {
     eur_rate: '',
     usd_rate: '',
   });
+
+  // Auto-save functionality
+  const AUTO_SAVE_KEY = 'addTransaction_autoSave';
+  const AUTO_SAVE_DELAY = 2000; // 2 seconds delay
+
+  // Load saved form data on component mount
+  useEffect(() => {
+    const savedData = localStorage.getItem(AUTO_SAVE_KEY);
+    if (savedData) {
+      try {
+        const parsedData = JSON.parse(savedData);
+        setFormData(parsedData);
+        console.log('📁 Auto-saved form data restored');
+      } catch (error) {
+        console.error('❌ Error parsing saved form data:', error);
+        localStorage.removeItem(AUTO_SAVE_KEY);
+      }
+    }
+  }, []);
+
+  // Auto-save form data when it changes
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      // Only save if form has meaningful data
+      if (formData.client_name || formData.amount || formData.date) {
+        setAutoSaveStatus('saving');
+        try {
+          localStorage.setItem(AUTO_SAVE_KEY, JSON.stringify(formData));
+          setAutoSaveStatus('saved');
+          console.log('💾 Form data auto-saved');
+        } catch (error) {
+          console.error('❌ Auto-save failed:', error);
+          setAutoSaveStatus('error');
+        }
+      }
+    }, AUTO_SAVE_DELAY);
+
+    return () => clearTimeout(timeoutId);
+  }, [formData]);
 
   useEffect(() => {
     console.log('🔍 Auth state check:', { isAuthenticated, authLoading, dropdownsLoaded, user: !!user });
@@ -415,6 +461,10 @@ export default function AddTransaction() {
         console.log('✅ Transaction created successfully!');
         setSuccess(true);
         
+        // Clear auto-saved data
+        localStorage.removeItem(AUTO_SAVE_KEY);
+        setAutoSaveStatus('saved');
+        
         // Dispatch event to refresh transaction lists in other components
         // Add a small delay to ensure transaction is fully committed
         setTimeout(() => {
@@ -523,235 +573,334 @@ export default function AddTransaction() {
     setSuccess(false);
     setError(null);
     setDropdownsLoaded(false);
+    setConvertedAmountTL('');
+    
+    // Clear auto-saved data
+    localStorage.removeItem(AUTO_SAVE_KEY);
+    setAutoSaveStatus('saved');
   };
 
   // Loading state
   if (authLoading || loading) {
     return (
-      <div className='min-h-screen flex items-center justify-center bg-gray-50'>
-        <div className='text-center'>
-          <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-gray-600 mx-auto'></div>
-          <p className='mt-4 text-gray-600'>Loading...</p>
-        </div>
+      <div className='min-h-screen bg-gray-50 flex items-center justify-center p-4'>
+        <UnifiedCard className="max-w-sm w-full text-center" variant="elevated">
+          <div className='space-y-4'>
+            <div className='w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto'>
+              <RefreshCw className='h-8 w-8 text-blue-600 animate-spin' />
+            </div>
+            <div>
+              <h2 className='text-xl font-semibold text-gray-900 mb-2'>
+                Loading Transaction Form
+              </h2>
+              <p className='text-gray-600'>
+                Please wait while we prepare the form and load your options...
+              </p>
+            </div>
+          </div>
+        </UnifiedCard>
       </div>
     );
   }
 
   if (success) {
     return (
-      <div className='min-h-screen flex items-center justify-center bg-gray-50'>
-        <div className='text-center'>
-          <div className='w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4'>
-            <CheckCircle className='h-10 w-10 text-green-600' />
+      <div className='min-h-screen bg-gray-50 flex items-center justify-center p-4'>
+        <UnifiedCard className="max-w-md w-full text-center" variant="elevated">
+          <div className='space-y-6'>
+            <div className='w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto'>
+              <CheckCircle className='h-10 w-10 text-green-600' />
+            </div>
+            <div>
+              <h2 className='text-2xl font-bold text-gray-900 mb-2'>
+                Transaction Added Successfully!
+              </h2>
+              <p className='text-gray-600'>
+                The transaction has been added to your pipeline and is now available in your transaction list.
+              </p>
+            </div>
+            <div className='flex flex-col sm:flex-row gap-3'>
+              <UnifiedButton
+                variant="primary"
+                size="lg"
+                onClick={() => (window.location.href = '/transactions')}
+                icon={<FileText className="h-4 w-4" />}
+                className="flex-1"
+              >
+                View Transactions
+              </UnifiedButton>
+              <UnifiedButton
+                variant="outline"
+                size="lg"
+                onClick={resetForm}
+                icon={<Plus className="h-4 w-4" />}
+                className="flex-1"
+              >
+                Add Another
+              </UnifiedButton>
+            </div>
           </div>
-          <h2 className='text-2xl font-bold text-gray-900 mb-2'>
-            Transaction Added Successfully!
-          </h2>
-          <p className='text-gray-600 mb-6'>
-            The transaction has been added to your pipeline.
-          </p>
-          <div className='flex gap-3 justify-center'>
-            <button
-              onClick={() => (window.location.href = '/transactions')}
-              className='inline-flex items-center px-6 py-3 border border-transparent rounded-lg text-sm font-medium text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors shadow-sm'
-            >
-              View Clients
-            </button>
-            <button
-              onClick={resetForm}
-              className='inline-flex items-center px-6 py-3 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors'
-            >
-              Add Another
-            </button>
-          </div>
-        </div>
+        </UnifiedCard>
       </div>
     );
   }
 
   return (
-    <div className='space-y-8'>
-      {/* Enhanced Header */}
-      <div className='bg-gradient-to-r from-gray-50 via-white to-purple-50 rounded-2xl p-8 border border-gray-100 shadow-sm'>
-        <div className='flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6'>
-          <div className='space-y-3'>
-            <div className='flex items-center gap-3'>
-              <button
+    <div className='min-h-screen bg-gray-50'>
+      {/* Professional Header */}
+      <div className='bg-white border-b border-gray-200 shadow-sm'>
+        <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
+          <div className='flex items-center justify-between h-16'>
+            <div className='flex items-center space-x-4'>
+              <UnifiedButton
+                variant="ghost"
+                size="sm"
                 onClick={handleCancel}
-                className='inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors'
+                icon={<ArrowLeft className="h-4 w-4" />}
+                className="text-gray-600 hover:text-gray-900"
               >
-                <ArrowLeft className='h-4 w-4' />
                 Back to Transactions
-              </button>
-            </div>
-            <div className='flex items-center gap-3'>
-              <div className='w-12 h-12 bg-gradient-to-br from-gray-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg'>
-                <FileText className='h-6 w-6 text-white' />
+              </UnifiedButton>
+              <div className='h-6 w-px bg-gray-300' />
+              <div className='flex items-center space-x-3'>
+                <div className='w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-lg flex items-center justify-center shadow-sm'>
+                  <FileText className='h-5 w-5 text-white' />
+                </div>
+                <div>
+                  <h1 className='text-xl font-semibold text-gray-900'>
+                    Add New Transaction
+                  </h1>
+                  <p className='text-sm text-gray-500'>
+                    Create a new transaction record
+                  </p>
+                </div>
               </div>
-              <div>
-                <h1 className='text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent tracking-tight'>
-                  Add New Transaction
-                </h1>
-                <p className='text-lg text-gray-600 mt-1'>
-                  Enter the transaction details below to add a new record to your pipeline
-                </p>
+            </div>
+            <div className='flex items-center space-x-3'>
+              <div className='flex items-center space-x-2 text-sm'>
+                {autoSaveStatus === 'saving' && (
+                  <>
+                    <RefreshCw className='h-4 w-4 text-blue-500 animate-spin' />
+                    <span className='text-blue-600'>Saving...</span>
+                  </>
+                )}
+                {autoSaveStatus === 'saved' && (
+                  <>
+                    <CheckCircle className='h-4 w-4 text-green-500' />
+                    <span className='text-green-600'>Auto-saved</span>
+                  </>
+                )}
+                {autoSaveStatus === 'error' && (
+                  <>
+                    <AlertTriangle className='h-4 w-4 text-red-500' />
+                    <span className='text-red-600'>Save failed</span>
+                  </>
+                )}
+              </div>
+              <div className='flex items-center space-x-2 text-sm text-green-600'>
+                <Shield className='h-4 w-4' />
+                <span>Secure</span>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Error Message */}
-      {error && (
-        <div className='bg-red-50 border border-red-200 rounded-xl p-4'>
-          <div className='flex items-center gap-2 text-red-800'>
-            <AlertTriangle className='h-5 w-5' />
-            <span className='font-medium'>Error:</span>
-            <span>{error}</span>
-          </div>
-        </div>
-      )}
+      {/* Main Content */}
+      <div className='max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8'>
+        <div className='space-y-6'>
 
-      {/* Form */}
-      <div className='bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden'>
-        <form onSubmit={handleSubmit}>
-          <div className='p-6 space-y-6'>
-            {/* Basic Information */}
-            <div className='space-y-4'>
-              <h4 className='text-lg font-medium text-gray-900'>Basic Information</h4>
-              <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+          {/* Error Message */}
+          {error && (
+            <UnifiedCard
+              variant="outlined"
+              className="border-red-200 bg-red-50"
+            >
+              <div className='flex items-center gap-3'>
+                <div className='w-8 h-8 bg-red-100 rounded-full flex items-center justify-center'>
+                  <AlertTriangle className='h-4 w-4 text-red-600' />
+                </div>
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 mb-2'>
+                  <h3 className='font-medium text-red-900'>Validation Error</h3>
+                  <p className='text-sm text-red-700 mt-1'>{error}</p>
+                </div>
+              </div>
+            </UnifiedCard>
+          )}
+
+          {/* Main Form */}
+          <form onSubmit={handleSubmit} className='space-y-6'>
+            {/* Basic Information Card */}
+            <UnifiedCard
+              header={{
+                title: "Basic Information",
+                description: "Essential transaction details"
+              }}
+            >
+              <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                <div className='space-y-2'>
+                  <label className='block text-sm font-medium text-gray-700'>
                     Client Name *
                   </label>
-                  <input
-                    type='text'
-                    value={formData.client_name}
-                    onChange={e => handleInputChange('client_name', e.target.value)}
-                    className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-colors duration-200'
-                    placeholder='Enter client name'
-                    required
-                  />
+                  <div className='relative'>
+                    <User className='absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400' />
+                    <input
+                      type='text'
+                      value={formData.client_name}
+                      onChange={e => handleInputChange('client_name', e.target.value)}
+                      className='w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 bg-white'
+                      placeholder='Enter client name'
+                      required
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label className='block text-sm font-medium text-gray-700 mb-2'>
-                    Date *
+                <div className='space-y-2'>
+                  <label className='block text-sm font-medium text-gray-700'>
+                    Transaction Date *
                   </label>
-                  <input
-                    type='date'
-                    value={formData.date}
-                    onChange={e => handleInputChange('date', e.target.value)}
-                    className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-colors duration-200'
-                    required
-                  />
+                  <div className='relative'>
+                    <Calendar className='absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400' />
+                    <input
+                      type='date'
+                      value={formData.date}
+                      onChange={e => handleInputChange('date', e.target.value)}
+                      className='w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 bg-white'
+                      required
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label className='block text-sm font-medium text-gray-700 mb-2'>
+                <div className='space-y-2'>
+                  <label className='block text-sm font-medium text-gray-700'>
                     Amount *
                   </label>
-                  <input
-                    type='number'
-                    step='0.01'
-                    value={formData.amount}
-                    onChange={e => handleInputChange('amount', e.target.value)}
-                    className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-colors duration-200'
-                    placeholder='0.00'
-                    required
-                  />
+                  <div className='relative'>
+                    <DollarSign className='absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400' />
+                    <input
+                      type='number'
+                      step='0.01'
+                      value={formData.amount}
+                      onChange={e => handleInputChange('amount', e.target.value)}
+                      className='w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 bg-white'
+                      placeholder='0.00'
+                      required
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label className='block text-sm font-medium text-gray-700 mb-2'>
+                <div className='space-y-2'>
+                  <label className='block text-sm font-medium text-gray-700'>
                     Currency *
                   </label>
-                  <select
-                    value={formData.currency}
-                    onChange={e => handleInputChange('currency', e.target.value)}
-                    className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-colors duration-200'
-                    required
-                  >
-                    <option value=''>Select Currency</option>
-                    {dropdownOptions.currency?.map(option => (
-                      <option key={option.id} value={option.value}>
-                        {option.value}
-                      </option>
-                    ))}
-                  </select>
+                  <div className='relative'>
+                    <Globe className='absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400' />
+                    <select
+                      value={formData.currency}
+                      onChange={e => handleInputChange('currency', e.target.value)}
+                      className='w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 bg-white appearance-none'
+                      required
+                    >
+                      <option value=''>Select Currency</option>
+                      {dropdownOptions.currency?.map(option => (
+                        <option key={option.id} value={option.value}>
+                          {option.value}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               </div>
-            </div>
+            </UnifiedCard>
 
-            {/* Payment Information */}
-            <div className='space-y-4'>
-              <h4 className='text-lg font-medium text-gray-900'>Payment Information</h4>
-              <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-                <div>
-                  <label className='block text-sm font-medium text-gray-700 mb-2'>
+            {/* Payment Information Card */}
+            <UnifiedCard
+              header={{
+                title: "Payment Information",
+                description: "Payment method and transaction category"
+              }}
+            >
+              <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                <div className='space-y-2'>
+                  <label className='block text-sm font-medium text-gray-700'>
                     Payment Method *
                   </label>
-                  <select
-                    value={formData.payment_method}
-                    onChange={e => handleInputChange('payment_method', e.target.value)}
-                    className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-colors duration-200'
-                    required
-                  >
-                    <option value=''>Select Payment Method</option>
-                    {dropdownOptions.payment_method?.map(option => (
-                      <option key={option.id} value={option.value}>
-                        {option.value}
-                      </option>
-                    ))}
-                  </select>
+                  <div className='relative'>
+                    <CreditCard className='absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400' />
+                    <select
+                      value={formData.payment_method}
+                      onChange={e => handleInputChange('payment_method', e.target.value)}
+                      className='w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 bg-white appearance-none'
+                      required
+                    >
+                      <option value=''>Select Payment Method</option>
+                      {dropdownOptions.payment_method?.map(option => (
+                        <option key={option.id} value={option.value}>
+                          {option.value}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
-                <div>
-                  <label className='block text-sm font-medium text-gray-700 mb-2'>
-                    Category *
+                <div className='space-y-2'>
+                  <label className='block text-sm font-medium text-gray-700'>
+                    Transaction Category *
                   </label>
-                  <select
-                    value={formData.category}
-                    onChange={e => handleInputChange('category', e.target.value)}
-                    className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-colors duration-200'
-                    required
-                  >
-                    <option value=''>Select Category</option>
-                    <option value='WD'>WD (Withdraw)</option>
-                    <option value='DEP'>DEP (Deposit)</option>
-                  </select>
-                  <p className='text-sm text-gray-500 mt-1'>
-                    WD = Withdraw (no commission), DEP = Deposit (with commission)
-                  </p>
+                  <div className='relative'>
+                    <Tag className='absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400' />
+                    <select
+                      value={formData.category}
+                      onChange={e => handleInputChange('category', e.target.value)}
+                      className='w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 bg-white appearance-none'
+                      required
+                    >
+                      <option value=''>Select Category</option>
+                      <option value='WD'>WD (Withdraw)</option>
+                      <option value='DEP'>DEP (Deposit)</option>
+                    </select>
+                  </div>
+                  <div className='flex items-center gap-2 text-sm text-gray-600 bg-blue-50 p-2 rounded-lg'>
+                    <Info className='h-4 w-4 text-blue-500' />
+                    <span>WD = Withdraw (no commission), DEP = Deposit (with commission)</span>
+                  </div>
                 </div>
-                <div>
-                  <label className='block text-sm font-medium text-gray-700 mb-2'>
+                <div className='space-y-2'>
+                  <label className='block text-sm font-medium text-gray-700'>
                     PSP/KASA (Optional)
                   </label>
-                  <select
-                    value={formData.psp}
-                    onChange={e => handleInputChange('psp', e.target.value)}
-                    className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-colors duration-200'
-                  >
-                    <option value=''>Select PSP/KASA</option>
-                    {dropdownOptions.psp?.map(option => (
-                      <option key={option.id} value={option.value}>
-                        {option.value}
-                      </option>
-                    ))}
-                  </select>
+                  <div className='relative'>
+                    <Building2 className='absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400' />
+                    <select
+                      value={formData.psp}
+                      onChange={e => handleInputChange('psp', e.target.value)}
+                      className='w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 bg-white appearance-none'
+                    >
+                      <option value=''>Select PSP/KASA</option>
+                      {dropdownOptions.psp?.map(option => (
+                        <option key={option.id} value={option.value}>
+                          {option.value}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               </div>
-            </div>
+            </UnifiedCard>
 
-            {/* Company Information */}
-            <div className='space-y-4'>
-              <h4 className='text-lg font-medium text-gray-900'>Company Information</h4>
-              <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-                <div>
-                  <label className='block text-sm font-medium text-gray-700 mb-2'>
-                    Company
-                  </label>
+            {/* Company Information Card */}
+            <UnifiedCard
+              header={{
+                title: "Company Information",
+                description: "Select the company for this transaction"
+              }}
+            >
+              <div className='space-y-2'>
+                <label className='block text-sm font-medium text-gray-700'>
+                  Company
+                </label>
+                <div className='relative'>
+                  <Building className='absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400' />
                   <select
                     value={formData.company}
                     onChange={e => handleInputChange('company', e.target.value)}
-                    className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-colors duration-200'
+                    className='w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 bg-white appearance-none'
                   >
                     <option value=''>Select Company</option>
                     {dropdownOptions.company?.map(option => (
@@ -762,109 +911,129 @@ export default function AddTransaction() {
                   </select>
                 </div>
               </div>
-            </div>
+            </UnifiedCard>
 
-            {/* Notes */}
-            <div className='space-y-4'>
-              <h4 className='text-lg font-medium text-gray-900'>Additional Information</h4>
-              <div>
-                <label className='block text-sm font-medium text-gray-700 mb-2'>
-                  Notes (Optional)
+            {/* Additional Information Card */}
+            <UnifiedCard
+              header={{
+                title: "Additional Information",
+                description: "Optional notes and comments"
+              }}
+            >
+              <div className='space-y-2'>
+                <label className='block text-sm font-medium text-gray-700'>
+                  Transaction Notes
                 </label>
-                <textarea
-                  value={formData.notes}
-                  onChange={e => handleInputChange('notes', e.target.value)}
-                  className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-colors duration-200'
-                  placeholder='Enter any additional notes or comments about this transaction'
-                  rows={4}
-                />
-                <p className='text-sm text-gray-500 mt-1'>
-                  Optional notes to help track transaction details
-                </p>
+                <div className='relative'>
+                  <MessageSquare className='absolute left-3 top-3 h-4 w-4 text-gray-400' />
+                  <textarea
+                    value={formData.notes}
+                    onChange={e => handleInputChange('notes', e.target.value)}
+                    className='w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 bg-white resize-none'
+                    placeholder='Enter any additional notes or comments about this transaction'
+                    rows={4}
+                  />
+                </div>
+                <div className='flex items-center gap-2 text-sm text-gray-600 bg-gray-50 p-2 rounded-lg'>
+                  <Info className='h-4 w-4 text-gray-500' />
+                  <span>Optional notes to help track transaction details</span>
+                </div>
               </div>
-            </div>
+            </UnifiedCard>
 
             {/* Exchange Rate Section */}
             {showExchangeRateSection && (
-              <div className='space-y-4'>
-                <h4 className='text-lg font-medium text-gray-900'>Exchange Rates</h4>
-                <div className='p-6 bg-yellow-50 border border-yellow-200 rounded-lg'>
-                  <div className='flex items-center gap-2 mb-4'>
-                    <AlertTriangle className='h-5 w-5 text-yellow-600' />
-                    <h3 className='font-semibold text-yellow-800'>
-                      Exchange Rates Required
-                    </h3>
+              <UnifiedCard
+                variant="outlined"
+                className="border-amber-200 bg-amber-50"
+                header={{
+                  title: "Exchange Rates Required",
+                  description: "Foreign currency transactions require exchange rates"
+                }}
+              >
+                <div className='space-y-4'>
+                  <div className='flex items-center gap-3 p-4 bg-amber-100 border border-amber-200 rounded-lg'>
+                    <AlertTriangle className='h-5 w-5 text-amber-600 flex-shrink-0' />
+                    <div>
+                      <p className='text-amber-800 font-medium'>
+                        Exchange rates are required for foreign currency transactions
+                      </p>
+                      <p className='text-amber-700 text-sm mt-1'>
+                        Please enter the exchange rates for the selected date to ensure accurate conversions
+                      </p>
+                    </div>
                   </div>
 
-                  <div className='mb-4 p-3 bg-yellow-100 border border-yellow-300 rounded-lg'>
-                    <p className='text-yellow-800 text-sm'>
-                      <strong>
-                        Exchange rates are required for foreign currency transactions.
-                      </strong>
-                      <br />
-                      Please enter the exchange rates for the selected date to ensure accurate conversions.
-                    </p>
-                  </div>
-
-                  <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                  <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
                     {formData.currency === 'EUR' && (
-                      <div>
-                        <label className='block text-sm font-medium text-gray-700 mb-2'>
+                      <div className='space-y-2'>
+                        <label className='block text-sm font-medium text-gray-700'>
                           EUR to TL Rate
                         </label>
-                        <input
-                          type='number'
-                          step='0.0001'
-                          min='0'
-                          value={formData.eur_rate}
-                          onChange={e => handleInputChange('eur_rate', e.target.value)}
-                          className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-colors duration-200'
-                          placeholder='0.0000'
-                          required={formData.currency === 'EUR'}
-                        />
-                        <p className='text-sm text-gray-500 mt-1'>
+                        <div className='relative'>
+                          <TrendingUp className='absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400' />
+                          <input
+                            type='number'
+                            step='0.0001'
+                            min='0'
+                            value={formData.eur_rate}
+                            onChange={e => handleInputChange('eur_rate', e.target.value)}
+                            className='w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 bg-white'
+                            placeholder='0.0000'
+                            required={formData.currency === 'EUR'}
+                          />
+                        </div>
+                        <p className='text-sm text-gray-600 bg-gray-50 p-2 rounded-lg'>
                           Auto-fetched when possible. If no rate, it defaults to 0.00.
                         </p>
                       </div>
                     )}
 
                     {formData.currency === 'USD' && (
-                      <div>
-                        <label className='block text-sm font-medium text-gray-700 mb-2'>
+                      <div className='space-y-2'>
+                        <label className='block text-sm font-medium text-gray-700'>
                           USD to TL Rate
                         </label>
                         <div className='flex gap-2'>
-                          <input
-                            type='number'
-                            step='0.0001'
-                            min='0'
-                            value={formData.usd_rate}
-                            onChange={e => handleInputChange('usd_rate', e.target.value)}
-                            className='flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-colors duration-200'
-                            placeholder='0.0000'
-                          />
-                          <button
+                          <div className='relative flex-1'>
+                            <TrendingUp className='absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400' />
+                            <input
+                              type='number'
+                              step='0.0001'
+                              min='0'
+                              value={formData.usd_rate}
+                              onChange={e => handleInputChange('usd_rate', e.target.value)}
+                              className='w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 bg-white'
+                              placeholder='0.0000'
+                            />
+                          </div>
+                          <UnifiedButton
                             type='button'
+                            variant="success"
+                            size="sm"
                             onClick={() => setShowCurrencyModal(true)}
-                            className='px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200 flex items-center space-x-1'
+                            icon={<DollarSign className="h-4 w-4" />}
                           >
-                            <DollarSign className="h-4 w-4" />
-                            <span>Get Rate</span>
-                          </button>
-                          <button
+                            Get Rate
+                          </UnifiedButton>
+                          <UnifiedButton
                             type='button'
+                            variant="outline"
+                            size="sm"
                             onClick={applyUsdRate}
-                            className='px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors duration-200'
+                            icon={<RefreshCw className="h-4 w-4" />}
                           >
                             Apply
-                          </button>
+                          </UnifiedButton>
                         </div>
                         {convertedAmountTL && (
-                          <p className='text-sm text-gray-600 mt-2'>
-                            Converted TL Amount: <span className='font-semibold'>{convertedAmountTL}</span>
-                          </p>
+                          <div className='p-3 bg-green-50 border border-green-200 rounded-lg'>
+                            <p className='text-sm text-green-800'>
+                              <strong>Converted TL Amount:</strong> {convertedAmountTL}
+                            </p>
+                          </div>
                         )}
-                        <p className='text-sm text-gray-500 mt-1'>
+                        <p className='text-sm text-gray-600 bg-gray-50 p-2 rounded-lg'>
                           Auto-fetched when possible. If no rate, it defaults to 0.00.
                         </p>
                       </div>
@@ -873,62 +1042,81 @@ export default function AddTransaction() {
 
                   {/* Rate Validation Status */}
                   {rateValidationMessage && (
-                    <div className='mt-4 p-3 bg-gray-50 border border-gray-200 rounded-lg'>
-                      <div className='flex items-center gap-2'>
-                        <Info className='h-4 w-4 text-gray-600' />
-                        <span className='text-gray-800 text-sm'>
-                          <strong>Rate Validation:</strong> {rateValidationMessage}
-                        </span>
+                    <div className='p-4 bg-blue-50 border border-blue-200 rounded-lg'>
+                      <div className='flex items-center gap-3'>
+                        <Info className='h-5 w-5 text-blue-600 flex-shrink-0' />
+                        <div>
+                          <p className='text-blue-800 font-medium'>Rate Validation</p>
+                          <p className='text-blue-700 text-sm'>{rateValidationMessage}</p>
+                        </div>
                       </div>
                     </div>
                   )}
                 </div>
-              </div>
+              </UnifiedCard>
             )}
-          </div>
 
-          {/* Form Actions */}
-          <div className='p-6 border-t border-gray-100'>
-            <div className='flex gap-3'>
-              <button
-                type='button'
-                onClick={handleCancel}
-                className='flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200'
-              >
-                Cancel
-              </button>
-              <button
-                type='submit'
-                disabled={submitting}
-                className='flex-1 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed'
-              >
-                {submitting ? 'Adding Transaction...' : 'Add Transaction'}
-              </button>
-            </div>
-          </div>
+            {/* Form Actions */}
+            <UnifiedCard className="bg-gray-50">
+              <div className='flex flex-col sm:flex-row gap-3'>
+                <UnifiedButton
+                  type='button'
+                  variant="outline"
+                  size="lg"
+                  onClick={handleCancel}
+                  className="flex-1"
+                  icon={<X className="h-4 w-4" />}
+                >
+                  Cancel
+                </UnifiedButton>
+                <UnifiedButton
+                  type='submit'
+                  variant="primary"
+                  size="lg"
+                  disabled={submitting}
+                  loading={submitting}
+                  className="flex-1"
+                  icon={<Save className="h-4 w-4" />}
+                >
+                  {submitting ? 'Adding Transaction...' : 'Add Transaction'}
+                </UnifiedButton>
+              </div>
+            </UnifiedCard>
         </form>
-      </div>
 
-      {/* Settings Link */}
-      <div className='bg-white rounded-xl shadow-sm border border-gray-100 p-6'>
-        <div className='text-center'>
-          <a
-            href='/settings?tab=dropdowns'
-            className='inline-flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-sm'
-          >
-            <Settings className='h-4 w-4' />
-            Manage Dropdown Options
-          </a>
-          <div className='mt-4 p-4 bg-gray-50 border border-gray-200 rounded-lg'>
-            <div className='flex items-center gap-2 text-gray-800'>
-              <Info className='h-4 w-4' />
-              <div className='text-sm'>
-                <strong>Need to customize dropdown options?</strong>
-                <br />
-                If you want to add your own payment methods, companies, or PSPs, click the "Manage Dropdown Options" button above. This will take you to the settings page where you can add, edit, or remove options from the dropdown menus.
+        {/* Settings Link */}
+        <UnifiedCard
+          header={{
+            title: "Dropdown Management",
+            description: "Customize your dropdown options"
+          }}
+        >
+          <div className='text-center space-y-4'>
+            <UnifiedButton
+              variant="success"
+              size="lg"
+              onClick={() => window.location.href = '/settings?tab=dropdowns'}
+              icon={<Settings className="h-4 w-4" />}
+              className="mx-auto"
+            >
+              Manage Dropdown Options
+            </UnifiedButton>
+            <div className='p-4 bg-blue-50 border border-blue-200 rounded-lg'>
+              <div className='flex items-start gap-3 text-left'>
+                <Info className='h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5' />
+                <div className='text-sm'>
+                  <p className='font-medium text-blue-900 mb-1'>
+                    Need to customize dropdown options?
+                  </p>
+                  <p className='text-blue-800'>
+                    Add your own payment methods, companies, or PSPs by clicking the button above. 
+                    This will take you to the settings page where you can manage all dropdown options.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
+        </UnifiedCard>
         </div>
       </div>
 

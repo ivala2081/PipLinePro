@@ -100,7 +100,7 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ range = '7d' }) => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">{metric.name}</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">{metric.value}</p>
+                  <p className="text-lg font-bold text-gray-900 mt-1">{metric.value}</p>
                 </div>
                 <div className={`p-3 rounded-full ${metric.bgColor}`}>
                   <Icon className={`h-6 w-6 ${metric.color}`} />

@@ -367,3 +367,5 @@ export const RevenueChart: React.FC<RevenueChartProps> = ({
     </ResponsiveContainer>
   );
 };
+
+export default RevenueChart;

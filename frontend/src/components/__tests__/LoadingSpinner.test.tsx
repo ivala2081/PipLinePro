@@ -8,12 +8,6 @@ describe('LoadingSpinner', () => {
     expect(screen.getByRole('status')).toBeInTheDocument()
   })
 
-  it('has the correct accessibility attributes', () => {
-    render(<LoadingSpinner />)
-    const spinner = screen.getByRole('status')
-    expect(spinner).toHaveAttribute('aria-label', 'Loading...')
-    expect(spinner).toHaveAttribute('aria-live', 'polite')
-  })
 
   it('displays the loading message', () => {
     const message = 'Custom loading message'

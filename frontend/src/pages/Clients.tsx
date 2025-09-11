@@ -125,181 +125,6 @@ interface Transaction {
   exchange_rate?: number;
 }
 
-interface BulkRateManagerProps {
-  transactions: Transaction[];
-  onRateUpdate: (date: string, rate: number) => void;
-}
-
-// BulkRateManager Component
-const BulkRateManager: React.FC<BulkRateManagerProps> = ({ transactions, onRateUpdate }) => {
-  console.log('🔍 BulkRateManager rendered with transactions:', transactions.length);
-  const [localRates, setLocalRates] = useState<Record<string, number>>({});
-  const [editingDate, setEditingDate] = useState<string | null>(null);
-
-  // Get USD transactions grouped by date
-  const usdTransactionsByDate = React.useMemo(() => {
-    const usdTransactions = transactions.filter(t => 
-      t.currency?.toUpperCase() === 'USD' && t.date
-    );
-    
-    const grouped = usdTransactions.reduce((acc, transaction) => {
-      const date = transaction.date!.split('T')[0]; // Get YYYY-MM-DD format
-      if (!acc[date]) {
-        acc[date] = [];
-      }
-      acc[date].push(transaction);
-      return acc;
-    }, {} as Record<string, Transaction[]>);
-
-    // Sort dates in descending order (most recent first)
-    return Object.keys(grouped)
-      .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
-      .reduce((acc, date) => {
-        acc[date] = grouped[date];
-        return acc;
-      }, {} as Record<string, Transaction[]>);
-  }, [transactions]);
-
-  const handleRateChange = (date: string, value: string) => {
-    const numericValue = parseFloat(value) || 0;
-    setLocalRates(prev => ({
-      ...prev,
-      [date]: numericValue
-    }));
-  };
-
-  const handleRateSubmit = (date: string) => {
-    const rate = localRates[date];
-    if (rate && rate > 0) {
-      onRateUpdate(date, rate);
-      setEditingDate(null);
-    }
-  };
-
-  const handleRateEdit = (date: string) => {
-    setEditingDate(date);
-    if (!localRates[date]) {
-      setLocalRates(prev => ({
-        ...prev,
-        [date]: 0
-      }));
-    }
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      weekday: 'short'
-    });
-  };
-
-  const calculateTotalUSD = (transactions: Transaction[]) => {
-    return transactions.reduce((sum, t) => sum + (t.amount || 0), 0);
-  };
-
-  if (Object.keys(usdTransactionsByDate).length === 0) {
-    return (
-      <div className="text-center py-8">
-        <div className="text-gray-400 mb-2">
-          <TrendingUp className="h-12 w-12 mx-auto" />
-        </div>
-        <h3 className="text-lg font-medium text-gray-900 mb-2">No USD Transactions Found</h3>
-        <p className="text-gray-500">There are no USD transactions to apply bulk rates to.</p>
-        <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
-          <p className="text-sm text-yellow-700">
-            Total transactions: {transactions.length} | 
-            USD transactions: {transactions.filter(t => t.currency?.toUpperCase() === 'USD').length}
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-4">
-      <div className="text-sm text-gray-600 mb-4">
-        Found {Object.keys(usdTransactionsByDate).length} date(s) with USD transactions
-      </div>
-      
-      <div className="space-y-3">
-        {Object.entries(usdTransactionsByDate).map(([date, dateTransactions]) => {
-          const totalUSD = calculateTotalUSD(dateTransactions);
-          const isEditing = editingDate === date;
-          const currentRate = localRates[date] || 0;
-          
-          return (
-            <div key={date} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3">
-                    <div className="text-sm font-medium text-gray-900">
-                      {formatDate(date)}
-                    </div>
-                    <div className="text-sm text-gray-500">
-                      {dateTransactions.length} transaction(s)
-                    </div>
-                    <div className="text-sm font-semibold text-green-600">
-                      ${totalUSD.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-3">
-                  {isEditing ? (
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="number"
-                        step="0.0001"
-                        min="0"
-                        value={currentRate}
-                        onChange={(e) => handleRateChange(date, e.target.value)}
-                        className="w-24 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
-                        placeholder="Rate"
-                        autoFocus
-                      />
-                      <button
-                        onClick={() => handleRateSubmit(date)}
-                        className="px-3 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
-                      >
-                        Save
-                      </button>
-                      <button
-                        onClick={() => setEditingDate(null)}
-                        className="px-3 py-1 text-xs bg-gray-500 text-white rounded hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <div className="text-sm">
-                        {currentRate > 0 ? (
-                          <span className="font-medium text-gray-600">
-                            {currentRate.toFixed(4)} TRY
-                          </span>
-                        ) : (
-                          <span className="text-gray-400">No rate set</span>
-                        )}
-                      </div>
-                      <button
-                        onClick={() => handleRateEdit(date)}
-                        className="px-3 py-1 text-xs bg-gray-600 text-white rounded hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500"
-                      >
-                        {currentRate > 0 ? 'Edit' : 'Set Rate'}
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-};
 
 interface ClientsResponse {
   clients: Client[];
@@ -465,12 +290,7 @@ export default function Clients() {
     sort_order: 'desc',
   });
   const [showFilters, setShowFilters] = useState(false);
-  const [showBulkRates, setShowBulkRates] = useState(true);
-  const [bulkRates, setBulkRates] = useState<Record<string, number>>({});
-  const [rateUpdateLoading, setRateUpdateLoading] = useState(false);
   
-  // DEBUG: Log the showBulkRates state
-  console.log('🔍 Clients component render - showBulkRates:', showBulkRates);
   const [expandedFilterSections, setExpandedFilterSections] = useState({
     basic: true,
     advanced: false,
@@ -1713,9 +1533,26 @@ export default function Clients() {
     setShowViewTransactionModal(true);
   };
 
-  const handleEditTransaction = (transaction: Transaction) => {
-    setSelectedTransaction(transaction);
-    setShowEditTransactionModal(true);
+  const handleEditTransaction = async (transaction: Transaction) => {
+    try {
+      // Fetch full transaction details before editing
+      const response = await api.get(`/api/v1/transactions/${transaction.id}`);
+      if (response.ok) {
+        const result = await response.json();
+        setSelectedTransaction(result.transaction);
+        setShowEditTransactionModal(true);
+      } else {
+        console.error('Failed to fetch transaction details for editing');
+        // Fallback to using the transaction data we have
+        setSelectedTransaction(transaction);
+        setShowEditTransactionModal(true);
+      }
+    } catch (error) {
+      console.error('Error fetching transaction details for editing:', error);
+      // Fallback to using the transaction data we have
+      setSelectedTransaction(transaction);
+      setShowEditTransactionModal(true);
+    }
   };
 
   const handleDeleteTransaction = async (transaction: Transaction) => {
@@ -1923,38 +1760,6 @@ export default function Clients() {
     setSelectedClient(null);
   };
 
-  // Handle bulk rate updates
-  const handleBulkRateUpdate = async (date: string, newRate: number) => {
-    try {
-      setRateUpdateLoading(true);
-      
-      // Update local state
-      setBulkRates(prev => ({
-        ...prev,
-        [date]: newRate
-      }));
-
-      // Here you would typically make an API call to update the rates
-      // For now, we'll just log the update
-      console.log(`Updating bulk rate for ${date} to ${newRate}`);
-      
-      // TODO: Implement API call to update bulk rates
-      // await api.post('/api/v1/transactions/bulk-rates', {
-      //   date,
-      //   rate: newRate
-      // });
-      
-    } catch (error) {
-      console.error('Error updating bulk rate:', error);
-      // Revert the change on error
-      setBulkRates(prev => ({
-        ...prev,
-        [date]: prev[date] || 0
-      }));
-    } finally {
-      setRateUpdateLoading(false);
-    }
-  };
 
 
 
@@ -2771,17 +2576,12 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  console.log('BRate clicked! Current:', showBulkRates);
-                  setShowBulkRates(!showBulkRates);
-                  console.log('New value:', !showBulkRates);
+                  // BRate functionality removed - button kept for visual consistency
                 }}
                 icon={<TrendingUp className="h-4 w-4" />}
                 iconPosition="left"
-                className={`${
-                  showBulkRates 
-                    ? 'bg-green-50 border-green-300 text-green-700 hover:bg-green-100' 
-                    : 'bg-orange-50 border-orange-300 text-orange-700 hover:bg-orange-100'
-                }`}
+                className="bg-gray-50 border-gray-300 text-gray-500 cursor-not-allowed opacity-60"
+                disabled
               >
                 BRate
               </UnifiedButton>
@@ -2894,8 +2694,6 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                 subtitle="DEP Transactions"
                 icon={TrendingUp}
                 color="green"
-                change={totalDeposits > 0 ? "N/A" : "0%"}
-                trend={totalDeposits > 0 ? "up" : "neutral"}
               />
               
               <MetricCard
@@ -2904,8 +2702,6 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                 subtitle="WD Transactions"
                 icon={TrendingDown}
                 color="red"
-                change={Math.abs(totalWithdrawals) > 0 ? "N/A" : "0%"}
-                trend={Math.abs(totalWithdrawals) > 0 ? "down" : "neutral"}
               />
               
               <MetricCard
@@ -2914,8 +2710,6 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                 subtitle="Tot DEP - Tot WD"
                 icon={DollarSign}
                 color={totalDeposits - totalWithdrawals >= 0 ? "gray" : "red"}
-                change={totalDeposits - totalWithdrawals !== 0 ? "N/A" : "0%"}
-                trend={totalDeposits - totalWithdrawals !== 0 ? (totalDeposits - totalWithdrawals >= 0 ? "up" : "down") : "neutral"}
               />
               
               <MetricCard
@@ -2924,8 +2718,6 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                 subtitle="All paid commissions"
                 icon={FileText}
                 color="purple"
-                change={totalCommissions > 0 ? "N/A" : "0%"}
-                trend={totalCommissions > 0 ? "up" : "neutral"}
               />
               </div>
             </CardContent>
@@ -2950,8 +2742,6 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                 subtitle={`${clients.filter(c => Array.isArray(c.currencies) && c.currencies.length > 1).length} multi-currency`}
                 icon={Users}
                 color="gray"
-                change="N/A"
-                trend="up"
               />
 
               <MetricCard
@@ -2960,8 +2750,6 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                 subtitle={`Most transactions: ${filteredClients.length > 0 ? filteredClients.reduce((max, client) => client.transaction_count > max.transaction_count ? client : max).client_name : 'N/A'}`}
                 icon={Award}
                 color="purple"
-                change="N/A"
-                trend="up"
               />
               </div>
             </CardContent>
@@ -4103,33 +3891,6 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
             </div>
           </div>
 
-          {/* BRate Bulk Rate Management */}
-          {showBulkRates && (
-            <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5 text-green-600" />
-                  <h3 className="text-lg font-semibold text-gray-900">Bulk Rate Management</h3>
-                </div>
-                <div className="text-sm text-gray-500">
-                  Manage exchange rates for USD transactions by date
-                </div>
-              </div>
-
-              {/* Debug: Show transactions count */}
-              <div className="mb-4 p-2 bg-gray-50 border border-gray-200 rounded">
-                <p className="text-sm text-gray-700">
-                  Debug: Transactions count: {transactions.length}, 
-                  USD transactions: {transactions.filter(t => t.currency?.toUpperCase() === 'USD').length}
-                </p>
-              </div>
-
-              <BulkRateManager 
-                transactions={transactions}
-                onRateUpdate={handleBulkRateUpdate}
-              />
-            </div>
-          )}
 
       </TabsContent>
 

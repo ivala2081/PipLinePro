@@ -97,6 +97,18 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ onResultClick }) => 
     }
   }, [searchTerm]);
 
+  // Close search dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (isOpen && !(event.target as Element).closest('.search-container')) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isOpen]);
+
   const getResultIcon = (type: string) => {
     switch (type) {
       case 'transaction': return <DollarSign className="w-4 h-4" />;
@@ -132,7 +144,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ onResultClick }) => 
   };
 
   return (
-    <div className="relative">
+    <div className="relative search-container">
       <div className="relative">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
         <Input
@@ -218,3 +230,5 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ onResultClick }) => 
     </div>
   );
 };
+
+export default GlobalSearch;

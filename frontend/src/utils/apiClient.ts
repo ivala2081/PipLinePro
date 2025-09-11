@@ -6,6 +6,8 @@
 import { apiConfig, loggingConfig } from '../config/environment';
 import { measureAsync } from './performance';
 import { handleApiError, PipLineError } from './errorHandler';
+import { performanceOptimizer, debounce, throttle } from './performanceOptimizer';
+import { requestBatcher } from './requestBatcher';
 
 class ApiClient {
   private csrfToken: string | null = null;
@@ -235,6 +237,51 @@ class ApiClient {
         this.processQueue();
       }, this.BATCH_DELAY);
     });
+  }
+
+  /**
+   * Make an optimized request with advanced performance features
+   */
+  async makeOptimizedRequest<T>(
+    endpoint: string,
+    options: RequestInit = {},
+    batchId?: string
+  ): Promise<T> {
+    const url = `${apiConfig.baseURL}${endpoint}`;
+    
+    // Use batching if batchId is provided
+    if (batchId) {
+      return performanceOptimizer.batchRequest<T>(batchId, url, options);
+    }
+    
+    // Otherwise use regular request with performance tracking
+    return this.makeRequest<T>('GET', endpoint, undefined, options);
+  }
+
+  /**
+   * Make a batched request to reduce API calls
+   */
+  async makeBatchedRequest<T>(
+    endpoint: string,
+    options: RequestInit = {},
+    batchKey?: string
+  ): Promise<T> {
+    const url = `${apiConfig.baseURL}${endpoint}`;
+    
+    // Add authentication headers
+    const token = await this.getCsrfToken();
+    const headers = {
+      ...options.headers,
+      ...(token && { 'X-CSRFToken': token }),
+      'Content-Type': 'application/json',
+    };
+
+    const batchedOptions = {
+      ...options,
+      headers,
+    };
+
+    return requestBatcher.batchRequest<T>(url, batchedOptions, batchKey);
   }
 
   /**

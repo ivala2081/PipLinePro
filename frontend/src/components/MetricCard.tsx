@@ -1,13 +1,11 @@
 import React from 'react';
-import { LucideIcon, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { LucideIcon } from 'lucide-react';
 import { UnifiedCard } from '../design-system';
 import { CardContent } from '../components/ui/card';
 
 interface MetricCardProps {
   title: string;
   value: string | number;
-  change?: string;
-  trend?: 'up' | 'down' | 'neutral';
   icon: LucideIcon;
   color: 'gray' | 'green' | 'purple' | 'orange' | 'red' | 'teal' | 'indigo' | 'pink';
   subtitle?: string;
@@ -60,8 +58,6 @@ const colorMap = {
 export const MetricCard: React.FC<MetricCardProps> = ({
   title,
   value,
-  change,
-  trend = 'neutral',
   icon: Icon,
   color,
   subtitle,
@@ -79,23 +75,11 @@ export const MetricCard: React.FC<MetricCardProps> = ({
           <div className={`w-12 h-12 ${colors.bg} rounded-xl flex items-center justify-center shadow-lg`}>
             <Icon className={`h-6 w-6 ${colors.text}`} />
           </div>
-          {change && (
-            <div className="flex items-center gap-2">
-              <span className={`text-sm font-medium ${colors.text}`}>
-                {change}
-              </span>
-              {trend === 'up' ? (
-                <ArrowUpRight className="h-4 w-4 text-green-500" />
-              ) : trend === 'down' ? (
-                <ArrowDownRight className="h-4 w-4 text-red-500" />
-              ) : null}
-            </div>
-          )}
         </div>
         
         <div className="space-y-2">
-          <p className="text-sm font-medium text-gray-600">{title}</p>
-          <p className="text-3xl font-bold text-gray-900">{value}</p>
+          <p className="text-xs font-medium text-gray-600">{title}</p>
+          <p className="text-lg font-bold text-gray-900">{value}</p>
           {subtitle && (
             <p className="text-xs text-gray-500">{subtitle}</p>
           )}

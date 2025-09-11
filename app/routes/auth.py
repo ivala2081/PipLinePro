@@ -1,7 +1,7 @@
 """
 Authentication routes blueprint
 """
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session as flask_session, jsonify
+from flask import Blueprint, request, redirect, url_for, flash, session as flask_session, jsonify
 from flask_login import login_user, login_required, logout_user, current_user
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField
@@ -142,7 +142,7 @@ def login():
                     lockout_time = user.account_locked_until.strftime('%H:%M:%S')
                     flash(f'Account is locked until {lockout_time}. Please try again later.', 'error')
                     record_login_attempt(username, ip_address, success=False, failure_reason='account_locked')
-                    return render_template('login.html', form=form)
+                    return redirect('http://localhost:3000/login')
                 
                 if check_password_hash(user.password, password):
                     # Check if remember me is enabled
@@ -226,9 +226,7 @@ def login():
         record_login_attempt(username, ip_address, success=False, failure_reason='validation_error')
         flash('⚠️ Invalid credentials. Please verify your username and password and try again.', 'error')
     
-    result = render_template('login.html', form=form)
-    # Login template rendered successfully
-    return result
+    return redirect('http://localhost:3000/login')
 
 @auth_bp.route('/logout')
 @login_required
@@ -254,7 +252,7 @@ def logout():
 @auth_bp.route('/logout_page')
 def logout_page():
     """Show logout confirmation page"""
-    return render_template('logout.html')
+    return redirect('http://localhost:3000/logout')
 
 @auth_bp.route('/logout_session/<int:session_id>', methods=['POST'])
 @login_required
@@ -285,7 +283,7 @@ def account_security():
         is_active=True
     ).order_by(UserSession.created_at.desc()).all()
     
-    return render_template('account_security.html', active_sessions=active_sessions)
+    return redirect('http://localhost:3000/account/security')
 
 @auth_bp.route('/account/force_logout_all', methods=['POST'])
 @login_required

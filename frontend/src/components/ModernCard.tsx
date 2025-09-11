@@ -60,12 +60,6 @@ export const ModernCard: React.FC<ModernCardProps> = ({
       border: 'border-amber-200/60',
       icon: 'text-amber-600 bg-amber-100',
       trend: 'text-amber-600'
-    },
-    gray: {
-      gradient: 'from-gray-500/10 to-gray-600/5',
-      border: 'border-gray-200/60',
-      icon: 'text-gray-600 bg-gray-100',
-      trend: 'text-gray-600'
     }
   };
 
@@ -100,7 +94,7 @@ export const ModernCard: React.FC<ModernCardProps> = ({
           <h3 className="text-sm font-medium text-gray-600 mb-1 tracking-wide">
             {title}
           </h3>
-          <div className="text-2xl font-bold text-gray-900 mb-1">
+          <div className="text-lg font-bold text-gray-900 mb-1">
             {value}
           </div>
           {subtitle && (

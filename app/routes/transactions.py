@@ -125,16 +125,8 @@ def transactions_main():
         'total_net': sum(t.net_amount for t in transactions)
     }
     
-    return render_template('transactions_content.html',
-                         transactions=transactions,
-                         pagination=pagination,
-                         summary=summary,
-                         psp_options=psp_options,
-                         category_options=category_options,
-                         currency_options=currency_options,
-                         payment_method_options=payment_method_options,
-                         filters=filters,
-                         now=datetime.now())
+    # Redirect to React frontend instead of rendering HTML template
+    return redirect('http://localhost:3000/transactions')
 
 # Alias routes for compatibility
 @transactions_bp.route('/transactions_old')
@@ -302,14 +294,14 @@ def add_transaction():
             client_name = request.form.get('client_name', '').strip()
             if not client_name:
                 flash('Client name is required.', 'error')
-                return render_template('add_transaction.html')
+                return redirect('http://localhost:3000/add-transaction')
             
             # Validate amount
             amount_str = request.form.get('amount', '')
             is_valid, amount_result = validate_input(amount_str, 'amount')
             if not is_valid:
                 flash(amount_result, 'error')
-                return render_template('add_transaction.html')
+                return redirect('http://localhost:3000/add-transaction')
             amount = amount_result
             
             # Validate date
@@ -317,7 +309,7 @@ def add_transaction():
             is_valid, date_result = validate_input(date_str, 'date')
             if not is_valid:
                 flash(date_result, 'error')
-                return render_template('add_transaction.html')
+                return redirect('http://localhost:3000/add-transaction')
             transaction_date = date_result
             
             # Get other fields
@@ -416,13 +408,7 @@ def add_transaction():
         psps = db.session.query(Transaction.psp).distinct().filter(Transaction.psp.isnot(None)).all()
         psps = [psp[0] for psp in psps if psp[0]]
     
-    return render_template('add_transaction.html',
-                         ibans=ibans,
-                         payment_methods=payment_methods,
-                         companies=companies,
-                         currencies=currencies,
-                         categories=categories,
-                         psps=psps)
+    return redirect('http://localhost:3000/add-transaction')
 
 @transactions_bp.route('/edit/<int:id>', methods=['GET', 'POST'])
 @login_required
@@ -440,14 +426,14 @@ def edit_transaction(id):
             client_name = request.form.get('client_name', '').strip()
             if not client_name:
                 flash('Client name is required.', 'error')
-                return render_template('edit_transaction.html', transaction=transaction)
+                return redirect(f'http://localhost:3000/transactions/{id}/edit')
             
             # Validate amount
             amount_str = request.form.get('amount', '')
             is_valid, amount_result = validate_input(amount_str, 'amount')
             if not is_valid:
                 flash(amount_result, 'error')
-                return render_template('edit_transaction.html', transaction=transaction)
+                return redirect(f'http://localhost:3000/transactions/{id}/edit')
             amount = amount_result
             
             # Validate date
@@ -455,7 +441,7 @@ def edit_transaction(id):
             is_valid, date_result = validate_input(date_str, 'date')
             if not is_valid:
                 flash(date_result, 'error')
-                return render_template('edit_transaction.html', transaction=transaction)
+                return redirect(f'http://localhost:3000/transactions/{id}/edit')
             transaction_date = date_result
             
             # Get other fields
@@ -554,14 +540,7 @@ def edit_transaction(id):
         psps = db.session.query(Transaction.psp).distinct().filter(Transaction.psp.isnot(None)).all()
         psps = [psp[0] for psp in psps if psp[0]]
     
-    return render_template('edit_transaction.html', 
-                         transaction=transaction,
-                         ibans=ibans,
-                         payment_methods=payment_methods,
-                         companies=companies,
-                         currencies=currencies,
-                         categories=categories,
-                         psps=psps)
+    return redirect(f'http://localhost:3000/transactions/{id}/edit')
 
 @transactions_bp.route('/delete/<int:id>', methods=['POST'])
 @login_required
@@ -915,35 +894,7 @@ def clients():
         flash('Error loading clients data', 'error')
         
         # Return safe default values
-        return render_template('clients.html',
-                             active_tab=active_tab,
-                             clients=[],
-                             client_stats={'total_clients': 0, 'total_volume': 0, 'avg_transaction': 0, 'top_client': 'N/A'},
-                             client_chart_data=None,
-                             transactions=[],
-                             pagination={'page': 1, 'per_page': 25, 'total_count': 0, 'total_pages': 0, 'has_next': False, 'has_prev': False},
-                             available_clients=[],
-                             selected_client='',
-                             filters={},
-                             analytics=Analytics(0, 0, 0, 0),
-                             top_clients=[],
-                             recent_activity=[],
-                             volume_chart_data={'labels': [], 'volumes': []},
-                             distribution_chart_data={'labels': [], 'values': []},
-                             filter_client='',
-                             filter_payment='',
-                             filter_category='',
-                             filter_psp='',
-                             filter_company='',
-                             filter_currency='',
-                             payment_methods=[],
-                             categories=[],
-                             psps=[],
-                             companies=[],
-                             currencies=[],
-                             risk_clients=[],
-                             opportunity_clients=[],
-                             now=datetime.now())
+        return redirect('http://localhost:3000/clients')
     
     # Auto-fix all template data for JSON compatibility
     template_data = {
@@ -983,7 +934,7 @@ def clients():
     # Apply datetime fixing to all template data
     safe_data = fix_template_data_dates(safe_data)
     
-    return render_template('clients.html', **safe_data)
+    return redirect('http://localhost:3000/clients')
 
 
 
@@ -995,16 +946,16 @@ def import_transactions():
     if request.method == 'POST':
         if 'file' not in request.files:
             flash('No file selected.', 'error')
-            return render_template('import_transactions.html')
+            return redirect('http://localhost:3000/import')
         
         file = request.files['file']
         if file.filename == '':
             flash('No file selected.', 'error')
-            return render_template('import_transactions.html')
+            return redirect('http://localhost:3000/import')
         
         if not allowed_file(file.filename):
             flash('Invalid file type. Please upload CSV or Excel file.', 'error')
-            return render_template('import_transactions.html')
+            return redirect('http://localhost:3000/import')
         
         try:
             # Read file
@@ -1018,7 +969,7 @@ def import_transactions():
             missing_columns = [col for col in required_columns if col not in df.columns]
             if missing_columns:
                 flash(f'Missing required columns: {", ".join(missing_columns)}', 'error')
-                return render_template('import_transactions.html')
+                return redirect('http://localhost:3000/import')
             
             # Process transactions
             success_count = 0
@@ -1104,7 +1055,7 @@ def import_transactions():
             logger.error(f"Error importing transactions: {str(e)}")
             flash('Error importing transactions. Please check file format.', 'error')
     
-    return render_template('import_transactions.html')
+        return redirect('http://localhost:3000/import')
 
 @transactions_bp.route('/export')
 @login_required
@@ -1179,9 +1130,7 @@ def view_transaction(transaction_id):
         Transaction.id != transaction_id
     ).order_by(desc(Transaction.date)).limit(5).all()
     
-    return render_template('view_transaction.html', 
-                         transaction=transaction,
-                         related_transactions=related_transactions)
+    return redirect(f'http://localhost:3000/transactions/{transaction_id}')
 
 @transactions_bp.route('/daily_summary/<date>', methods=['GET', 'POST'])
 @login_required
@@ -1274,7 +1223,7 @@ def daily_summary(date):
                 'transactions': []
             }
             
-            return render_template('daily_summary.html', **summary_data)
+            return redirect(f'http://localhost:3000/summary/{date}')
         
         # Get exchange rate for this date
         from app.models.config import ExchangeRate
@@ -1560,32 +1509,13 @@ def daily_summary(date):
             'transactions': transactions
         }
         
-        return render_template('daily_summary.html', **summary_data)
+        return redirect(f'http://localhost:3000/summary/{date}')
         
     except Exception as e:
         logger.error(f"Error in daily summary: {str(e)}")
         flash(f'Error loading daily summary for {date}: {str(e)}', 'error')
         # Instead of redirecting to clients, show an error page
-        return render_template('daily_summary.html', 
-                             date=datetime.strptime(date, '%Y-%m-%d').date() if date else None,
-                             date_str=date,
-                             error_message=str(e),
-                             transactions=[],
-                             total_deposits_tl=0.0,
-                             total_withdrawals_tl=0.0,
-                             total_deposits_usd=0.0,
-                             total_withdrawals_usd=0.0,
-                             total_amount_tl=0.0,
-                             total_amount_usd=0.0,
-                             total_commission_tl=0.0,
-                             total_commission_usd=0.0,
-                             total_net_tl=0.0,
-                             total_net_usd=0.0,
-                             transaction_count=0,
-                             unique_clients=0,
-                             psp_summary=[],
-                             category_summary=[],
-                             payment_method_summary=[])
+        return redirect(f'http://localhost:3000/summary/{date}')
 
 @transactions_bp.route('/api/<int:transaction_id>')
 @login_required
@@ -1620,26 +1550,7 @@ def summary_view(date):
         logger.error(f"Error in summary_view for date {date}: {str(e)}")
         flash(f'Error loading summary for {date}: {str(e)}', 'error')
         # Instead of redirecting to clients, show an error page
-        return render_template('daily_summary.html', 
-                             date=datetime.strptime(date, '%Y-%m-%d').date() if date else None,
-                             date_str=date,
-                             error_message=str(e),
-                             transactions=[],
-                             total_deposits_tl=0.0,
-                             total_withdrawals_tl=0.0,
-                             total_deposits_usd=0.0,
-                             total_withdrawals_usd=0.0,
-                             total_amount_tl=0.0,
-                             total_amount_usd=0.0,
-                             total_commission_tl=0.0,
-                             total_commission_usd=0.0,
-                             total_net_tl=0.0,
-                             total_net_usd=0.0,
-                             transaction_count=0,
-                             unique_clients=0,
-                             psp_summary=[],
-                             category_summary=[],
-                             payment_method_summary=[])
+        return redirect(f'http://localhost:3000/summary/{date}')
 
 @transactions_bp.route('/api/summary/<date>')
 @login_required

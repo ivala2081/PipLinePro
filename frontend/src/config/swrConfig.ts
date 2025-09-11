@@ -1,24 +1,28 @@
 import { SWRConfiguration } from 'swr';
 import { isDevelopment } from './environment';
 
-// SWR configuration for data fetching and caching
+// SWR configuration for data fetching and caching - PERFORMANCE OPTIMIZED
 export const swrConfig: SWRConfiguration = {
-  // Revalidate data every 5 minutes
-  refreshInterval: 5 * 60 * 1000,
-  // Keep data in cache for 10 minutes
-  dedupingInterval: 10 * 60 * 1000,
-  // Retry failed requests 3 times
-  errorRetryCount: 3,
+  // Revalidate data every 30 minutes (increased from 15 minutes)
+  refreshInterval: 30 * 60 * 1000,
+  // Keep data in cache for 60 minutes (increased from 30 minutes)
+  dedupingInterval: 60 * 60 * 1000,
+  // Retry failed requests only once (reduced from 2)
+  errorRetryCount: 1,
   // Retry delay with exponential backoff
-  errorRetryInterval: 1000,
-  // Focus revalidation in development
-  revalidateOnFocus: isDevelopment(),
-  // Revalidate on reconnect
-  revalidateOnReconnect: true,
-  // Revalidate on mount if data is stale
-  revalidateOnMount: true,
-  // Compare function for determining if data has changed
+  errorRetryInterval: 5000,
+  // Disable focus revalidation to reduce unnecessary requests
+  revalidateOnFocus: false,
+  // Disable reconnect revalidation to reduce requests
+  revalidateOnReconnect: false,
+  // Only revalidate on mount if data is very stale
+  revalidateOnMount: false,
+  // Optimized compare function
   compare: (a, b) => JSON.stringify(a) === JSON.stringify(b),
+  // Add stale-while-revalidate behavior
+  revalidateIfStale: false,
+  // Increase loading timeout
+  loadingTimeout: 15000,
 };
 
 // Query keys factory for consistent key management

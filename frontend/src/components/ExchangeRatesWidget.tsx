@@ -117,7 +117,7 @@ const ExchangeRatesWidget = memo<ExchangeRatesWidgetProps>(({
                     {getQualityLabel(rate.data_quality)}
                   </span>
                 </div>
-                <div className='text-2xl font-bold text-gray-900'>
+                <div className='text-lg font-bold text-gray-900'>
                   {new Intl.NumberFormat('en-US', {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 4

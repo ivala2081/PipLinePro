@@ -188,6 +188,7 @@ export const ModernSidebar: React.FC<ModernSidebarProps> = ({
             </div>
           </div>
         </div>
+        
       </div>
     </div>
   );

@@ -133,11 +133,13 @@ class EnhancedLogger:
         ))
         handlers.append(console_handler)
         
-        # Main application log - reduced size to prevent rotation issues
+        # Main application log - with proper file handle management
         app_handler = logging.handlers.RotatingFileHandler(
             os.path.join(log_dir, "pipelinepro_enhanced.log"),
-            maxBytes=5*1024*1024,  # Reduced to 5MB
-            backupCount=5
+            maxBytes=2*1024*1024,  # Reduced to 2MB to prevent rotation issues
+            backupCount=3,
+            encoding='utf-8',
+            delay=True  # Delay file opening to prevent permission issues
         )
         app_handler.setLevel(logging.INFO)
         app_handler.setFormatter(DetailedFormatter(
@@ -145,11 +147,13 @@ class EnhancedLogger:
         ))
         handlers.append(app_handler)
         
-        # Error log - reduced size
+        # Error log - with proper file handle management
         error_handler = logging.handlers.RotatingFileHandler(
             os.path.join(log_dir, "pipelinepro_errors_enhanced.log"),
-            maxBytes=5*1024*1024,  # Reduced to 5MB
-            backupCount=5
+            maxBytes=2*1024*1024,  # Reduced to 2MB
+            backupCount=3,
+            encoding='utf-8',
+            delay=True  # Delay file opening to prevent permission issues
         )
         error_handler.setLevel(logging.ERROR)
         error_handler.setFormatter(DetailedFormatter(
@@ -157,11 +161,13 @@ class EnhancedLogger:
         ))
         handlers.append(error_handler)
         
-        # Debug log - reduced size and improved rotation
+        # Debug log - with proper file handle management
         debug_handler = logging.handlers.RotatingFileHandler(
             os.path.join(log_dir, "pipelinepro_debug_enhanced.log"),
-            maxBytes=5*1024*1024,  # Reduced to 5MB
-            backupCount=3  # Reduced backup count
+            maxBytes=2*1024*1024,  # Reduced to 2MB
+            backupCount=2,  # Minimal backup count
+            encoding='utf-8',
+            delay=True  # Delay file opening to prevent permission issues
         )
         debug_handler.setLevel(logging.DEBUG)
         debug_handler.setFormatter(DetailedFormatter(
@@ -169,11 +175,13 @@ class EnhancedLogger:
         ))
         handlers.append(debug_handler)
         
-        # JSON log for structured logging - reduced size
+        # JSON log for structured logging - with proper file handle management
         json_handler = logging.handlers.RotatingFileHandler(
             os.path.join(log_dir, "pipelinepro_structured.log"),
-            maxBytes=5*1024*1024,  # Reduced to 5MB
-            backupCount=3
+            maxBytes=2*1024*1024,  # Reduced to 2MB
+            backupCount=2,
+            encoding='utf-8',
+            delay=True  # Delay file opening to prevent permission issues
         )
         json_handler.setLevel(logging.INFO)
         json_handler.setFormatter(EnhancedJSONFormatter())

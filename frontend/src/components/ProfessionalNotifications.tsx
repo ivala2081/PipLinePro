@@ -819,8 +819,8 @@ export function ProfessionalNotificationsShowcase() {
           Professional Notification & Feedback Systems
         </h2>
         <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-          Business-ready notification components with advanced features, smooth animations, 
-          and accessibility support. Perfect for providing user feedback and system status updates.
+          Business-ready notification components with advanced features and smooth animations. 
+          Perfect for providing user feedback and system status updates.
         </p>
       </div>
 

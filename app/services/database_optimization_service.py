@@ -56,7 +56,7 @@ class DatabaseOptimizationService:
         """Get basic database statistics"""
         try:
             # Get transaction count
-            transaction_count = db.session.execute(text("SELECT COUNT(*) FROM transaction")).scalar()
+            transaction_count = db.session.execute(text('SELECT COUNT(*) FROM "transaction"')).scalar()
             
             # Get user count
             user_count = db.session.execute(text("SELECT COUNT(*) FROM user")).scalar()
@@ -64,13 +64,13 @@ class DatabaseOptimizationService:
             # Get date range of transactions
             date_range = db.session.execute(text("""
                 SELECT MIN(date) as min_date, MAX(date) as max_date 
-                FROM transaction
+                FROM "transaction"
             """)).first()
             
             # Get most active PSPs
             top_psps = db.session.execute(text("""
                 SELECT psp, COUNT(*) as transaction_count
-                FROM transaction 
+                FROM "transaction" 
                 WHERE psp IS NOT NULL
                 GROUP BY psp 
                 ORDER BY transaction_count DESC 
@@ -97,13 +97,13 @@ class DatabaseOptimizationService:
         # For now, return common slow query patterns
         return [
             {
-                'query_pattern': 'SELECT * FROM transaction WHERE date BETWEEN ? AND ?',
+                'query_pattern': 'SELECT * FROM "transaction" WHERE date BETWEEN ? AND ?',
                 'frequency': 'High',
                 'suggestion': 'Add composite index on (date, amount)',
                 'impact': 'High'
             },
             {
-                'query_pattern': 'SELECT psp, SUM(amount) FROM transaction GROUP BY psp',
+                'query_pattern': 'SELECT psp, SUM(amount) FROM "transaction" GROUP BY psp',
                 'frequency': 'Medium',
                 'suggestion': 'Add index on (psp, amount)',
                 'impact': 'Medium'
@@ -335,11 +335,12 @@ class DatabaseOptimizationService:
                     result = db.session.execute(text(check_sql)).fetchone()
                     
                     if not result:
-                        # Create the index
+                        # Create the index (escape reserved keywords)
                         columns = ', '.join(index_def['columns'])
+                        table_name = f'"{index_def["table"]}"' if index_def['table'] == 'transaction' else index_def['table']
                         create_sql = f"""
                         CREATE INDEX {index_def['name']} 
-                        ON {index_def['table']} ({columns})
+                        ON {table_name} ({columns})
                         """
                         db.session.execute(text(create_sql))
                         indexes_created += 1

@@ -567,8 +567,6 @@ const Dashboard = memo(() => {
                 <MetricCard
                   title={t('dashboard.net_cash')}
                   value={formatCurrency(dashboardData.summary.total_net, '₺')}
-                  change={dashboardData.stats.total_revenue.change}
-                  trend="up"
                   icon={DollarSign}
                   color="gray"
                   subtitle="All time net cash"
@@ -577,8 +575,6 @@ const Dashboard = memo(() => {
                 <MetricCard
                   title={t('dashboard.total_transactions')}
                   value={formatNumber(dashboardData.summary.transaction_count)}
-                  change={dashboardData.stats.total_transactions.change}
-                  trend="up"
                   icon={CreditCard}
                   color="green"
                   subtitle="Total transactions"
@@ -587,8 +583,6 @@ const Dashboard = memo(() => {
                 <MetricCard
                   title={t('dashboard.active_clients')}
                   value={formatNumber(dashboardData.summary.active_clients)}
-                  change={dashboardData.stats.active_clients.change}
-                  trend="up"
                   icon={Users}
                   color="purple"
                   subtitle="Active clients"
@@ -597,8 +591,6 @@ const Dashboard = memo(() => {
                 <MetricCard
                   title={t('dashboard.total_commissions')}
                   value={formatCurrency(dashboardData.summary.total_commission, '₺')}
-                  change={`${((dashboardData.summary.total_commission / dashboardData.summary.total_revenue) * 100).toFixed(2)}%`}
-                  trend="up"
                   icon={TrendingUp}
                   color="teal"
                   subtitle="Commission earned"

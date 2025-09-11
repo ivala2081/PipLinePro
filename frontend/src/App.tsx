@@ -1,5 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { Suspense, lazy } from 'react';
+import { Suspense, lazy, useEffect } from 'react';
 import { SWRConfig } from 'swr';
 import { Provider } from 'react-redux';
 import { store } from './store';
@@ -9,15 +9,18 @@ import ProtectedRoute from './components/ProtectedRoute';
 import ErrorBoundary from './components/ErrorBoundary';
 import { AuthProvider } from './contexts/AuthContext';
 import { LanguageProvider } from './contexts/LanguageContext';
-import { ThemeProvider } from './contexts/ThemeContext';
-import { AccessibilityProvider } from './components/AccessibilityProvider';
+import { AccessibilityProvider } from './contexts/AccessibilityContext';
 import { swrConfig } from './config/swrConfig';
 import { ToastProvider } from './components/ToastProvider';
 import SkipLink from './components/SkipLink';
-import AccessibilitySettings from './components/AccessibilitySettings';
+import PerformanceWidget from './components/PerformanceWidget';
+// import { preloadComponents } from './components/LazyComponents';
+import { performanceOptimizer } from './utils/performanceOptimizer';
 
 import './utils/apiTest'; // Auto-run API tests
 import './styles/navigation-hover-effects.css'; // Navigation hover effects
+import './styles/mobile-first.css'; // Mobile-first responsive design
+import './styles/accessibility-enhanced.css'; // Professional accessibility enhancements
 
 // Lazy load pages for code splitting
 const Dashboard = lazy(() => import('./pages/ModernDashboardPage'));
@@ -36,14 +39,30 @@ const Accounting = lazy(() => import('./pages/Accounting'));
 const RevenueAnalytics = lazy(() => import('./pages/RevenueAnalytics'));
 
 function App() {
+  // Preload critical components and setup performance optimization
+  useEffect(() => {
+    // Preload critical components after initial load
+    // const timer = setTimeout(() => {
+    //   preloadComponents();
+    // }, 1000);
+
+    // Setup performance monitoring
+    performanceOptimizer.setupLazyImages();
+
+    // Cleanup on unmount
+    return () => {
+      // clearTimeout(timer);
+      performanceOptimizer.cleanup();
+    };
+  }, []);
+
   return (
     <Provider store={store}>
       <SWRConfig value={swrConfig}>
         <ErrorBoundary>
-          <ThemeProvider>
-            <AuthProvider>
-              <LanguageProvider>
-                <AccessibilityProvider>
+          <AuthProvider>
+            <LanguageProvider>
+              <AccessibilityProvider>
                 <ToastProvider>
                   <SkipLink />
 
@@ -65,7 +84,7 @@ function App() {
                           <Route path='accounting' element={<Accounting />} />
                           <Route path='ledger' element={<Ledger />} />
                           <Route path='transactions/add' element={<AddTransaction />} />
-                          <Route path='transactions/clients' element={<Clients />} />
+                          <Route path='transactions/clients' element={<Navigate to="/transactions" replace />} />
                           
                           {/* Legacy route redirects for backward compatibility */}
                           <Route path='clients' element={<Clients />} />
@@ -155,12 +174,17 @@ function App() {
                       </Routes>
                     </Suspense>
                   </div>
-                  <AccessibilitySettings />
+                  <PerformanceWidget 
+                    position="floating"
+                    compact={true}
+                    onPerformanceIssue={(metrics) => {
+                      console.warn('Performance issue detected:', metrics);
+                    }}
+                  />
                 </ToastProvider>
-                </AccessibilityProvider>
-              </LanguageProvider>
-            </AuthProvider>
-          </ThemeProvider>
+              </AccessibilityProvider>
+            </LanguageProvider>
+          </AuthProvider>
         </ErrorBoundary>
       </SWRConfig>
     </Provider>

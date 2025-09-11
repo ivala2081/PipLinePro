@@ -2,7 +2,7 @@
 Admin Section Permissions Routes for PipLine Treasury System
 Allows main admin to configure which sections are accessible to different admin levels
 """
-from flask import Blueprint, render_template, request, jsonify, flash, redirect, url_for
+from flask import Blueprint, request, jsonify, flash, redirect, url_for
 from flask_login import login_required, current_user
 import json
 import logging
@@ -31,7 +31,7 @@ def admin_section_permissions():
         # Get all section permissions
         sections = admin_permission_service.get_all_sections()
         
-        return render_template('admin_section_permissions.html', sections=sections)
+        return redirect('http://localhost:3000/admin/permissions')
         
     except Exception as e:
         logger.error(f"Error in admin section permissions view: {str(e)}")

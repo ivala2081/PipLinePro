@@ -95,15 +95,15 @@ export const designTokens = {
       mono: ['JetBrains Mono', 'Consolas', 'monospace'],
     },
     fontSize: {
-      xs: '0.75rem',      // 12px
-      sm: '0.875rem',     // 14px
-      base: '1rem',       // 16px
-      lg: '1.125rem',     // 18px
-      xl: '1.25rem',      // 20px
-      '2xl': '1.5rem',    // 24px
-      '3xl': '1.875rem',  // 30px
-      '4xl': '2.25rem',   // 36px
-      '5xl': '3rem',      // 48px
+      xs: '0.5rem',       // 8px
+      sm: '0.625rem',     // 10px
+      base: '0.75rem',    // 12px
+      lg: '0.875rem',     // 14px
+      xl: '1rem',         // 16px
+      '2xl': '1.125rem',  // 18px
+      '3xl': '1.25rem',   // 20px
+      '4xl': '1.5rem',    // 24px
+      '5xl': '1.875rem',  // 30px
     },
     fontWeight: {
       light: '300',
@@ -251,7 +251,7 @@ export const componentTokens = {
   }
 };
 
-// Theme variants
+// Light theme only
 export const themeVariants = {
   light: {
     background: '#ffffff',
@@ -273,26 +273,5 @@ export const themeVariants = {
     popoverForeground: '#0f172a',
     card: '#ffffff',
     cardForeground: '#0f172a',
-  },
-  dark: {
-    background: '#0f172a',
-    foreground: '#f8fafc',
-    muted: '#1e293b',
-    mutedForeground: '#94a3b8',
-    border: '#334155',
-    input: '#334155',
-    ring: '#3b82f6',
-    primary: '#3b82f6',
-    primaryForeground: '#ffffff',
-    secondary: '#1e293b',
-    secondaryForeground: '#f8fafc',
-    destructive: '#ef4444',
-    destructiveForeground: '#ffffff',
-    accent: '#1e293b',
-    accentForeground: '#f8fafc',
-    popover: '#0f172a',
-    popoverForeground: '#f8fafc',
-    card: '#0f172a',
-    cardForeground: '#f8fafc',
   }
 };

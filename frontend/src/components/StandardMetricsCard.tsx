@@ -1,12 +1,10 @@
 import React, { memo } from 'react';
-import { TrendingUp, TrendingDown, LucideIcon } from 'lucide-react';
+import { LucideIcon } from 'lucide-react';
 import { MetricsCardSkeleton } from './EnhancedSkeletonLoaders';
 
 export interface MetricsCardProps {
   title: string;
   value: string | number;
-  change?: string;
-  changeType?: 'positive' | 'negative' | 'neutral';
   icon: LucideIcon;
   variant?: 'default' | 'gradient' | 'minimal' | 'compact';
   color?: 'primary' | 'success' | 'warning' | 'danger' | 'neutral' | 'turquoise' | 'gray' | 'green' | 'red' | 'purple' | 'orange' | 'indigo' | 'teal' | 'pink';
@@ -94,8 +92,6 @@ const enterpriseColorVariants = {
 const StandardMetricsCard = memo<MetricsCardProps>(({
   title,
   value,
-  change,
-  changeType,
   icon,
   variant = 'default',
   color = 'primary',
@@ -146,16 +142,6 @@ const StandardMetricsCard = memo<MetricsCardProps>(({
                 {renderIcon()}
               </div>
             </div>
-            {change && (
-              <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-white/20 backdrop-blur-sm`}>
-                {changeType === 'positive' ? (
-                  <TrendingUp style={{ width: 'var(--icon-sm)', height: 'var(--icon-sm)' }} />
-                ) : changeType === 'negative' ? (
-                  <TrendingDown style={{ width: 'var(--icon-sm)', height: 'var(--icon-sm)' }} />
-                ) : null}
-                <span>{change}</span>
-              </div>
-            )}
           </div>
           <div className="space-y-1">
             <h3 className="text-sm font-medium text-white/90">{title}</h3>
@@ -187,22 +173,6 @@ const StandardMetricsCard = memo<MetricsCardProps>(({
                 {subtitle && <p className="text-xs text-gray-500">{subtitle}</p>}
               </div>
             </div>
-            {change && (
-              <div className={`flex items-center gap-1 text-xs font-medium ${
-                changeType === 'positive' 
-                  ? 'enterprise-status-success' 
-                  : changeType === 'negative' 
-                  ? 'enterprise-status-danger' 
-                  : 'text-gray-600'
-              }`}>
-                {changeType === 'positive' ? (
-                  <TrendingUp style={{ width: 'var(--icon-sm)', height: 'var(--icon-sm)' }} />
-                ) : changeType === 'negative' ? (
-                  <TrendingDown style={{ width: 'var(--icon-sm)', height: 'var(--icon-sm)' }} />
-                ) : null}
-                <span>{change}</span>
-              </div>
-            )}
           </div>
         </div>
       );
@@ -227,17 +197,6 @@ const StandardMetricsCard = memo<MetricsCardProps>(({
               <h3 className="text-xs font-medium text-gray-600 uppercase tracking-wide truncate">{title}</h3>
               <div className="flex items-center justify-between">
                 <p className="text-sm font-semibold text-gray-900">{value}</p>
-                {change && (
-                  <span className={`text-xs font-medium ${
-                    changeType === 'positive' 
-                      ? 'enterprise-status-success' 
-                      : changeType === 'negative' 
-                      ? 'enterprise-status-danger' 
-                      : 'text-gray-600'
-                  }`}>
-                    {change}
-                  </span>
-                )}
               </div>
               {subtitle && <p className="text-xs text-gray-500 truncate">{subtitle}</p>}
             </div>
@@ -257,22 +216,6 @@ const StandardMetricsCard = memo<MetricsCardProps>(({
                 {renderIcon()}
               </div>
             </div>
-            {change && (
-              <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
-                changeType === 'positive'
-                  ? 'enterprise-status-success'
-                  : changeType === 'negative'
-                  ? 'enterprise-status-danger'
-                  : 'bg-gray-50 text-gray-700'
-              }`}>
-                {changeType === 'positive' ? (
-                  <TrendingUp style={{ width: 'var(--icon-sm)', height: 'var(--icon-sm)' }} />
-                ) : changeType === 'negative' ? (
-                  <TrendingDown style={{ width: 'var(--icon-sm)', height: 'var(--icon-sm)' }} />
-                ) : null}
-                <span>{change}</span>
-              </div>
-            )}
           </div>
           <div className="space-y-1">
             <h3 className="text-xs font-medium text-gray-600 uppercase tracking-wide">{title}</h3>

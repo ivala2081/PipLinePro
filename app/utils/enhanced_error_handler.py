@@ -262,7 +262,7 @@ def create_enhanced_error_response(error: EnhancedPipLineError,
     if request_format == 'json':
         return jsonify(error_data), error.status_code
     else:
-        return render_template('errors/generic.html', error=error_data['error']), error.status_code
+        return jsonify({'error': 'Error', 'message': error_data['error']}), error.status_code
 
 def handle_enhanced_api_error(error: Exception) -> Tuple[Dict, int]:
     """Handle API errors with enhanced logging"""

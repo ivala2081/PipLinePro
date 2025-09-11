@@ -14,7 +14,7 @@ Features:
 - Automated fixes application
 """
 
-from flask import Blueprint, render_template, jsonify, request, current_app
+from flask import Blueprint, redirect, jsonify, request, current_app
 from flask_login import login_required, current_user
 import logging
 
@@ -37,14 +37,10 @@ def color_dashboard():
         # Get analysis report
         report = color_service.get_analysis_report()
         
-        return render_template('color_enhancement_dashboard.html', 
-                            report=report,
-                            user=current_user)
+        return redirect('http://localhost:3000/color-enhancement')
     except Exception as e:
         logger.error(f"Error in color dashboard: {e}")
-        return render_template('color_enhancement_dashboard.html', 
-                            report={'error': str(e)},
-                            user=current_user)
+        return redirect('http://localhost:3000/color-enhancement')
 
 @color_enhancement_bp.route('/analyze', methods=['POST'])
 @login_required

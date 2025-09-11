@@ -184,56 +184,15 @@ def dashboard():
         growth = dashboard_data.get('growth', {})
         charts = dashboard_data.get('charts', {})
         
-        # Ensure all values are properly typed
-        return render_template('dashboard.html',
-                           total_amount=float(current.get('total_amount', 0)),
-                           total_commission=float(current.get('total_commission', 0)),
-                           total_net=float(current.get('total_net', 0)),
-                           transaction_count=int(current.get('transaction_count', 0)),
-                           unique_clients=int(current.get('unique_clients', 0)),
-                           count_growth=float(growth.get('percentage', 0)),
-                           amount_growth=float(growth.get('percentage', 0)),
-                           net_growth=float(growth.get('percentage', 0)),
-                           recent_transactions=recent_transactions,
-                           dates=charts.get('daily', {}).get('labels', []) if charts.get('daily') else [],
-                           amounts=charts.get('daily', {}).get('revenue', []) if charts.get('daily') else [],
-                           commissions=charts.get('daily', {}).get('commission', []) if charts.get('daily') else [],
-                           counts=charts.get('daily', {}).get('count', []) if charts.get('daily') else [],
-                           db_health=db_health,
-                           memory_health=memory_health,
-                           cpu_health=cpu_health,
-                           session_health=session_health,
-                           system_uptime=system_uptime,
-                           response_time=response_time,
-                           now=now,
-                           period_label=period_label)
+
+        # Redirect to React frontend dashboard
+        return redirect('http://localhost:3000/dashboard')
                            
     except Exception as e:
         logger.error(f"Error in dashboard: {str(e)}")
         flash('Error loading dashboard data', 'error')
         # Return safe default values
-        return render_template('dashboard.html',
-                           total_amount=0,
-                           total_commission=0,
-                           total_net=0,
-                           transaction_count=0,
-                           unique_clients=0,
-                           count_growth=0,
-                           amount_growth=0,
-                           net_growth=0,
-                           recent_transactions=[],
-                           dates=[],
-                           amounts=[],
-                           commissions=[],
-                           counts=[],
-                           db_health=0,
-                           memory_health=0,
-                           cpu_health=0,
-                           session_health=0,
-                           system_uptime=0,
-                           response_time=0,
-                           now=datetime.now(),
-                           period_label="Last 30 days")
+        return redirect('http://localhost:3000/dashboard')
 
 @analytics_bp.route('/analytics')
 @login_required
@@ -298,19 +257,12 @@ def analytics():
                 'avg_commission_rate': avg_commission_rate
             })
         
-        return render_template('analytics.html',
-                             total_amount=float(total_amount),
-                             total_commission=float(total_commission),
-                             avg_transaction_size=float(avg_transaction_size),
-                             growth_rate=growth_rate,
-                             top_clients=top_clients,
-                             psp_performance=psp_performance,
-                             days=days)
+        return redirect('http://localhost:3000/analytics')
         
     except Exception as e:
         logger.error(f"Error loading analytics: {str(e)}")
         flash('Error loading analytics data.', 'error')
-        return render_template('analytics.html')
+        return redirect('http://localhost:3000/analytics')
 
 @analytics_bp.route('/business-analytics')
 @login_required
@@ -356,54 +308,12 @@ def business_analytics():
         # Trend data will be serialized by the template filters
         sanitized_trends = analytics_data['trends']
         
-        return render_template('business-analytics.html',
-                             total_revenue=total_revenue,
-                             net_profit=net_profit,
-                             transaction_count=analytics_data['metrics']['transaction_count'],
-                             active_clients=active_clients,
-                             unique_clients=active_clients,  # Use active_clients for both
-                             revenue_growth=revenue_growth,
-                             profit_growth=profit_growth,
-                             transaction_growth=transaction_growth,
-                             client_growth=client_growth,
-                             avg_daily_revenue=avg_daily_revenue,
-                             profit_margin=analytics_data['metrics']['profit_margin'],
-                             cost_ratio=cost_ratio,
-                             retention_rate=retention_rate,
-                             avg_transaction_value=avg_transaction_value,
-                             transactions_per_day=transactions_per_day,
-                             next_month_forecast=next_month_forecast,
-                             next_quarter_forecast=next_quarter_forecast,
-                             forecast_growth=forecast_growth,
-                             peak_revenue_date=peak_revenue_date,
-                             trend_data=sanitized_trends,
-                             days=days)
+        return redirect('http://localhost:3000/business-analytics')
         
     except Exception as e:
         logger.error(f"Error loading business analytics: {str(e)}")
         flash('Error loading business analytics data.', 'error')
-        return render_template('business-analytics.html',
-                             total_revenue=0,
-                             net_profit=0,
-                             transaction_count=0,
-                             active_clients=0,
-                             unique_clients=0,
-                             revenue_growth=0,
-                             profit_growth=0,
-                             transaction_growth=0,
-                             client_growth=0,
-                             avg_daily_revenue=0,
-                             profit_margin=0,
-                             cost_ratio=0,
-                             retention_rate=0,
-                             avg_transaction_value=0,
-                             transactions_per_day=0,
-                             next_month_forecast=0,
-                             next_quarter_forecast=0,
-                             forecast_growth=0,
-                             peak_revenue_date=date.today(),
-                             trend_data={'dates': [], 'amounts': [], 'commissions': [], 'counts': [], 'moving_averages': []},
-                             days=30)
+        return redirect('http://localhost:3000/business-analytics')
 
 @analytics_bp.route('/api/analytics/data')
 @login_required
@@ -483,13 +393,7 @@ def psp_track():
         
         if not psp_tracks:
             logger.warning("No PSP tracks found in database")
-            return render_template(
-                'psp_track.html',
-                summary_data=[],
-                overview_data={'total_active_psps': 0, 'total_allocation': 0, 'total_rollover': 0, 'avg_allocation': 0, 'psps': {}, 'overall_metrics': {}},
-                active_tab='overview',  # Changed from 'ledger' to 'overview'
-                now=datetime.now()
-            )
+            return redirect('http://localhost:3000/psp-track')
         
         # Use the new analytics service to calculate comprehensive metrics
         analytics_data = PspAnalyticsService.calculate_psp_metrics(psp_tracks)
@@ -578,24 +482,12 @@ def psp_track():
         
         now = datetime.now()
         
-        return render_template(
-            'psp_track.html',
-            summary_data=summary_data,
-            overview_data=overview_data,
-            active_tab=active_tab,
-            now=now
-        )
+        return redirect('http://localhost:3000/psp-track')
         
     except Exception as e:
         logger.error(f"Error loading PSP track data: {str(e)}")
         flash('Error loading PSP track data.', 'error')
-        return render_template(
-            'psp_track.html',
-            summary_data=[],
-            overview_data={'total_active_psps': 0, 'total_allocation': 0, 'total_rollover': 0, 'avg_allocation': 0, 'psps': {}, 'overall_metrics': {}},
-            active_tab='ledger',
-            now=datetime.now()
-        )
+        return redirect('http://localhost:3000/psp-track')
 
 @analytics_bp.route('/analytics/api/psp_details/<psp_name>')
 @login_required
@@ -666,19 +558,19 @@ def add_employee():
             # Validate required fields
             if not name:
                 flash('Employee name is required.', 'error')
-                return render_template('add_employee.html')
+                return redirect('http://localhost:3000/employees/add')
             
             if not department:
                 flash('Department is required.', 'error')
-                return render_template('add_employee.html')
+                return redirect('http://localhost:3000/employees/add')
             
             if not company_name:
                 flash('Company name is required.', 'error')
-                return render_template('add_employee.html')
+                return redirect('http://localhost:3000/employees/add')
             
             if not stage_name:
                 flash('Stage name is required.', 'error')
-                return render_template('add_employee.html')
+                return redirect('http://localhost:3000/employees/add')
             
             # Convert numeric values
             try:
@@ -688,7 +580,7 @@ def add_employee():
                 usd_rate = Decimal(usd_rate)
             except (ValueError, InvalidOperation):
                 flash('Invalid numeric values provided.', 'error')
-                return render_template('add_employee.html')
+                return redirect('http://localhost:3000/employees/add')
             
             # Create new employee
             employee = Employee()
@@ -721,7 +613,7 @@ def add_employee():
     
     # GET request - show form
     departments = ['Conversion', 'Marketing', 'Retention', 'Research', 'Operation', 'Developers', 'Management']
-    return render_template('add_employee.html', departments=departments)
+    return redirect('http://localhost:3000/employees/add')
 
 @analytics_bp.route('/edit_employee/<int:employee_id>', methods=['GET', 'POST'])
 @login_required
@@ -748,19 +640,19 @@ def edit_employee(employee_id):
             # Validate required fields
             if not name:
                 flash('Employee name is required.', 'error')
-                return render_template('edit_employee.html', employee=employee)
+                return redirect(f'http://localhost:3000/employees/edit/{employee_id}')
             
             if not department:
                 flash('Department is required.', 'error')
-                return render_template('edit_employee.html', employee=employee)
+                return redirect(f'http://localhost:3000/employees/edit/{employee_id}')
             
             if not company_name:
                 flash('Company name is required.', 'error')
-                return render_template('edit_employee.html', employee=employee)
+                return redirect(f'http://localhost:3000/employees/edit/{employee_id}')
             
             if not stage_name:
                 flash('Stage name is required.', 'error')
-                return render_template('edit_employee.html', employee=employee)
+                return redirect(f'http://localhost:3000/employees/edit/{employee_id}')
             
             # Convert numeric values
             try:
@@ -770,7 +662,7 @@ def edit_employee(employee_id):
                 usd_rate = Decimal(usd_rate)
             except (ValueError, InvalidOperation):
                 flash('Invalid numeric values provided.', 'error')
-                return render_template('edit_employee.html', employee=employee)
+                return redirect(f'http://localhost:3000/employees/edit/{employee_id}')
             
             # Update employee
             employee.name = name
@@ -795,7 +687,7 @@ def edit_employee(employee_id):
         
         # GET request - show form
         departments = ['Conversion', 'Marketing', 'Retention', 'Research', 'Operation', 'Developers', 'Management']
-        return render_template('edit_employee.html', employee=employee, departments=departments)
+        return redirect(f'http://localhost:3000/employees/edit/{employee_id}')
         
     except Exception as e:
         db.session.rollback()
@@ -910,52 +802,12 @@ def agent_management():
         # Available departments for tabs
         available_departments = ['overview', 'Conversion', 'Marketing', 'Retention', 'Research', 'Operation', 'Developers', 'Management']
         
-        return render_template(
-            'agent_management.html',
-            agents=agents,
-            departments=departments,
-            active_tab=active_tab,
-            selected_department=selected_department,
-            available_departments=available_departments,
-            stats={
-                'total_agents': total_agents,
-                'total_net_salary': total_net_salary,
-                'total_final_salary': total_final_salary,
-                'total_deducted': total_deducted,
-                'total_advance': total_advance,
-                'total_usd_salary': total_usd_salary,
-                'active_agents': active_agents,
-                'inactive_agents': inactive_agents,
-                'avg_final_salary': total_final_salary / total_agents if total_agents > 0 else 0,
-                'avg_usd_salary': total_usd_salary / total_agents if total_agents > 0 else 0
-            },
-            date_range={'start': start_date, 'end': end_date, 'days': days}
-        )
+        return redirect('http://localhost:3000/agent-management')
         
     except Exception as e:
         logger.error(f"Error loading agent management data: {str(e)}")
         flash('Error loading agent management data.', 'error')
-        return render_template(
-            'agent_management.html',
-            agents=[],
-            departments={},
-            active_tab='overview',
-            selected_department='',
-            available_departments=['overview', 'Conversion', 'Marketing', 'Retention', 'Research', 'Operation', 'Developers', 'Management'],
-            stats={
-                'total_agents': 0,
-                'total_net_salary': 0,
-                'total_final_salary': 0,
-                'total_deducted': 0,
-                'total_advance': 0,
-                'total_usd_salary': 0,
-                'active_agents': 0,
-                'inactive_agents': 0,
-                'avg_final_salary': 0,
-                'avg_usd_salary': 0
-            },
-            date_range={'start': date.today(), 'end': date.today(), 'days': 30}
-        )
+        return redirect('http://localhost:3000/agent-management')
 
 @analytics_bp.route('/view_psp_track/<psp>/<date>')
 @login_required
@@ -992,11 +844,7 @@ def view_psp_track(psp, date):
         
         logger.info(f"Successfully found PSP track entry: {entry.psp_name} on {entry.date}")
         
-        return render_template(
-            'view_psp_track.html',
-            entry=entry,
-            action='View'
-        )
+        return redirect('http://localhost:3000/psp-track/view')
         
     except Exception as e:
         logger.error(f"Error viewing PSP track: {str(e)}")
@@ -1065,10 +913,7 @@ def add_psp_track():
         
         # GET request - show form
         psps = Option.query.filter_by(field_name='psp').all()
-        return render_template(
-            'add_psp_track.html',
-            psps=psps
-        )
+        return redirect('http://localhost:3000/psp-track/add')
         
     except Exception as e:
         logger.error(f"Error adding PSP track: {str(e)}")
@@ -1204,7 +1049,7 @@ def broadcast_analytics_update():
 def reports():
     """Reports page"""
     try:
-        return render_template('analytics.html', active_tab='reports')
+        return redirect('http://localhost:3000/analytics')
     except Exception as e:
         logger.error(f"Error loading reports: {str(e)}")
         flash('Error loading reports.', 'error')
@@ -1215,7 +1060,7 @@ def reports():
 def forecasting():
     """Forecasting page"""
     try:
-        return render_template('analytics.html', active_tab='forecasting')
+        return redirect('http://localhost:3000/analytics')
     except Exception as e:
         logger.error(f"Error loading forecasting: {str(e)}")
         flash('Error loading forecasting.', 'error')
@@ -1226,7 +1071,7 @@ def forecasting():
 def risk_management():
     """Risk management page"""
     try:
-        return render_template('analytics.html', active_tab='risk')
+        return redirect('http://localhost:3000/analytics')
     except Exception as e:
         logger.error(f"Error loading risk management: {str(e)}")
         flash('Error loading risk management.', 'error')
@@ -1237,7 +1082,7 @@ def risk_management():
 def compliance():
     """Compliance page"""
     try:
-        return render_template('analytics.html', active_tab='compliance')
+        return redirect('http://localhost:3000/analytics')
     except Exception as e:
         logger.error(f"Error loading compliance: {str(e)}")
         flash('Error loading compliance.', 'error')
@@ -1248,7 +1093,7 @@ def compliance():
 def audit():
     """Audit page"""
     try:
-        return render_template('analytics.html', active_tab='audit')
+        return redirect('http://localhost:3000/analytics')
     except Exception as e:
         logger.error(f"Error loading audit: {str(e)}")
         flash('Error loading audit.', 'error')
@@ -1259,7 +1104,7 @@ def audit():
 def alerts():
     """Alerts page"""
     try:
-        return render_template('analytics.html', active_tab='alerts')
+        return redirect('http://localhost:3000/analytics')
     except Exception as e:
         logger.error(f"Error loading alerts: {str(e)}")
         flash('Error loading alerts.', 'error')
@@ -1270,7 +1115,7 @@ def alerts():
 def integrations():
     """Integrations page"""
     try:
-        return render_template('analytics.html', active_tab='integrations')
+        return redirect('http://localhost:3000/analytics')
     except Exception as e:
         logger.error(f"Error loading integrations: {str(e)}")
         flash('Error loading integrations.', 'error')
@@ -1281,7 +1126,7 @@ def integrations():
 def api():
     """API page"""
     try:
-        return render_template('analytics.html', active_tab='api')
+        return redirect('http://localhost:3000/analytics')
     except Exception as e:
         logger.error(f"Error loading API: {str(e)}")
         flash('Error loading API.', 'error')
@@ -1292,7 +1137,7 @@ def api():
 def webhooks():
     """Webhooks page"""
     try:
-        return render_template('analytics.html', active_tab='webhooks')
+        return redirect('http://localhost:3000/analytics')
     except Exception as e:
         logger.error(f"Error loading webhooks: {str(e)}")
         flash('Error loading webhooks.', 'error')
@@ -1303,7 +1148,7 @@ def webhooks():
 def automation():
     """Automation page"""
     try:
-        return render_template('analytics.html', active_tab='automation')
+        return redirect('http://localhost:3000/analytics')
     except Exception as e:
         logger.error(f"Error loading automation: {str(e)}")
         flash('Error loading automation.', 'error')
@@ -1314,7 +1159,7 @@ def automation():
 def scheduling():
     """Scheduling page"""
     try:
-        return render_template('analytics.html', active_tab='scheduling')
+        return redirect('http://localhost:3000/analytics')
     except Exception as e:
         logger.error(f"Error loading scheduling: {str(e)}")
         flash('Error loading scheduling.', 'error')
@@ -1325,7 +1170,7 @@ def scheduling():
 def backup():
     """Backup page"""
     try:
-        return render_template('analytics.html', active_tab='backup')
+        return redirect('http://localhost:3000/analytics')
     except Exception as e:
         logger.error(f"Error loading backup: {str(e)}")
         flash('Error loading backup.', 'error')
@@ -1336,7 +1181,7 @@ def backup():
 def restore():
     """Restore page"""
     try:
-        return render_template('analytics.html', active_tab='restore')
+        return redirect('http://localhost:3000/analytics')
     except Exception as e:
         logger.error(f"Error loading restore: {str(e)}")
         flash('Error loading restore.', 'error')
@@ -1347,7 +1192,7 @@ def restore():
 def security():
     """Security page"""
     try:
-        return render_template('analytics.html', active_tab='security')
+        return redirect('http://localhost:3000/analytics')
     except Exception as e:
         logger.error(f"Error loading security: {str(e)}")
         flash('Error loading security.', 'error')
@@ -1358,7 +1203,7 @@ def security():
 def monitoring():
     """Monitoring page"""
     try:
-        return render_template('analytics.html', active_tab='monitoring')
+        return redirect('http://localhost:3000/analytics')
     except Exception as e:
         logger.error(f"Error loading monitoring: {str(e)}")
         flash('Error loading monitoring.', 'error')
@@ -1369,7 +1214,7 @@ def monitoring():
 def performance():
     """Performance page"""
     try:
-        return render_template('analytics.html', active_tab='performance')
+        return redirect('http://localhost:3000/analytics')
     except Exception as e:
         logger.error(f"Error loading performance: {str(e)}")
         flash('Error loading performance.', 'error')
@@ -1380,7 +1225,7 @@ def performance():
 def logs():
     """Logs page"""
     try:
-        return render_template('analytics.html', active_tab='logs')
+        return redirect('http://localhost:3000/analytics')
     except Exception as e:
         logger.error(f"Error loading logs: {str(e)}")
         flash('Error loading logs.', 'error')
@@ -1391,7 +1236,7 @@ def logs():
 def support():
     """Support page"""
     try:
-        return render_template('analytics.html', active_tab='support')
+        return redirect('http://localhost:3000/analytics')
     except Exception as e:
         logger.error(f"Error loading support: {str(e)}")
         flash('Error loading support.', 'error')
@@ -1402,7 +1247,7 @@ def support():
 def documentation():
     """Documentation page"""
     try:
-        return render_template('analytics.html', active_tab='documentation')
+        return redirect('http://localhost:3000/analytics')
     except Exception as e:
         logger.error(f"Error loading documentation: {str(e)}")
         flash('Error loading documentation.', 'error')
@@ -1413,7 +1258,7 @@ def documentation():
 def training():
     """Training page"""
     try:
-        return render_template('analytics.html', active_tab='training')
+        return redirect('http://localhost:3000/analytics')
     except Exception as e:
         logger.error(f"Error loading training: {str(e)}")
         flash('Error loading training.', 'error')
@@ -1424,7 +1269,7 @@ def training():
 def updates():
     """Updates page"""
     try:
-        return render_template('analytics.html', active_tab='updates')
+        return redirect('http://localhost:3000/analytics')
     except Exception as e:
         logger.error(f"Error loading updates: {str(e)}")
         flash('Error loading updates.', 'error')
@@ -1435,7 +1280,7 @@ def updates():
 def users():
     """Users page"""
     try:
-        return render_template('analytics.html', active_tab='users')
+        return redirect('http://localhost:3000/analytics')
     except Exception as e:
         logger.error(f"Error loading users: {str(e)}")
         flash('Error loading users.', 'error')
@@ -1446,7 +1291,7 @@ def users():
 def roles():
     """Roles page"""
     try:
-        return render_template('analytics.html', active_tab='roles')
+        return redirect('http://localhost:3000/analytics')
     except Exception as e:
         logger.error(f"Error loading roles: {str(e)}")
         flash('Error loading roles.', 'error')
@@ -1457,7 +1302,7 @@ def roles():
 def permissions():
     """Permissions page"""
     try:
-        return render_template('analytics.html', active_tab='permissions')
+        return redirect('http://localhost:3000/analytics')
     except Exception as e:
         logger.error(f"Error loading permissions: {str(e)}")
         flash('Error loading permissions.', 'error')
@@ -1468,7 +1313,7 @@ def permissions():
 def notifications():
     """Notifications page"""
     try:
-        return render_template('analytics.html', active_tab='notifications')
+        return redirect('http://localhost:3000/analytics')
     except Exception as e:
         logger.error(f"Error loading notifications: {str(e)}")
         flash('Error loading notifications.', 'error')
@@ -1479,7 +1324,7 @@ def notifications():
 def templates():
     """Templates page"""
     try:
-        return render_template('analytics.html', active_tab='templates')
+        return redirect('http://localhost:3000/analytics')
     except Exception as e:
         logger.error(f"Error loading templates: {str(e)}")
         flash('Error loading templates.', 'error')
@@ -1490,7 +1335,7 @@ def templates():
 def workflows():
     """Workflows page"""
     try:
-        return render_template('analytics.html', active_tab='workflows')
+        return redirect('http://localhost:3000/analytics')
     except Exception as e:
         logger.error(f"Error loading workflows: {str(e)}")
         flash('Error loading workflows.', 'error')
@@ -1501,7 +1346,7 @@ def workflows():
 def approvals():
     """Approvals page"""
     try:
-        return render_template('analytics.html', active_tab='approvals')
+        return redirect('http://localhost:3000/analytics')
     except Exception as e:
         logger.error(f"Error loading approvals: {str(e)}")
         flash('Error loading approvals.', 'error')
@@ -1512,7 +1357,7 @@ def approvals():
 def feedback():
     """Feedback page"""
     try:
-        return render_template('analytics.html', active_tab='feedback')
+        return redirect('http://localhost:3000/analytics')
     except Exception as e:
         logger.error(f"Error loading feedback: {str(e)}")
         flash('Error loading feedback.', 'error')
@@ -1523,7 +1368,7 @@ def feedback():
 def help():
     """Help page"""
     try:
-        return render_template('analytics.html', active_tab='help')
+        return redirect('http://localhost:3000/analytics')
     except Exception as e:
         logger.error(f"Error loading help: {str(e)}")
         flash('Error loading help.', 'error')
@@ -1534,7 +1379,7 @@ def help():
 def about():
     """About page"""
     try:
-        return render_template('analytics.html', active_tab='about')
+        return redirect('http://localhost:3000/analytics')
     except Exception as e:
         logger.error(f"Error loading about: {str(e)}")
         flash('Error loading about.', 'error')

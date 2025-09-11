@@ -3,7 +3,7 @@ Font Analytics Routes for PipLine Pro
 Provides font performance insights, recommendations, and optimization tools
 """
 
-from flask import Blueprint, jsonify, request, render_template, current_app
+from flask import Blueprint, jsonify, request, redirect, current_app
 from app.services.font_optimization_service import FontOptimizationService
 import logging
 
@@ -27,11 +27,7 @@ def font_analytics_dashboard():
         loading_strategy = font_service.get_font_loading_strategy()
         service_stats = font_service.get_service_stats()
         
-        return render_template('font_analytics_dashboard.html',
-                             stats=stats,
-                             recommendations=recommendations,
-                             loading_strategy=loading_strategy,
-                             service_stats=service_stats)
+        return redirect('http://localhost:3000/font-analytics')
     except Exception as e:
         logger.error(f"Error loading font analytics dashboard: {e}")
         return jsonify({"error": "Failed to load font analytics"}), 500
@@ -141,9 +137,7 @@ def font_preview():
             "SF Mono": font_service.analyze_font_accessibility("SF Mono")
         }
         
-        return render_template('font_preview.html',
-                             recommendations=recommendations,
-                             accessibility_data=accessibility_data)
+        return redirect('http://localhost:3000/font-preview')
     except Exception as e:
         logger.error(f"Error loading font preview: {e}")
         return jsonify({"error": "Failed to load font preview"}), 500

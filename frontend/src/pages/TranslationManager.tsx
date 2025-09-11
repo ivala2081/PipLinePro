@@ -590,16 +590,17 @@ export default function TranslationManager() {
   }
 
   return (
-    <div className="p-6">
-      {/* Breadcrumb Navigation */}
-      <div className="mb-6">
-        <Breadcrumb 
-          items={[
-            { label: 'Dashboard', href: '/' },
-            { label: 'Translation Manager', current: true }
-          ]} 
-        />
-      </div>
+    <>
+      <div className="p-6">
+        {/* Breadcrumb Navigation */}
+        <div className="mb-6">
+          <Breadcrumb 
+            items={[
+              { label: 'Dashboard', href: '/' },
+              { label: 'Translation Manager', current: true }
+            ]} 
+          />
+        </div>
 
       {/* Page Header */}
       <div className="mb-6">
@@ -830,6 +831,6 @@ export default function TranslationManager() {
           </div>
         )}
       </div>
-    </div>
+    </>
   );
 }

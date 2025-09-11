@@ -10,6 +10,9 @@ from datetime import datetime, timedelta, timezone
 from app.models.transaction import Transaction
 from app.models.financial import PspTrack
 from app import db, limiter
+from app.utils.advanced_cache import cache, cached, cache_invalidate, monitor_performance
+from app.utils.query_optimizer import query_optimizer
+from app.utils.response_optimizer import optimized_response
 import psutil
 import time
 import logging
@@ -19,44 +22,19 @@ import json
 
 analytics_api = Blueprint('analytics_api', __name__)
 
-# Simple in-memory cache for analytics data
-analytics_cache = {}
-CACHE_DURATION = 300  # 5 minutes
-def cache_result(duration=CACHE_DURATION):
-    """Decorator to cache API results"""
-    def decorator(f):
-        @wraps(f)
-        def decorated_function(*args, **kwargs):
-            # Create cache key from function name, arguments, and query parameters
-            query_params = dict(request.args)
-            cache_data = {**kwargs, **query_params}
-            cache_key = f"{f.__name__}_{hashlib.md5(json.dumps(cache_data, sort_keys=True).encode()).hexdigest()}"
-            
-            # Check if we have cached data
-            if cache_key in analytics_cache:
-                cached_data, timestamp = analytics_cache[cache_key]
-                if time.time() - timestamp < duration:
-                    logging.info(f"Returning cached data for {f.__name__}")
-                    return cached_data
-            
-            # Get fresh data
-            result = f(*args, **kwargs)
-            
-            # Cache the result
-            analytics_cache[cache_key] = (result, time.time())
-            
-            return result
-        return decorated_function
-    return decorator
+# Advanced caching configuration
+ANALYTICS_CACHE_DURATION = 600  # 10 minutes for analytics data
+DASHBOARD_CACHE_DURATION = 300  # 5 minutes for dashboard data
+SYSTEM_CACHE_DURATION = 60      # 1 minute for system data
 
-def clear_analytics_cache():
-    """Clear all analytics cache"""
-    global analytics_cache
-    analytics_cache.clear()
+def analytics_cache_clear():
+    """Clear analytics cache when data changes"""
+    cache_invalidate("analytics")
+    cache_invalidate("dashboard")
+    logging.info("Analytics cache cleared")
 
 # Clear cache on startup to ensure fresh data
-clear_analytics_cache()
-logging.info("Analytics cache cleared")
+analytics_cache_clear()
 
 def generate_chart_data(time_range='7d'):
     """Generate chart data for dashboard with optimization"""
@@ -112,18 +90,13 @@ def generate_chart_data(time_range='7d'):
         if time_range == '7d':
             logging.info(f"Dynamic 7d range: Found latest transaction on {latest_transaction.date if latest_transaction else 'None'}")
             logging.info(f"Chart date range: {start_date.date()} to {end_date.date()}")
-        logging.info(f"Found {len(transactions)} transactions in date range {start_date.date()} to {end_date.date()}")
-        
         # Data validation
         if len(transactions) == 0:
             logging.warning(f"No transactions found for time range {time_range}")
             return {
-                'daily_revenue': [],
-                'client_distribution': []
+                'daily_revenue': []
             }
-        if transactions:
-            logging.info(f"First transaction: {transactions[0].date} - {transactions[0].amount}")
-            logging.info(f"Last transaction: {transactions[-1].date} - {transactions[-1].amount}")
+        # Transaction logging removed for performance
         
         # Process data in memory
         daily_totals = {}
@@ -184,219 +157,65 @@ def generate_chart_data(time_range='7d'):
                     client_totals[transaction.client_name] = 0
                 client_totals[transaction.client_name] += net_amount
         
-        # Generate daily revenue data (net totals: deposits - withdrawals - commissions)
+        # Generate daily revenue data (simplified)
         daily_revenue = []
         current_date = start_date.date()
         chart_end_date = end_date.date()
         while current_date <= chart_end_date:
             day_key = current_date.strftime(date_format)
             net_amount = daily_totals.get(day_key, 0)
-            deposit_amount = daily_deposits.get(day_key, 0)
-            withdrawal_amount = daily_withdrawals.get(day_key, 0)
-            commission_amount = daily_commissions.get(day_key, 0)
-            transaction_count = daily_transaction_counts.get(day_key, 0)
-            client_count = len(daily_client_counts.get(day_key, set()))
             
             daily_revenue.append({
                 'date': day_key,
-                'amount': net_amount,  # Net total (deposits - withdrawals - commissions)
-                'deposits': deposit_amount,
-                'withdrawals': withdrawal_amount,
-                'commissions': commission_amount,
-                'transaction_count': transaction_count,
-                'client_count': client_count
+                'amount': net_amount
             })
             current_date += timedelta(days=1)
         
-        # Debug logging
-        logging.info(f"Generated {len(daily_revenue)} days of data for range {time_range}")
-        logging.info(f"Date range: {start_date.date()} to {end_date}")
-        logging.info(f"Sample data: {daily_revenue[:5]}...")
-        logging.info(f"Daily totals keys: {list(daily_totals.keys())[:10]}")
-        logging.info(f"Non-zero net amounts: {[k for k, v in daily_totals.items() if v != 0]}")
-        logging.info(f"Daily deposits: {dict(list(daily_deposits.items())[:5])}")
-        logging.info(f"Daily withdrawals: {dict(list(daily_withdrawals.items())[:5])}")
-        logging.info(f"Daily commissions: {dict(list(daily_commissions.items())[:5])}")
-        
-        # Check if we have any non-zero data (both positive and negative net amounts)
+        # Simplified debug logging
         non_zero_days = [item for item in daily_revenue if item['amount'] != 0]
-        logging.info(f"Non-zero net days: {len(non_zero_days)} out of {len(daily_revenue)}")
-        if non_zero_days:
-            logging.info(f"Non-zero sample: {non_zero_days[:3]}")
-        
-        # Log the full data for debugging (limit to avoid too much output)
-        logging.info(f"Full daily_revenue data (first 10): {daily_revenue[:10]}")
-        logging.info(f"Full daily_revenue data (last 10): {daily_revenue[-10:]}")
-        
-        # Check if we have the expected number of days
         expected_days = (end_date - start_date).days + 1
-        logging.info(f"Expected days: {expected_days}, Actual days: {len(daily_revenue)}")
         
-        # Check if the data is being generated correctly
+        # Data generation logging removed for performance
+        
         if len(daily_revenue) != expected_days:
             logging.warning(f"Data generation issue: expected {expected_days} days, got {len(daily_revenue)}")
-        else:
-            logging.info(f"Data generation correct: {len(daily_revenue)} days generated")
         
-        # Check if we have any data at all
         if not daily_revenue:
             logging.error("No daily revenue data generated!")
-        else:
-            logging.info(f"Daily revenue data generated successfully with {len(daily_revenue)} entries")
         
-        # Check the actual data being returned
-        total_amount = sum(item['amount'] for item in daily_revenue)
-        logging.info(f"Total amount across all days: {total_amount}")
-        logging.info(f"Average amount per day: {total_amount / len(daily_revenue) if daily_revenue else 0}")
-        
-        # Check if we have any non-zero days
-        non_zero_count = sum(1 for item in daily_revenue if item['amount'] > 0)
-        logging.info(f"Days with non-zero amounts: {non_zero_count} out of {len(daily_revenue)}")
-        
-        # Check the date range of the data
-        if daily_revenue:
-            first_date = daily_revenue[0]['date']
-            last_date = daily_revenue[-1]['date']
-            logging.info(f"Data date range: {first_date} to {last_date}")
-        
-        # Check if the data is being returned correctly
-        logging.info(f"Returning chart_data with daily_revenue length: {len(daily_revenue)}")
-        logging.info(f"Chart data structure: {type(daily_revenue)}")
-        
-        # Final check before returning
+        # Final validation
         if not daily_revenue:
-            logging.error("CRITICAL: No daily revenue data to return!")
-        else:
-            logging.info(f"SUCCESS: Returning {len(daily_revenue)} days of revenue data")
-        
-        # Log a sample of the data being returned
-        if daily_revenue:
-            sample_data = daily_revenue[:5] if len(daily_revenue) >= 5 else daily_revenue
-            logging.info(f"Sample data being returned: {sample_data}")
-        
-        # Check if we have any data with non-zero net amounts
-        non_zero_data = [item for item in daily_revenue if item['amount'] != 0]
-        if non_zero_data:
-            logging.info(f"Found {len(non_zero_data)} days with non-zero net amounts")
-            logging.info(f"Non-zero sample: {non_zero_data[:3]}")
-        else:
-            logging.warning("No non-zero net amounts found in the data!")
-        
-        # Check the total net amount across all days
-        total_net_revenue = sum(item['amount'] for item in daily_revenue)
-        total_deposits = sum(item['deposits'] for item in daily_revenue)
-        total_withdrawals = sum(item['withdrawals'] for item in daily_revenue)
-        logging.info(f"Total net revenue across all days: {total_net_revenue}")
-        logging.info(f"Total deposits: {total_deposits}, Total withdrawals: {total_withdrawals}")
-        
-        # Check if we have any transactions at all
-        if not transactions:
-            logging.warning("No transactions found in the database for the specified date range!")
-        else:
-            logging.info(f"Found {len(transactions)} transactions in the database")
-        
-        # Check the date range of transactions
-        if transactions:
-            first_transaction_date = min(t.date for t in transactions)
-            last_transaction_date = max(t.date for t in transactions)
-            logging.info(f"Transaction date range: {first_transaction_date} to {last_transaction_date}")
-            logging.info(f"Query date range: {start_date.date()} to {end_date.date()}")
-        
-        # Check if the date range is correct
-        if start_date > end_date:
-            logging.error(f"Date range error: start_date {start_date} is after end_date {end_date}")
-        else:
-            logging.info(f"Date range is correct: {start_date} to {end_date}")
-        
-        # Check if we have the right number of days
-        expected_days = (end_date - start_date).days + 1
-        actual_days = len(daily_revenue)
-        if expected_days != actual_days:
-            logging.error(f"Day count mismatch: expected {expected_days}, got {actual_days}")
-        else:
-            logging.info(f"Day count is correct: {actual_days} days")
-        
-        # Final summary
-        logging.info("=== CHART DATA GENERATION SUMMARY ===")
-        logging.info(f"Time range: {time_range}")
-        logging.info(f"Date range: {start_date} to {end_date}")
-        logging.info(f"Transactions found: {len(transactions)}")
-        logging.info(f"Days generated: {len(daily_revenue)}")
-        logging.info(f"Non-zero net days: {len([d for d in daily_revenue if d['amount'] != 0])}")
-        logging.info(f"Total net revenue: {sum(d['amount'] for d in daily_revenue)}")
-        logging.info(f"Total deposits: {sum(d['deposits'] for d in daily_revenue)}")
-        logging.info(f"Total withdrawals: {sum(d['withdrawals'] for d in daily_revenue)}")
-        logging.info("=====================================")
-        
-        # Check if we have any data at all
-        if not daily_revenue:
-            logging.error("CRITICAL ERROR: No daily revenue data generated!")
+            logging.error("No daily revenue data generated!")
             return {
-                'daily_revenue': [],
-                'client_distribution': []
+                'daily_revenue': []
             }
         
-        # Log the final data being returned
-        logging.info(f"FINAL: Returning {len(daily_revenue)} days of revenue data")
-        logging.info(f"FINAL: Sample data: {daily_revenue[:3]}")
-        logging.info(f"FINAL: Last data: {daily_revenue[-3:]}")
-        
-        # Check if we have any non-zero data
+        # Log the final data being returned (simplified)
         non_zero_count = sum(1 for d in daily_revenue if d['amount'] > 0)
-        logging.info(f"FINAL: Non-zero days: {non_zero_count} out of {len(daily_revenue)}")
+        # Chart generation logging removed for performance
         
-        # Check the total amount
-        total_amount = sum(d['amount'] for d in daily_revenue)
-        logging.info(f"FINAL: Total amount: {total_amount}")
-        
-        # Check if we have any data with non-zero amounts
-        if non_zero_count == 0:
-            logging.warning("FINAL: No non-zero amounts found in the data!")
-        else:
-            logging.info(f"FINAL: Found {non_zero_count} days with non-zero amounts")
-        
-        # Check if we have any transactions at all
-        if not transactions:
-            logging.warning("FINAL: No transactions found in the database!")
-        else:
-            logging.info(f"FINAL: Found {len(transactions)} transactions in the database")
-        
-        # Check if we have any data at all
         if not daily_revenue:
-            logging.error("FINAL: No daily revenue data generated!")
-        else:
-            logging.info(f"FINAL: Generated {len(daily_revenue)} days of revenue data")
+            logging.error("No daily revenue data generated!")
+        elif not transactions:
+            logging.warning("No transactions found in database!")
         
         # Check if we have any data with non-zero amounts
         if non_zero_count == 0:
             logging.warning("FINAL: No non-zero amounts found in the data!")
-        else:
-            logging.info(f"FINAL: Found {non_zero_count} days with non-zero amounts")
-        
-        # Generate client distribution (top 5)
-        client_distribution = []
-        sorted_clients = sorted(client_totals.items(), key=lambda x: x[1], reverse=True)[:5]
-        for client_name, total_amount in sorted_clients:
-            client_distribution.append({
-                'name': client_name,
-                'value': total_amount
-            })
+        # Final count logging removed for performance
         
         return {
-            'daily_revenue': daily_revenue,
-            'client_distribution': client_distribution
+            'daily_revenue': daily_revenue
         }
         
     except Exception as e:
         logging.error(f"Error generating chart data: {e}")
         return {
-            'daily_revenue': [],
-            'client_distribution': []
+            'daily_revenue': []
         }
 
 @analytics_api.route("/dashboard/stats")
 @login_required
-@cache_result(duration=60)  # Cache for 1 minute
 def dashboard_stats():
     """Get dashboard statistics with optimized queries"""
     try:
@@ -529,36 +348,26 @@ def dashboard_stats():
         return jsonify({
             'stats': {
                 'total_revenue': {
-                    'value': f"{total_revenue:,.2f}",
-                    'change': f"{revenue_change:+.1f}%",
-                    'changeType': 'positive' if revenue_change >= 0 else 'negative'
+                    'value': f"{total_revenue:,.2f}"
                 },
                 'total_transactions': {
-                    'value': f"{total_transactions:,}",
-                    'change': f"{transactions_change:+.1f}%",
-                    'changeType': 'positive' if transactions_change >= 0 else 'negative'
+                    'value': f"{total_transactions:,}"
                 },
                 'active_clients': {
-                    'value': f"{unique_clients:,}",
-                    'change': f"{clients_change:+.1f}%",
-                    'changeType': 'positive' if clients_change >= 0 else 'negative'
-                },
-                'growth_rate': {
-                    'value': f"{revenue_change:+.1f}%",
-                    'change': f"{revenue_change - (revenue_change * 0.1):+.1f}%",
-                    'changeType': 'positive' if revenue_change >= 0 else 'negative'
+                    'value': f"{unique_clients:,}"
                 }
             },
-            'recent_transactions': recent_transactions_data,
+            'recent_transactions': recent_transactions_data[:3],  # Limit to 3 recent transactions
             'summary': {
                 'total_revenue': total_revenue,
                 'total_commission': total_commission,
                 'total_net': total_net,
                 'transaction_count': total_transactions,
-                'active_clients': unique_clients,
-                'growth_rate': revenue_change
+                'active_clients': unique_clients
             },
-            'chart_data': chart_data
+            'chart_data': {
+                'daily_revenue': chart_data.get('daily_revenue', [])[:30]  # Limit to 30 days
+            }
         })
         
     except Exception as e:
@@ -775,8 +584,7 @@ def get_ledger_data():
             key = f"{allocation.date.isoformat()}-{allocation.psp_name}"
             allocation_lookup[key] = float(allocation.allocation_amount)
             # Debug logging for allocations
-            if allocation.psp_name == '#61 CRYPPAY':
-                logger.info(f"DEBUG - Found allocation for {allocation.psp_name} on {allocation.date}: {allocation.allocation_amount}")
+            # Debug logging removed for performance
         
         # Calculate PSP counts and rollovers with saved allocations
         for date_key, data in daily_data.items():
@@ -795,10 +603,7 @@ def get_ledger_data():
                 data['totals']['carry_over'] += psp_data['rollover']
                 
                 # Debug logging for rollover calculation
-                if psp == '#61 CRYPPAY' and date_key == '2025-09-08':
-                    logger.info(f"DEBUG - PSP: {psp}, Date: {date_key}")
-                    logger.info(f"DEBUG - Net: {psp_data['net']}, Allocation: {saved_allocation}")
-                    logger.info(f"DEBUG - Rollover calculation: {psp_data['net']} - {saved_allocation} = {psp_data['rollover']}")
+                # Debug logging removed for performance
         
         # Validate calculated totals for data integrity
         validation_errors = []
@@ -1671,7 +1476,8 @@ def commission_analytics():
 
 @analytics_api.route("/consolidated-dashboard")
 @login_required
-@cache_result(duration=300)  # Cache for 5 minutes
+@cached(ttl=DASHBOARD_CACHE_DURATION, key_prefix="consolidated_dashboard")
+@monitor_performance
 @limiter.limit("10 per minute, 100 per hour")  # Rate limiting for analytics
 def consolidated_dashboard():
     """
@@ -1783,8 +1589,10 @@ def consolidated_dashboard():
         logging.error(f"Error in consolidated dashboard: {str(e)}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@cached(ttl=ANALYTICS_CACHE_DURATION, key_prefix="dashboard_stats_optimized")
+@monitor_performance
 def get_dashboard_stats_optimized(start_date, end_date):
-    """Optimized dashboard stats query"""
+    """Optimized dashboard stats query with advanced caching"""
     try:
         # Single query for all stats
         if start_date is None and end_date is None:
@@ -2192,7 +2000,7 @@ def generate_market_analysis(dashboard_stats, client_analytics):
 @login_required
 def refresh_data():
     """Force refresh all analytics data by clearing cache"""
-    clear_analytics_cache()
+    analytics_cache_clear()
     logging.info("Data refresh requested - cache cleared")
     return jsonify({
         "message": "Data refresh initiated", 
@@ -2217,7 +2025,8 @@ def data_health_check():
         ).count()
         
         # Check cache status
-        cache_size = len(analytics_cache)
+        cache_stats = cache.get_stats()
+        cache_size = cache_stats['current_size']
         
         # Check database connection
         db_status = "connected"
@@ -2251,7 +2060,9 @@ def data_health_check():
 
 @analytics_api.route("/revenue-detailed")
 @login_required
-@cache_result(duration=300)  # Cache for 5 minutes
+@cached(ttl=ANALYTICS_CACHE_DURATION, key_prefix="revenue_detailed")
+@monitor_performance
+@optimized_response(cache_type='analytics', compress=True)
 def revenue_detailed():
     """Get detailed revenue analytics with all transaction data"""
     try:

@@ -8,6 +8,8 @@ interface Transaction {
   id: number;
   client_name: string;
   company?: string;
+  company_order?: string;
+  iban?: string;
   payment_method?: string;
   category: string;
   amount: number;
@@ -43,9 +45,14 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
   onCancel,
   dropdownOptions = { categories: [], psps: [], payment_methods: [], companies: [] },
 }) => {
+  // Debug: Log the transaction data being received
+  console.log('🔄 TransactionEditForm received transaction:', transaction);
+  console.log('🔄 TransactionEditForm received dropdownOptions:', dropdownOptions);
+
   const [formData, setFormData] = useState({
     client_name: transaction.client_name || '',
-    company: transaction.company || '',
+    company: transaction.company || transaction.company_order || '',
+    iban: transaction.iban || '',
     payment_method: transaction.payment_method || '',
     category: transaction.category || '',
     amount: transaction.amount?.toString() || '',
@@ -54,6 +61,65 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
     notes: transaction.notes || '',
     date: transaction.date ? transaction.date.split('T')[0] : new Date().toISOString().split('T')[0],
   });
+
+  // Debug: Log the initialized form data
+  console.log('🔄 TransactionEditForm initialized formData:', formData);
+  console.log('🔄 Form data values:', {
+    payment_method: formData.payment_method,
+    category: formData.category,
+    psp: formData.psp,
+    company: formData.company
+  });
+
+  // Update form data when transaction prop changes
+  useEffect(() => {
+    setFormData({
+      client_name: transaction.client_name || '',
+      company: transaction.company || transaction.company_order || '',
+      iban: transaction.iban || '',
+      payment_method: transaction.payment_method || '',
+      category: transaction.category || '',
+      amount: transaction.amount?.toString() || '',
+      currency: transaction.currency || 'TL',
+      psp: transaction.psp || '',
+      notes: transaction.notes || '',
+      date: transaction.date ? transaction.date.split('T')[0] : new Date().toISOString().split('T')[0],
+    });
+    console.log('🔄 TransactionEditForm updated formData from transaction:', transaction);
+  }, [transaction]);
+
+  // Ensure current values are included in dropdown options
+  const enhancedDropdownOptions = {
+    ...dropdownOptions,
+    payment_methods: [
+      ...new Set([
+        ...(dropdownOptions.payment_methods || []),
+        ...(transaction.payment_method ? [transaction.payment_method] : [])
+      ])
+    ],
+    categories: [
+      ...new Set([
+        ...(dropdownOptions.categories || []),
+        ...(transaction.category ? [transaction.category] : [])
+      ])
+    ],
+    psps: [
+      ...new Set([
+        ...(dropdownOptions.psps || []),
+        ...(transaction.psp ? [transaction.psp] : [])
+      ])
+    ],
+    companies: [
+      ...new Set([
+        ...(dropdownOptions.companies || []),
+        ...(transaction.company ? [transaction.company] : []),
+        ...(transaction.company_order ? [transaction.company_order] : [])
+      ])
+    ]
+  };
+
+  // Debug: Log enhanced dropdown options
+  console.log('🔄 Enhanced dropdown options:', enhancedDropdownOptions);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -161,10 +227,13 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
     try {
       const updateData = {
         ...formData,
+        company_order: formData.company, // Map company to company_order for backend
         amount: parseFloat(formData.amount),
         eur_rate: formData.currency === 'EUR' ? parseFloat(eurRate) : undefined,
         usd_rate: formData.currency === 'USD' ? parseFloat(usdRate) : undefined,
       };
+
+      console.log('🔄 Sending transaction update data:', updateData);
 
       const response = await api.put(`/api/v1/transactions/${transaction.id}`, updateData);
 
@@ -173,7 +242,8 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
         onSave(result.transaction);
       } else {
         const errorData = await response.json();
-        setError(errorData.message || 'Failed to update transaction.');
+        console.error('❌ Transaction update failed:', errorData);
+        setError(errorData.message || errorData.error || 'Failed to update transaction.');
       }
     } catch (err) {
       setError('An error occurred while updating the transaction.');
@@ -184,7 +254,7 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
   };
 
   return (
-    <div className="max-h-[80vh] overflow-y-auto pr-2 edit-form-scroll">
+    <div className="max-h-[80vh] overflow-y-auto overflow-x-hidden pr-2 edit-form-scroll">
       <form onSubmit={handleSubmit} className="space-y-6">
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-md p-4">
@@ -224,12 +294,25 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-gray-500 focus:border-gray-500"
             >
               <option value="">Select Company</option>
-              {dropdownOptions?.companies?.map((company) => (
+              {enhancedDropdownOptions?.companies?.map((company) => (
                 <option key={company} value={company}>
                   {company}
                 </option>
               )) || []}
             </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              IBAN
+            </label>
+            <input
+              type="text"
+              value={formData.iban}
+              onChange={(e) => handleInputChange('iban', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-gray-500 focus:border-gray-500"
+              placeholder="Enter IBAN"
+            />
           </div>
 
           <div>
@@ -242,7 +325,7 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-gray-500 focus:border-gray-500"
             >
               <option value="">Select Payment Method</option>
-              {dropdownOptions?.payment_methods?.map((method) => (
+              {enhancedDropdownOptions?.payment_methods?.map((method) => (
                 <option key={method} value={method}>
                   {method}
                 </option>
@@ -267,7 +350,7 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
               required
             >
               <option value="">Select Category</option>
-              {dropdownOptions?.categories?.map((category) => (
+              {enhancedDropdownOptions?.categories?.map((category) => (
                 <option key={category} value={category}>
                   {category}
                 </option>
@@ -284,7 +367,7 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-gray-500 focus:border-gray-500"
             >
               <option value="">Select PSP</option>
-              {dropdownOptions?.psps?.map((psp) => (
+              {enhancedDropdownOptions?.psps?.map((psp) => (
                 <option key={psp} value={psp}>
                   {psp}
                 </option>
@@ -363,7 +446,7 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   USD Rate (1 USD = ? TL)
                 </label>
-                <div className="flex space-x-3">
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                   <input
                     type="number"
                     step="0.0001"
@@ -374,21 +457,21 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
                       setConvertedAmounts(null);
                       setRateApplied(false);
                     }}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-gray-500 focus:border-gray-500"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-gray-500 focus:border-gray-500 min-w-0"
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowCurrencyModal(true)}
-                    className="px-4 py-2 bg-gray-100 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-colors duration-200 flex items-center space-x-2"
+                    className="px-4 py-2 bg-gray-100 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-colors duration-200 flex items-center justify-center space-x-2 whitespace-nowrap"
                   >
                     <DollarSign className="h-4 w-4" />
                     <span className="text-sm font-medium">Get Rate</span>
                   </button>
                 </div>
                 {usdRate && (
-                  <p className="text-xs text-gray-600 mt-1">
-                    ${formData.amount || 0} USD = ₺{((parseFloat(formData.amount) || 0) * (parseFloat(usdRate) || 0)).toFixed(2)}
+                  <p className="text-xs text-gray-600 mt-1 break-words">
+                    ${formData.amount || 0} USD = ₺{((parseFloat(formData.amount) || 0) * (parseFloat(usdRate) || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                 )}
               </div>
@@ -396,7 +479,7 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
           </div>
           
           {/* Apply Exchange Rate Button */}
-          <div className="mt-4 flex items-center justify-between">
+          <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <button
               type="button"
               onClick={handleApplyExchangeRate}
@@ -405,13 +488,13 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
                 (formData.currency === 'USD' && !usdRate) || 
                 (formData.currency === 'EUR' && !eurRate)
               }
-              className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+              className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 whitespace-nowrap"
             >
               <span>Apply Exchange Rate</span>
             </button>
             
             {rateApplied && (
-              <span className="text-sm text-green-600 font-medium">
+              <span className="text-sm text-green-600 font-medium text-center sm:text-right">
                 ✓ Rate applied successfully
               </span>
             )}
@@ -419,30 +502,32 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
           
           {/* Converted Amounts Display */}
           {convertedAmounts && (
-            <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+            <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg overflow-hidden">
               <h5 className="text-sm font-medium text-green-800 mb-3">Converted Amounts (Turkish Lira)</h5>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-green-700">Amount:</span>
-                  <span className="font-medium text-green-900">
+              <div className="space-y-3">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-2">
+                  <span className="text-green-700 text-sm">Amount:</span>
+                  <span className="font-medium text-green-900 text-sm break-all">
                     ₺{convertedAmounts.amount_try.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-green-700">Commission:</span>
-                  <span className="font-medium text-green-900">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-2">
+                  <span className="text-green-700 text-sm">Commission:</span>
+                  <span className="font-medium text-green-900 text-sm break-all">
                     ₺{convertedAmounts.commission_try.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-green-700">Net Amount:</span>
-                  <span className="font-medium text-green-900">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-2">
+                  <span className="text-green-700 text-sm">Net Amount:</span>
+                  <span className="font-medium text-green-900 text-sm break-all">
                     ₺{convertedAmounts.net_amount_try.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
                 </div>
               </div>
-              <div className="mt-2 text-xs text-green-600">
-                Exchange Rate: 1 {formData.currency} = ₺{formData.currency === 'USD' ? usdRate : eurRate}
+              <div className="mt-3 pt-2 border-t border-green-200">
+                <div className="text-xs text-green-600 break-words">
+                  Exchange Rate: 1 {formData.currency} = ₺{formData.currency === 'USD' ? usdRate : eurRate}
+                </div>
               </div>
             </div>
           )}

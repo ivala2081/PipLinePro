@@ -3,7 +3,7 @@ Responsive Automation Routes
 Handles responsive design automation endpoints
 """
 
-from flask import Blueprint, request, jsonify, render_template, current_app
+from flask import Blueprint, request, jsonify, redirect, current_app
 from app.services.responsive_automation_service import responsive_automation_service
 import logging
 from datetime import datetime
@@ -204,10 +204,7 @@ def responsive_preview():
         # Get responsive config
         config = responsive_automation_service.get_responsive_config()
         
-        return render_template('responsive_preview.html', 
-                             css_content=css_content,
-                             config=config,
-                             viewport_width=viewport_width)
+        return redirect('http://localhost:3000/responsive')
         
     except Exception as e:
         logger.error(f"Error serving responsive preview: {e}")

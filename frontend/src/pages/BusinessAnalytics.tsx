@@ -595,8 +595,6 @@ export default function BusinessAnalytics() {
             title={kpi.title}
             value={kpi.value}
             subtitle={kpi.subtitle}
-            change={kpi.change}
-            changeType={kpi.trend === 'up' ? 'positive' : kpi.trend === 'down' ? 'negative' : 'neutral'}
             icon={kpi.icon}
             color={kpi.color.includes('gray') ? 'gray' : 
                   kpi.color.includes('green') ? 'green' : 
@@ -614,8 +612,6 @@ export default function BusinessAnalytics() {
             key={index}
             title={metric.title}
             value={metric.value}
-            change={metric.change}
-            changeType={metric.trend === 'up' ? 'positive' : metric.trend === 'down' ? 'negative' : 'neutral'}
             icon={metric.icon}
             color={metric.color.includes('gray') ? 'gray' : 
                   metric.color.includes('green') ? 'green' : 
