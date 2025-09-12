@@ -117,9 +117,10 @@ const DailyTransactionSummary: React.FC<DailyTransactionSummaryProps> = ({
             const response = await api.get(`/api/summary/${date}`);
             if (response.ok) {
               const data = await api.parseResponse(response);
-              if (data && data.total_net_tl !== undefined) {
-                netBalanceTRY = data.total_net_tl || totalTRY;
+              if (data && data.gross_balance_tl !== undefined) {
+                netBalanceTRY = data.gross_balance_tl || totalTRY;
                 console.log(`Daily summary for ${date}:`, {
+                  gross_balance_tl: data.gross_balance_tl,
                   total_net_tl: data.total_net_tl,
                   total_deposits_tl: data.total_deposits_tl,
                   total_withdrawals_tl: data.total_withdrawals_tl,

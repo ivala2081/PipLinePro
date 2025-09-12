@@ -755,8 +755,8 @@ export default function Ledger() {
       {/* Page Header */}
       <div className="mb-6">
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+          <div className="space-y-1">
+            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
               <Building className="h-8 w-8 text-gray-600" />
               PSP Ledger
             </h1>

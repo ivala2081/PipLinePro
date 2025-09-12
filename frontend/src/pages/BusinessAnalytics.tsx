@@ -553,8 +553,11 @@ export default function BusinessAnalytics() {
       {/* Page Header */}
       <div className="mb-6">
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Business Analytics</h1>
+          <div className="space-y-1">
+            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+              <BarChart3 className="h-8 w-8 text-gray-600" />
+              Business Analytics
+            </h1>
             <p className="text-gray-600">Advanced analytics and business intelligence dashboard</p>
           </div>
           <div className='flex items-center space-x-3'>

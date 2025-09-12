@@ -5,6 +5,7 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import { PageHeader, Section, ContentArea, CardGrid } from '../components/ProfessionalLayout';
 import { Button } from '../components/ProfessionalButtons';
 import { Breadcrumb } from '../components/ui';
+import { Globe } from 'lucide-react';
 
 interface TranslationKey {
   id: number;
@@ -605,8 +606,11 @@ export default function TranslationManager() {
       {/* Page Header */}
       <div className="mb-6">
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Translation Manager</h1>
+          <div className="space-y-1">
+            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+              <Globe className="h-8 w-8 text-gray-600" />
+              Translation Manager
+            </h1>
             <p className="text-gray-600">Manage translations and dictionaries</p>
           </div>
           <div className='flex items-center gap-3'>

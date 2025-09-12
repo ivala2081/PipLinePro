@@ -190,7 +190,10 @@ export default function Accounting() {
       <div className="mb-6">
         <div className="flex items-center justify-between">
           <div className="space-y-1">
-            <h1 className="text-3xl font-bold text-gray-900">Accounting</h1>
+            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+              <Calculator className="h-8 w-8 text-gray-600" />
+              Accounting
+            </h1>
             <p className="text-gray-600">Financial records and accounting management</p>
           </div>
           <div className="flex items-center gap-3">
@@ -240,7 +243,7 @@ export default function Accounting() {
 
         {/* Tab Content */}
         <TabsContent value="overview" className="space-y-6">
-          <div className="px-6 py-6">
+          <div className="p-6">
             {/* Financial Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
               <UnifiedCard variant="elevated" className="relative overflow-hidden">
@@ -357,7 +360,7 @@ export default function Accounting() {
         </TabsContent>
 
         <TabsContent value="clients" className="space-y-6">
-          <div className="px-6 py-6">
+          <div className="p-6">
             <UnifiedCard variant="elevated">
               <CardHeader>
                 <CardTitle>Clients Overview</CardTitle>
@@ -371,7 +374,7 @@ export default function Accounting() {
         </TabsContent>
 
         <TabsContent value="transactions" className="space-y-6">
-          <div className="px-6 py-6">
+          <div className="p-6">
             <UnifiedCard variant="elevated">
               <CardHeader>
                 <CardTitle>Transaction Records</CardTitle>
@@ -385,7 +388,7 @@ export default function Accounting() {
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-6">
-          <div className="px-6 py-6">
+          <div className="p-6">
             <UnifiedCard variant="elevated">
               <CardHeader>
                 <CardTitle>Accounting Analytics</CardTitle>
@@ -399,7 +402,7 @@ export default function Accounting() {
         </TabsContent>
 
         <TabsContent value="accounting" className="space-y-6">
-          <div className="px-6 py-6">
+          <div className="p-6">
             <UnifiedCard variant="elevated">
               <CardHeader>
                 <CardTitle>Accounting Management</CardTitle>

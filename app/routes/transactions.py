@@ -1260,7 +1260,10 @@ def daily_summary(date):
                     # DEP: add to deposits (amount is positive)
                     total_deposits_usd += amount
                 total_commission_usd += commission
-                total_net_usd += net_amount
+                if is_withdrawal:
+                    total_net_usd -= net_amount  # Subtract withdrawals from net balance
+                else:
+                    total_net_usd += net_amount  # Add deposits to net balance
                 
                 # Convert USD to TL for total calculations
                 if usd_rate and usd_rate != Decimal('0'):
@@ -1270,31 +1273,38 @@ def daily_summary(date):
                     
                     if is_withdrawal:
                         total_withdrawals_tl += amount_tl
+                        total_net_tl -= net_amount_tl  # Subtract withdrawals from net balance
                     else:
                         total_deposits_tl += amount_tl
+                        total_net_tl += net_amount_tl  # Add deposits to net balance
                     total_commission_tl += commission_tl
-                    total_net_tl += net_amount_tl
                 else:
                     # Fallback to USD amount
                     if is_withdrawal:
                         total_withdrawals_tl += amount
+                        total_net_tl -= net_amount  # Subtract withdrawals from net balance
                     else:
                         total_deposits_tl += amount
+                        total_net_tl += net_amount  # Add deposits to net balance
                     total_commission_tl += commission
-                    total_net_tl += net_amount
             else:
                 # TL transactions
                 if is_withdrawal:
                     total_withdrawals_tl += amount
+                    total_net_tl -= net_amount  # Subtract withdrawals from net balance
                 else:
                     total_deposits_tl += amount
+                    total_net_tl += net_amount  # Add deposits to net balance
                 total_commission_tl += commission
-                total_net_tl += net_amount
         
         # Calculate totals using DEP + (-WD) formula
         # Withdrawals are stored as positive amounts, but we treat them as negative in calculations
         total_amount_tl = total_deposits_tl - total_withdrawals_tl  # DEP + (-WD)
         total_amount_usd = total_deposits_usd - total_withdrawals_usd  # DEP + (-WD)
+        
+        # Calculate gross balance (deposits - withdrawals before commission)
+        gross_balance_tl = total_deposits_tl - total_withdrawals_tl
+        gross_balance_usd = total_deposits_usd - total_withdrawals_usd
         
         transaction_count = len(transactions)
         
@@ -1501,6 +1511,8 @@ def daily_summary(date):
             'total_commission_usd': float(total_commission_usd),
             'total_net_tl': float(total_net_tl),
             'total_net_usd': float(total_net_usd),
+            'gross_balance_tl': float(gross_balance_tl),
+            'gross_balance_usd': float(gross_balance_usd),
             'transaction_count': transaction_count,
             'unique_clients': unique_clients,
             'psp_summary': psp_summary,
@@ -1610,26 +1622,29 @@ def api_summary(date):
                     
                     if is_withdrawal:
                         total_withdrawals_tl += amount_tl
+                        total_net_tl -= net_amount_tl  # Subtract withdrawals from net balance
                     else:
                         total_deposits_tl += amount_tl
+                        total_net_tl += net_amount_tl  # Add deposits to net balance
                     total_commission_tl += commission_tl
-                    total_net_tl += net_amount_tl
                 else:
                     # Fallback to USD amount
                     if is_withdrawal:
                         total_withdrawals_tl += amount
+                        total_net_tl -= net_amount  # Subtract withdrawals from net balance
                     else:
                         total_deposits_tl += amount
+                        total_net_tl += net_amount  # Add deposits to net balance
                     total_commission_tl += commission
-                    total_net_tl += net_amount
             else:
                 # TL transactions
                 if is_withdrawal:
                     total_withdrawals_tl += amount
+                    total_net_tl -= net_amount  # Subtract withdrawals from net balance
                 else:
                     total_deposits_tl += amount
+                    total_net_tl += net_amount  # Add deposits to net balance
                 total_commission_tl += commission
-                total_net_tl += net_amount
         
         # Calculate totals using DEP + (-WD) formula
         # Withdrawals are stored as positive amounts, but we treat them as negative in calculations
@@ -1732,6 +1747,10 @@ def api_summary(date):
             category_data[category]['count'] += 1
             payment_method_data[payment_method]['count'] += 1
         
+        # Calculate gross balance (deposits - withdrawals before commission)
+        gross_balance_tl = total_deposits_tl - total_withdrawals_tl
+        gross_balance_usd = total_deposits_usd - total_withdrawals_usd
+        
         # Format data for JSON response
         summary_data = {
             'date': date,
@@ -1743,6 +1762,8 @@ def api_summary(date):
             'total_commission_usd': float(total_commission_usd),
             'total_net_tl': float(total_net_tl),
             'total_net_usd': float(total_net_usd),
+            'gross_balance_tl': float(gross_balance_tl),
+            'gross_balance_usd': float(gross_balance_usd),
             'total_deposits_tl': float(total_deposits_tl),
             'total_deposits_usd': float(total_deposits_usd),
             'total_withdrawals_tl': float(total_withdrawals_tl),

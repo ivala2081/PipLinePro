@@ -1618,9 +1618,12 @@ export default function Settings() {
 
       {/* Page Header with Tabs */}
       <div className="mb-6">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between">
           <div className="space-y-1">
-            <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
+            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+              <SettingsIcon className="h-8 w-8 text-gray-600" />
+              Settings
+            </h1>
             <p className="text-gray-600">Application settings and configuration</p>
           </div>
             <div className="flex items-center gap-3">
@@ -1680,7 +1683,7 @@ export default function Settings() {
         </div>
 
       {/* Tab Content */}
-      <div className="px-6 py-6">
+      <div className="p-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           {tabs.map(tab => (
             <TabsContent key={tab.id} value={tab.id} className="space-y-6">

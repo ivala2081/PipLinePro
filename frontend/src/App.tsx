@@ -26,14 +26,14 @@ import './styles/accessibility-enhanced.css'; // Professional accessibility enha
 const Dashboard = lazy(() => import('./pages/ModernDashboardPage'));
 const Analytics = lazy(() => import('./pages/Analytics'));
 const Login = lazy(() => import('./pages/Login'));
-const Clients = lazy(() => import('./pages/Clients'));
+const Clients = lazy(() => import('./pages/clients'));
 const Agents = lazy(() => import('./pages/Agents'));
 const Ledger = lazy(() => import('./pages/Ledger'));
 const Settings = lazy(() => import('./pages/Settings'));
 const Reports = lazy(() => import('./pages/Reports'));
 const BusinessAnalytics = lazy(() => import('./pages/BusinessAnalytics'));
 const SystemMonitor = lazy(() => import('./pages/SystemMonitor'));
-const Transactions = lazy(() => import('./pages/Transactions'));
+const Transactions = lazy(() => import('./pages/transactions'));
 const AddTransaction = lazy(() => import('./pages/AddTransaction'));
 const Accounting = lazy(() => import('./pages/Accounting'));
 const RevenueAnalytics = lazy(() => import('./pages/RevenueAnalytics'));
@@ -80,7 +80,7 @@ function App() {
                         >
                           <Route index element={<Dashboard />} />
                           <Route path='dashboard' element={<Dashboard />} />
-                          <Route path='transactions' element={<Clients />} />
+                          <Route path='transactions' element={<Transactions />} />
                           <Route path='accounting' element={<Accounting />} />
                           <Route path='ledger' element={<Ledger />} />
                           <Route path='transactions/add' element={<AddTransaction />} />

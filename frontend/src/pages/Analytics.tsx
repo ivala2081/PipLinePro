@@ -203,10 +203,13 @@ export default function Analytics() {
       <div className="min-h-screen bg-gray-50">
         {/* Modern Header */}
         <div className="bg-white border-b border-gray-200">
-          <div className="px-6 py-6">
+          <div className="p-6">
             <div className="flex items-center justify-between">
               <div className="space-y-1">
-                <h1 className="text-3xl font-bold text-gray-900">{t('analytics.title')}</h1>
+                <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+                  <BarChart3 className="h-8 w-8 text-gray-600" />
+                  {t('analytics.title')}
+                </h1>
                 <p className="text-gray-600">{t('analytics.description')}</p>
               </div>
             </div>
@@ -214,7 +217,7 @@ export default function Analytics() {
         </div>
 
         {/* Error State */}
-        <div className="px-6 py-6">
+        <div className="p-6">
           <UnifiedCard variant="elevated">
             <CardContent className="p-12 text-center">
               <div className="text-red-500 mb-6">
@@ -244,10 +247,13 @@ export default function Analytics() {
       <div className="min-h-screen bg-gray-50">
         {/* Modern Header */}
         <div className="bg-white border-b border-gray-200">
-          <div className="px-6 py-6">
+          <div className="p-6">
             <div className="flex items-center justify-between">
               <div className="space-y-1">
-                <h1 className="text-3xl font-bold text-gray-900">{t('analytics.title')}</h1>
+                <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+                  <BarChart3 className="h-8 w-8 text-gray-600" />
+                  {t('analytics.title')}
+                </h1>
                 <p className="text-gray-600">{t('analytics.description')}</p>
               </div>
             </div>
@@ -255,7 +261,7 @@ export default function Analytics() {
         </div>
 
         {/* Empty State */}
-        <div className="px-6 py-6">
+        <div className="p-6">
           <UnifiedCard variant="elevated">
             <CardContent className="p-12 text-center">
               <div className="text-gray-400 mb-6">
@@ -298,12 +304,15 @@ export default function Analytics() {
 
       {/* Page Header with Tabs */}
       <div className="mb-6">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between">
           <div className="space-y-1">
-            <h1 className="text-3xl font-bold text-gray-900">{t('analytics.title')}</h1>
+            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+              <BarChart3 className="h-8 w-8 text-gray-600" />
+              {t('analytics.title')}
+            </h1>
             <p className="text-gray-600">{t('analytics.description')}</p>
           </div>
-            <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3">
               <QuickActions actions={[
                 {
                   id: 'refresh',
@@ -347,7 +356,7 @@ export default function Analytics() {
         </div>
 
       {/* Tab Content */}
-      <div className="px-6 py-6">
+      <div className="p-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">

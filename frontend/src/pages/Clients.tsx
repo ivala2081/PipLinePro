@@ -141,6 +141,8 @@ interface DailySummary {
   total_commission_usd: number;
   total_net_tl: number;
   total_net_usd: number;
+  gross_balance_tl?: number;
+  gross_balance_usd?: number;
   total_deposits_tl?: number;
   total_deposits_usd?: number;
   total_withdrawals_tl?: number;
@@ -1010,8 +1012,8 @@ export default function Clients() {
         const response = await api.get(`/api/summary/${date}`);
         if (response.ok) {
           const data = await api.parseResponse(response);
-          if (data && data.summary && data.summary.total_net_tl) {
-            netBalances[date] = data.summary.total_net_tl;
+          if (data && data.summary && data.summary.gross_balance_tl) {
+            netBalances[date] = data.summary.gross_balance_tl;
           }
         }
       } catch (error) {
@@ -4474,8 +4476,8 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                                 Net
                               </span>
                             </div>
-                            <p className={`text-2xl font-semibold mb-1 ${(dailySummaryData?.total_net_tl || dailyMetrics.totalDeposits - dailyMetrics.totalWithdrawals) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                              {formatCurrency(dailySummaryData?.total_net_tl || dailyMetrics.totalDeposits - dailyMetrics.totalWithdrawals, '₺')}
+                            <p className={`text-2xl font-semibold mb-1 ${(dailySummaryData?.gross_balance_tl || dailyMetrics.totalDeposits - dailyMetrics.totalWithdrawals) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                              {formatCurrency(dailySummaryData?.gross_balance_tl || dailyMetrics.totalDeposits - dailyMetrics.totalWithdrawals, '₺')}
                             </p>
                             <p className='text-xs text-gray-500'>Balance</p>
                           </div>

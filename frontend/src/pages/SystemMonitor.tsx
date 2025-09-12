@@ -278,8 +278,11 @@ const SystemMonitor: React.FC = () => {
       {/* Page Header */}
       <div className="mb-6">
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">System Monitor</h1>
+          <div className="space-y-1">
+            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+              <Activity className="h-8 w-8 text-gray-600" />
+              System Monitor
+            </h1>
             <p className="text-gray-600">Real-time system performance and health monitoring</p>
           </div>
           

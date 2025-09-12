@@ -69,12 +69,12 @@ export default function Reports() {
       {/* Page Header */}
       <div className="mb-6">
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+          <div className="space-y-1">
+            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
               <FileText className="h-8 w-8 text-gray-600" />
               Reports
             </h1>
-            <p className="text-gray-600 mt-1">Generate and view comprehensive business reports</p>
+            <p className="text-gray-600">Generate and view comprehensive business reports</p>
           </div>
           <div className="flex items-center gap-3">
             <UnifiedButton 

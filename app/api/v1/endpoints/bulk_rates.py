@@ -12,7 +12,7 @@ logger = get_logger(__name__)
 
 bulk_rates_bp = Blueprint('bulk_rates', __name__)
 
-@bulk_rates_bp.route('/api/v1/bulk-rates/usd-dates', methods=['GET'])
+@bulk_rates_bp.route('/bulk-rates/usd-dates', methods=['GET'])
 def get_usd_transaction_dates():
     """Get all dates that have USD currency transactions"""
     try:
@@ -55,7 +55,7 @@ def get_usd_transaction_dates():
             'error': 'Failed to fetch USD transaction dates'
         }), 500
 
-@bulk_rates_bp.route('/api/v1/bulk-rates/apply-usd-rate', methods=['POST'])
+@bulk_rates_bp.route('/bulk-rates/apply-usd-rate', methods=['POST'])
 def apply_usd_rate():
     """Apply USD rate to all transactions on a specific date"""
     try:
@@ -162,7 +162,7 @@ def apply_usd_rate():
             'error': 'Failed to apply USD rate'
         }), 500
 
-@bulk_rates_bp.route('/api/v1/bulk-rates/apply-multiple-usd-rates', methods=['POST'])
+@bulk_rates_bp.route('/bulk-rates/apply-multiple-usd-rates', methods=['POST'])
 def apply_multiple_usd_rates():
     """Apply multiple USD rates to different dates"""
     try:
