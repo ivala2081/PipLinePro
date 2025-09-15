@@ -512,7 +512,7 @@ export function DemoNavigationSystem() {
       description: 'Manage all transactions',
       badge: 'New',
       badgeColor: 'success',
-      href: '/transactions'
+      href: '/clients'
     },
     {
       id: 'accounting',
@@ -576,7 +576,7 @@ export function DemoNavigationSystem() {
       icon: <CreditCard className="w-4 h-4" />,
       badge: 'New',
       badgeColor: 'success',
-      href: '/transactions'
+      href: '/clients'
     },
     {
       id: 'accounting',

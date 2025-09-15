@@ -37,57 +37,87 @@ class UnifiedLogger:
     
     def _setup_logger(self):
         """Setup the logger based on environment"""
-        if not self.logger.handlers:
-            # Set level based on environment
-            if self.is_development:
-                self.logger.setLevel(logging.INFO)
-            else:
-                self.logger.setLevel(logging.WARNING)
-            
-            # Create console handler
-            console_handler = logging.StreamHandler(sys.stdout)
-            console_handler.setLevel(logging.INFO)
-            
-            # Create formatter
-            if self.is_development:
-                formatter = logging.Formatter(
-                    '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                    datefmt='%H:%M:%S'
-                )
-            else:
-                formatter = logging.Formatter(
-                    '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-                )
-            
-            console_handler.setFormatter(formatter)
-            self.logger.addHandler(console_handler)
-            
-            # Add file handler for production
-            if not self.is_development:
-                self._setup_file_handler()
+        # Clear existing handlers to prevent duplicates
+        self.logger.handlers.clear()
+        
+        # Set level based on environment
+        if self.is_development:
+            self.logger.setLevel(logging.INFO)
+        else:
+            self.logger.setLevel(logging.WARNING)
+        
+        # Create console handler
+        console_handler = logging.StreamHandler(sys.stdout)
+        console_handler.setLevel(logging.INFO)
+        
+        # Create formatter
+        if self.is_development:
+            formatter = logging.Formatter(
+                '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                datefmt='%H:%M:%S'
+            )
+        else:
+            formatter = logging.Formatter(
+                '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+            )
+        
+        console_handler.setFormatter(formatter)
+        self.logger.addHandler(console_handler)
+        
+        # Always add file handler (both development and production)
+        self._setup_file_handler()
     
     def _setup_file_handler(self):
-        """Setup file handler for production"""
+        """Setup file handler for both development and production"""
         try:
             # Ensure logs directory exists
             os.makedirs('logs', exist_ok=True)
             
-            # Create rotating file handler
-            file_handler = logging.handlers.RotatingFileHandler(
-                'logs/pipelinepro.log',
-                maxBytes=10*1024*1024,  # 10MB
-                backupCount=5
+            # Create rotating file handler for main log
+            main_file_handler = logging.handlers.RotatingFileHandler(
+                'logs/pipelinepro_enhanced.log',
+                maxBytes=5*1024*1024,  # 5MB
+                backupCount=3,
+                encoding='utf-8',
+                delay=True
             )
-            file_handler.setLevel(logging.WARNING)
+            main_file_handler.setLevel(logging.INFO)
             
-            # Create JSON formatter for production
+            # Create formatter
             formatter = logging.Formatter(
                 '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
             )
-            file_handler.setFormatter(formatter)
-            self.logger.addHandler(file_handler)
+            main_file_handler.setFormatter(formatter)
+            self.logger.addHandler(main_file_handler)
+            
+            # Create error file handler
+            error_file_handler = logging.handlers.RotatingFileHandler(
+                'logs/pipelinepro_errors_enhanced.log',
+                maxBytes=5*1024*1024,  # 5MB
+                backupCount=3,
+                encoding='utf-8',
+                delay=True
+            )
+            error_file_handler.setLevel(logging.ERROR)
+            error_file_handler.setFormatter(formatter)
+            self.logger.addHandler(error_file_handler)
+            
+            # Create debug file handler for development
+            if self.is_development:
+                debug_file_handler = logging.handlers.RotatingFileHandler(
+                    'logs/pipelinepro_debug_enhanced.log',
+                    maxBytes=5*1024*1024,  # 5MB
+                    backupCount=2,
+                    encoding='utf-8',
+                    delay=True
+                )
+                debug_file_handler.setLevel(logging.DEBUG)
+                debug_file_handler.setFormatter(formatter)
+                self.logger.addHandler(debug_file_handler)
+                
         except Exception as e:
-            self.logger.warning(f"Failed to setup file handler: {e}")
+            # Use print since logger might not be available
+            print(f"Failed to setup file handler: {e}")
     
     def info(self, message: str, extra_data: Optional[Dict[str, Any]] = None):
         """Log info message"""

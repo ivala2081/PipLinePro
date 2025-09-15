@@ -20,7 +20,7 @@ interface NavigationItem {
 
 const navigation: NavigationItem[] = [
   { name: 'Dashboard', href: '/dashboard', icon: Home, mobilePriority: 'high' },
-  { name: 'Transactions', href: '/transactions', icon: FileText, mobilePriority: 'high' },
+  { name: 'Clients', href: '/clients', icon: FileText, mobilePriority: 'high' },
   { name: 'Analytics', href: '/analytics', icon: BarChart3, mobilePriority: 'medium' },
   { name: 'Settings', href: '/settings', icon: Settings, mobilePriority: 'low' },
 ];

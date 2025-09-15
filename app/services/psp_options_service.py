@@ -11,6 +11,9 @@ from app.models.transaction import Transaction
 
 logger = logging.getLogger(__name__)
 
+# Prevent duplicate logging by tracking logged operations
+_logged_operations = set()
+
 class PspOptionsService:
     """Service for managing fixed PSP options"""
     
@@ -25,7 +28,6 @@ class PspOptionsService:
             ).order_by(Transaction.psp).all()
             
             transaction_psps = [result[0] for result in psp_results]
-            logger.info(f"Found {len(transaction_psps)} PSPs in transaction table: {transaction_psps}")
             
             # Get PSPs from option table (for historical data)
             option_results = db.session.query(Option.value).filter(
@@ -34,13 +36,19 @@ class PspOptionsService:
             ).distinct().order_by(Option.value).all()
             
             option_psps = [result[0] for result in option_results]
-            logger.info(f"Found {len(option_psps)} PSPs in option table: {option_psps}")
             
             # Combine and deduplicate
             all_psps = list(set(transaction_psps + option_psps))
             all_psps.sort()
             
-            logger.info(f"Found {len(all_psps)} unique PSPs total: {all_psps}")
+            # Log only once per unique result set
+            result_key = f"psps_{len(transaction_psps)}_{len(option_psps)}_{len(all_psps)}"
+            if result_key not in _logged_operations:
+                logger.info(f"Found {len(transaction_psps)} PSPs in transaction table: {transaction_psps}")
+                logger.info(f"Found {len(option_psps)} PSPs in option table: {option_psps}")
+                logger.info(f"Found {len(all_psps)} unique PSPs total: {all_psps}")
+                _logged_operations.add(result_key)
+            
             return all_psps
             
         except Exception as e:
@@ -91,7 +99,12 @@ class PspOptionsService:
             # Use default rate based on PSP name (no database lookup to avoid duplicates)
             psp_lower = psp.lower().strip()
             commission_rate = default_rates.get(psp_lower, Decimal('0.025'))  # Default 2.5%
-            logger.info(f"Using default commission rate for '{psp}': {commission_rate}")
+            
+            # Log commission rate only once per PSP
+            rate_key = f"rate_{psp}_{commission_rate}"
+            if rate_key not in _logged_operations:
+                logger.info(f"Using default commission rate for '{psp}': {commission_rate}")
+                _logged_operations.add(rate_key)
             
             fixed_options.append({
                 'value': psp,
@@ -99,7 +112,12 @@ class PspOptionsService:
                 'is_fixed': True
             })
         
-        logger.info(f"Created {len(fixed_options)} unique fixed PSP options")
+        # Log creation only once
+        creation_key = f"created_psps_{len(fixed_options)}"
+        if creation_key not in _logged_operations:
+            logger.info(f"Created {len(fixed_options)} unique fixed PSP options")
+            _logged_operations.add(creation_key)
+        
         return fixed_options
     
     @staticmethod

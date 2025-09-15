@@ -65,7 +65,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: Home, current: location.pathname === '/dashboard' || location.pathname === '/' },
-    { name: 'Transactions', href: '/transactions', icon: FileText, current: location.pathname === '/transactions' },
+    { name: 'Clients', href: '/clients', icon: FileText, current: location.pathname === '/clients' },
     { name: 'Accounting', href: '/accounting', icon: Calculator, current: location.pathname === '/accounting' },
     { name: 'Ledger', href: '/ledger', icon: ClipboardList, current: location.pathname === '/ledger' },
     { name: 'Reports', href: '/reports', icon: FileText, current: location.pathname === '/reports' },

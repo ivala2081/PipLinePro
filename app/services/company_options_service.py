@@ -11,6 +11,9 @@ from app import db
 
 logger = logging.getLogger(__name__)
 
+# Prevent duplicate logging by tracking logged operations
+_logged_operations = set()
+
 class CompanyOptionsService:
     """Service for managing fixed Company options"""
     
@@ -25,7 +28,6 @@ class CompanyOptionsService:
             ).order_by(Transaction.company).all()
             
             transaction_companies = [result[0] for result in company_results]
-            logger.info(f"Found {len(transaction_companies)} companies in transaction table: {transaction_companies}")
             
             # Get companies from option table (for historical data)
             option_results = db.session.query(Option.value).filter(
@@ -34,13 +36,19 @@ class CompanyOptionsService:
             ).distinct().order_by(Option.value).all()
             
             option_companies = [result[0] for result in option_results]
-            logger.info(f"Found {len(option_companies)} companies in option table: {option_companies}")
             
             # Combine and deduplicate
             all_companies = list(set(transaction_companies + option_companies))
             all_companies.sort()
             
-            logger.info(f"Found {len(all_companies)} unique companies total: {all_companies}")
+            # Log only once per unique result set
+            result_key = f"companies_{len(transaction_companies)}_{len(option_companies)}_{len(all_companies)}"
+            if result_key not in _logged_operations:
+                logger.info(f"Found {len(transaction_companies)} companies in transaction table: {transaction_companies}")
+                logger.info(f"Found {len(option_companies)} companies in option table: {option_companies}")
+                logger.info(f"Found {len(all_companies)} unique companies total: {all_companies}")
+                _logged_operations.add(result_key)
+            
             return all_companies
             
         except Exception as e:
@@ -67,5 +75,10 @@ class CompanyOptionsService:
                 'is_fixed': True
             })
         
-        logger.info(f"Created {len(fixed_options)} unique fixed company options")
+        # Log creation only once
+        creation_key = f"created_companies_{len(fixed_options)}"
+        if creation_key not in _logged_operations:
+            logger.info(f"Created {len(fixed_options)} unique fixed company options")
+            _logged_operations.add(creation_key)
+        
         return fixed_options

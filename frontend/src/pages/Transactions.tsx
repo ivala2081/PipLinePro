@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import {
   Search,
   Filter,
@@ -29,6 +29,7 @@ import {
   MoreHorizontal,
   Settings,
   X,
+  LineChart,
 } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -39,9 +40,8 @@ import TransactionDetailView from '../components/TransactionDetailView';
 import TransactionEditForm from '../components/TransactionEditForm';
 // Removed old ProfessionalLayout imports - using modern design system
 import DailyTransactionSummary from '../components/DailyTransactionSummary';
-import Clients from './clients';
 import { RevenueChart } from '../components/modern/RevenueChart';
-import { MetricCard, ProgressRing, MiniChart } from '../components/DataVisualization';
+import { ProgressRing, MiniChart } from '../components/DataVisualization';
 import { 
   UnifiedCard, 
   UnifiedButton, 
@@ -65,6 +65,28 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import StandardMetricsCard from '../components/StandardMetricsCard';
+import MetricCard from '../components/MetricCard';
+import { ProfessionalPagination } from '../components/ProfessionalPagination';
+import {
+  BarChart as RechartsBarChart,
+  Bar,
+  LineChart as RechartsLineChart,
+  Line,
+  PieChart as RechartsPieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  ComposedChart,
+} from 'recharts';
 
 interface Transaction {
   id: number;
@@ -101,10 +123,27 @@ interface TransactionsResponse {
   };
 }
 
+interface Client {
+  client_name: string;
+  company_name?: string;
+  payment_method?: string;
+  category?: string;
+  total_amount: number;
+  total_commission: number;
+  total_net: number;
+  transaction_count: number;
+  first_transaction: string;
+  last_transaction: string;
+  currencies: string[];
+  psps: string[];
+  avg_transaction: number;
+}
+
 export default function Transactions() {
   const { t } = useLanguage();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(false);
@@ -169,6 +208,24 @@ export default function Transactions() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoadingData, setIsLoadingData] = useState(false);
   
+  // Tab state - get from URL params, localStorage, or default to 'overview'
+  const getInitialTab = () => {
+    const tabFromUrl = searchParams.get('tab') as 'overview' | 'transactions' | 'analytics' | 'accounting';
+    if (tabFromUrl) return tabFromUrl;
+    
+    // Check localStorage for last active tab
+    const lastTab = localStorage.getItem('clients-page-active-tab') as 'overview' | 'transactions' | 'analytics' | 'accounting';
+    if (lastTab) return lastTab;
+    
+    return 'overview';
+  };
+  
+  const initialTab = getInitialTab();
+  console.log('🔄 Initial tab state:', { initialTab, urlParams: searchParams.toString() });
+  const [activeTab, setActiveTab] = useState<'overview' | 'transactions' | 'analytics' | 'accounting'>(initialTab);
+  const [paginationLoading, setPaginationLoading] = useState(false);
+  
+  
 
   // File input reference for import
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -194,70 +251,19 @@ export default function Transactions() {
     }
   }, [isAuthenticated, authLoading]);
 
-  // Debug: Log transactions state changes
+  // Handle filter and pagination changes with debouncing
   useEffect(() => {
-    console.log('🔄 Transactions: Transactions state changed:', transactions.length, 'transactions');
-  }, [transactions]);
-
-  // Debug: Log loading state changes
-  useEffect(() => {
-    console.log('🔄 Transactions: Loading state changed:', { loading, isLoadingData });
-  }, [loading, isLoadingData]);
-
-  // Debug: Log dropdown options changes
-  useEffect(() => {
-    console.log('🔄 Transactions: Dropdown options changed:', dropdownOptions);
-  }, [dropdownOptions]);
-
-  // Force data loading on component mount
-  useEffect(() => {
-    console.log('🔄 Transactions: Component mounted, ensuring data load...');
-    const timer = setTimeout(() => {
       if (isAuthenticated && !authLoading) {
-        console.log('🔄 Transactions: Mount timer - loading data...');
-        fetchTransactions();
-        fetchDropdownOptions();
-      }
-    }, 200); // Slightly longer delay to ensure everything is settled
-    
-    return () => clearTimeout(timer);
-  }, []); // Only run on mount
-
-  // Immediate call to fetch dropdown options on mount
-  useEffect(() => {
-    console.log('🔄 Transactions: Immediate dropdown options fetch on mount');
-    fetchDropdownOptions();
-  }, []); // Run immediately on mount
-
-  // Additional effect to ensure dropdown options are loaded
-  useEffect(() => {
-    if (isAuthenticated && !authLoading && dropdownOptions.currencies.length === 0) {
-      console.log('🔄 Transactions: Dropdown options empty, refetching...');
-      fetchDropdownOptions();
-    }
-  }, [isAuthenticated, authLoading, dropdownOptions.currencies.length]);
-
-  // Data loading when navigating to transactions page
-  useEffect(() => {
-    console.log('🔄 Transactions: Navigation effect triggered', {
-      pathname: location.pathname,
-      isAuthenticated,
-      authLoading
-    });
-    
-    if (location.pathname === '/transactions' && isAuthenticated && !authLoading) {
-      console.log('🔄 Transactions: Navigating to transactions page, refreshing data...');
-      fetchTransactions();
-      fetchDropdownOptions();
-    }
-  }, [location.pathname, isAuthenticated, authLoading]);
-
-  // Handle filter and pagination changes
-  useEffect(() => {
-    if (isAuthenticated && !authLoading) {
       console.log('🔄 Transactions: Filters/pagination changed, refetching...');
+      
+      // Debounce filter changes to prevent rapid API calls
+      const timeoutId = setTimeout(() => {
       fetchTransactions();
+      }, 300); // 300ms debounce
+      
+      return () => clearTimeout(timeoutId);
     }
+    return undefined; // Explicit return for all code paths
   }, [filters, pagination.page]);
 
   // Add a refresh mechanism that can be called externally
@@ -275,23 +281,44 @@ export default function Transactions() {
       }
     };
 
-    const handleWindowFocus = () => {
-      console.log('🔄 Transactions: Window focused, checking if refresh needed...');
-      if (location.pathname === '/transactions' && isAuthenticated && !authLoading) {
-        console.log('🔄 Transactions: Window focused on transactions page, refreshing data...');
-        fetchTransactions();
-      }
-    };
-
     // Listen for transaction updates from other components
     window.addEventListener('transactionsUpdated', handleRefresh);
-    window.addEventListener('focus', handleWindowFocus);
     
     return () => {
       window.removeEventListener('transactionsUpdated', handleRefresh);
-      window.removeEventListener('focus', handleWindowFocus);
     };
-  }, [isAuthenticated, authLoading, location.pathname]);
+  }, [isAuthenticated, authLoading]);
+
+  // Sync tab state with URL parameters
+  useEffect(() => {
+    const tabFromUrl = searchParams.get('tab') as 'overview' | 'transactions' | 'analytics' | 'accounting';
+    console.log('🔄 URL sync effect:', { tabFromUrl, activeTab, searchParams: searchParams.toString() });
+    if (tabFromUrl && tabFromUrl !== activeTab) {
+      console.log('🔄 Setting tab from URL:', tabFromUrl);
+      setActiveTab(tabFromUrl);
+      // Save to localStorage when tab is set from URL
+      localStorage.setItem('clients-page-active-tab', tabFromUrl);
+    } else if (!tabFromUrl) {
+      // If no tab in URL, check localStorage for last active tab
+      const lastTab = localStorage.getItem('clients-page-active-tab') as 'overview' | 'transactions' | 'analytics' | 'accounting';
+      if (lastTab && lastTab !== activeTab) {
+        console.log('🔄 No tab in URL, using last active tab from localStorage:', lastTab);
+        setActiveTab(lastTab);
+        const currentParams = new URLSearchParams(searchParams);
+        currentParams.set('tab', lastTab);
+        setSearchParams(currentParams, { replace: true });
+      } else if (!lastTab) {
+        // If no tab in URL and no localStorage, default to overview
+        console.log('🔄 No tab in URL and no localStorage, defaulting to overview tab');
+        setActiveTab('overview');
+        const currentParams = new URLSearchParams(searchParams);
+        currentParams.set('tab', 'overview');
+        setSearchParams(currentParams, { replace: true });
+      }
+    }
+  }, [searchParams]); // Removed activeTab dependency to prevent loops
+
+
 
   // Keyboard shortcuts
   useKeyboardShortcuts([
@@ -318,6 +345,7 @@ export default function Transactions() {
     }
   ]);
 
+
   const fetchDropdownOptions = async () => {
     try {
       console.log('🔄 Transactions: Fetching dropdown options...');
@@ -331,16 +359,28 @@ export default function Transactions() {
       if (response.ok) {
         const data = await response.json();
         console.log('🔄 Transactions: Raw dropdown options data:', data);
+        console.log('🔄 Transactions: API response keys:', Object.keys(data || {}));
+        console.log('🔄 Transactions: PSP options from API:', data.psp);
+        console.log('🔄 Transactions: Payment method options from API:', data.payment_method);
+        console.log('🔄 Transactions: Currency options from API:', data.currency);
+        console.log('🔄 Transactions: Currencies options from API:', data.currencies);
         if (data) {
           // Extract just the 'value' property from each option object
           const processedOptions = {
-            currencies: (data.currency || []).map((option: any) => option.value),
+            currencies: (data.currencies || data.currency || []).map((option: any) => option.value),
             payment_methods: (data.payment_method || []).map((option: any) => option.value),
             categories: (data.category || []).map((option: any) => option.value),
             psps: (data.psp || []).map((option: any) => option.value),
             companies: (data.company || []).map((option: any) => option.value),
           };
           console.log('🔄 Transactions: Processed dropdown options:', processedOptions);
+          console.log('🔄 Transactions: Setting dropdown options with counts:', {
+            psps: processedOptions.psps?.length || 0,
+            payment_methods: processedOptions.payment_methods?.length || 0,
+            categories: processedOptions.categories?.length || 0,
+            companies: processedOptions.companies?.length || 0,
+            currencies: processedOptions.currencies?.length || 0
+          });
           setDropdownOptions(processedOptions);
         } else {
           console.warn('🔄 Transactions: No data received from dropdown options API');
@@ -389,6 +429,9 @@ export default function Transactions() {
 
   const handleEditTransaction = async (transaction: Transaction) => {
     try {
+      // Ensure dropdown options are loaded before opening edit modal
+      await fetchDropdownOptions();
+      
       const response = await api.get(`/api/v1/transactions/${transaction.id}`);
       if (response.ok) {
         const result = await response.json();
@@ -493,6 +536,13 @@ export default function Transactions() {
   const fetchTransactions = async () => {
     try {
       console.log('🔄 Transactions: Fetching transactions data...');
+      
+      // Prevent multiple simultaneous requests
+      if (loading || isLoadingData) {
+        console.log('🔄 Transactions: Already loading, skipping duplicate request');
+        return;
+      }
+      
       setLoading(true);
       setError(null);
       setIsLoadingData(true);
@@ -578,6 +628,7 @@ export default function Transactions() {
     } finally {
       console.log('🔄 Transactions: Setting loading states to false');
       setLoading(false);
+      setPaginationLoading(false);
       setIsLoadingData(false);
     }
   };
@@ -913,6 +964,22 @@ export default function Transactions() {
   };
 
 
+  // Handle tab change and update URL
+  const handleTabChange = (value: string) => {
+    const newTab = value as 'overview' | 'transactions' | 'analytics' | 'accounting';
+    console.log('🔄 Tab change:', newTab, 'Previous tab:', activeTab);
+    setActiveTab(newTab);
+    
+    // Save tab state to localStorage for persistence across page reloads
+    localStorage.setItem('clients-page-active-tab', newTab);
+    
+    // Preserve existing search parameters and only update the tab
+    const currentParams = new URLSearchParams(searchParams);
+    currentParams.set('tab', newTab);
+    setSearchParams(currentParams);
+  };
+
+
   const formatDate = (dateString: string) => {
     if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -951,7 +1018,21 @@ export default function Transactions() {
   };
 
   const handlePageChange = (newPage: number) => {
+    console.log('🔄 Page change:', newPage, 'Current tab:', activeTab);
+    setPaginationLoading(true);
     setPagination(prev => ({ ...prev, page: newPage }));
+    // Ensure tab state is preserved during pagination changes
+    // Don't reset the tab or URL parameters
+  };
+
+  const handleItemsPerPageChange = (newItemsPerPage: number) => {
+    console.log('🔄 Items per page change:', newItemsPerPage);
+    setPaginationLoading(true);
+    setPagination(prev => ({ 
+      ...prev, 
+      per_page: newItemsPerPage, 
+      page: 1 // Reset to first page when changing page size
+    }));
   };
 
   // Loading state
@@ -979,8 +1060,743 @@ export default function Transactions() {
         id="csv-file-input"
       />
 
-        {/* Clients Analytics Content */}
-          <Clients />
+        {/* Header Section */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between">
+            <div>
+                <h1 className="text-2xl font-bold text-gray-900">Client Management</h1>
+                <p className="text-gray-600 mt-1">
+                  Comprehensive client management and transaction tracking
+                </p>
+            </div>
+            <div className="flex items-center space-x-3">
+            </div>
+          </div>
+        </div>
+
+        {/* Tabs Navigation */}
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="overview" className="flex items-center gap-2">
+                <BarChart3 className="h-4 w-4" />
+                Overview
+              </TabsTrigger>
+              <TabsTrigger value="transactions" className="flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                Transactions
+              </TabsTrigger>
+              <TabsTrigger value="analytics" className="flex items-center gap-2">
+                <LineChart className="h-4 w-4" />
+                Analytics
+              </TabsTrigger>
+              <TabsTrigger value="accounting" className="flex items-center gap-2">
+                <DollarSign className="h-4 w-4" />
+                Accounting
+              </TabsTrigger>
+            </TabsList>
+
+          {/* Tab Content */}
+
+          <TabsContent value="overview" className="space-y-6">
+            {/* Overview Content */}
+            <UnifiedCard variant="elevated" className="mb-6">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5" />
+                  Financial Overview
+                </CardTitle>
+                <CardDescription>
+                  Key metrics and performance indicators
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="p-4 bg-blue-50 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-blue-600">Total Transactions</p>
+                        <p className="text-2xl font-bold text-blue-900">{pagination.total}</p>
+                        <p className="text-xs text-blue-500">+12% from last month</p>
+                      </div>
+                      <FileText className="h-8 w-8 text-blue-500" />
+                    </div>
+                  </div>
+                  <div className="p-4 bg-green-50 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-green-600">Active Clients</p>
+                        <p className="text-2xl font-bold text-green-900">24</p>
+                        <p className="text-xs text-green-500">+5% from last month</p>
+                      </div>
+                      <Users className="h-8 w-8 text-green-500" />
+                    </div>
+                  </div>
+                  <div className="p-4 bg-purple-50 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-purple-600">Total Volume</p>
+                        <p className="text-2xl font-bold text-purple-900">₺2.4M</p>
+                        <p className="text-xs text-purple-500">+8% from last month</p>
+                      </div>
+                      <DollarSign className="h-8 w-8 text-purple-500" />
+                    </div>
+                  </div>
+                  <div className="p-4 bg-orange-50 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-orange-600">Commission</p>
+                        <p className="text-2xl font-bold text-orange-900">₺48K</p>
+                        <p className="text-xs text-orange-500">+15% from last month</p>
+                      </div>
+                      <TrendingUp className="h-8 w-8 text-orange-500" />
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </UnifiedCard>
+
+            {/* Recent Activity */}
+            <UnifiedCard>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Activity className="h-5 w-5" />
+                  Recent Activity
+                </CardTitle>
+                <CardDescription>
+                  Latest transactions and system activity
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {transactions.slice(0, 5).map((transaction) => (
+                    <div key={transaction.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-full ${
+                          transaction.category === 'DEP' ? 'bg-green-100' : 'bg-red-100'
+                        }`}>
+                          {transaction.category === 'DEP' ? (
+                            <TrendingUp className="h-4 w-4 text-green-600" />
+                          ) : (
+                            <TrendingDown className="h-4 w-4 text-red-600" />
+                          )}
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900">{transaction.client_name}</p>
+                          <p className="text-sm text-gray-500">{transaction.psp} • {formatDate(transaction.created_at || transaction.date || '')}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className={`font-medium ${
+                          transaction.amount >= 0 ? 'text-green-600' : 'text-red-600'
+                        }`}>
+                          {formatCurrency(transaction.amount, transaction.currency || '₺')}
+                        </p>
+                        <p className="text-sm text-gray-500">{transaction.category}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </UnifiedCard>
+          </TabsContent>
+
+          <TabsContent value="transactions" className="space-y-6">
+            {/* Error Display */}
+            {error && (
+              <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                <div className="flex items-center">
+                  <AlertCircle className="h-5 w-5 text-red-500 mr-2" />
+                  <p className="text-red-700">{error}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Success Display */}
+            {success && (
+              <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                <div className="flex items-center">
+                  <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
+                  <p className="text-green-700 whitespace-pre-line">{success}</p>
+                </div>
+              </div>
+            )}
+
+        {/* Search and Filters */}
+        <div className="mb-6">
+          <div className="flex items-center space-x-4">
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Search transactions, clients, reports..."
+                  value={filters.search}
+                  onChange={(e) => handleFilterChange('search', e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center"
+            >
+              <Filter className="h-4 w-4 mr-2" />
+              Filters
+              {getActiveFilterCount() > 0 && (
+                <Badge className="ml-2 bg-primary-100 text-primary-800">
+                  {getActiveFilterCount()}
+                </Badge>
+              )}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleExport}
+              disabled={exporting}
+              className="flex items-center"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              {exporting ? 'Exporting...' : 'Export'}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={triggerFileInput}
+              disabled={importing}
+              className="flex items-center"
+            >
+              <Upload className="h-4 w-4 mr-2" />
+              {importing ? 'Importing...' : 'Import'}
+            </Button>
+          </div>
+        </div>
+
+        {/* Loading State */}
+        {(loading || isLoadingData) && (
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
+              <p className="mt-2 text-gray-600">Loading transactions...</p>
+            </div>
+          </div>
+        )}
+
+        {/* Transactions Table */}
+        {!loading && !isLoadingData && (
+          <div className="bg-white rounded-lg shadow">
+            {transactions.length === 0 ? (
+              <div className="text-center py-12">
+                <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No transactions found</h3>
+                <p className="text-gray-600 mb-4">
+                  {getActiveFilterCount() > 0 
+                    ? "Try adjusting your filters to see more results."
+                    : "Get started by adding your first transaction."
+                  }
+                </p>
+                {getActiveFilterCount() > 0 ? (
+                  <Button variant="outline" onClick={clearAllFilters}>
+                    Clear Filters
+                  </Button>
+                ) : (
+                  <Button onClick={() => navigate('/transactions/add')}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Transaction
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <>
+                {/* Bulk Actions */}
+                {selectedTransactions.length > 0 && (
+                  <div className="px-6 py-3 bg-gray-50 border-b border-gray-200">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-700">
+                        {selectedTransactions.length} transaction(s) selected
+                      </span>
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleBulkDelete}
+                          disabled={bulkDeleting}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          {bulkDeleting ? 'Deleting...' : 'Delete Selected'}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSelectedTransactions([])}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Table */}
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left">
+                          <input
+                            type="checkbox"
+                            checked={selectedTransactions.length === transactions.length && transactions.length > 0}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedTransactions(transactions.map(t => t.id));
+                              } else {
+                                setSelectedTransactions([]);
+                              }
+                            }}
+                            className="rounded border-gray-300"
+                          />
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Client
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Company
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Category
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Amount
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Commission
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Net Amount
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          PSP
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Date
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {transactions.map((transaction) => (
+                        <tr key={transaction.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <input
+                              type="checkbox"
+                              checked={selectedTransactions.includes(transaction.id)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedTransactions(prev => [...prev, transaction.id]);
+                                } else {
+                                  setSelectedTransactions(prev => prev.filter(id => id !== transaction.id));
+                                }
+                              }}
+                              className="rounded border-gray-300"
+                            />
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-medium text-gray-900">
+                              {transaction.client_name || 'Unknown'}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">
+                              {transaction.company || 'N/A'}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <Badge 
+                              className={
+                                transaction.category === 'DEP' 
+                                  ? 'bg-green-100 text-green-800' 
+                                  : 'bg-red-100 text-red-800'
+                              }
+                            >
+                              {transaction.category}
+                            </Badge>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className={`text-sm font-medium ${
+                              transaction.amount >= 0 ? 'text-green-600' : 'text-red-600'
+                            }`}>
+                              {formatCurrency(transaction.amount, transaction.currency || '₺')}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">
+                              {formatCurrency(transaction.commission, transaction.currency || '₺')}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className={`text-sm font-medium ${
+                              transaction.net_amount >= 0 ? 'text-green-600' : 'text-red-600'
+                            }`}>
+                              {formatCurrency(transaction.net_amount, transaction.currency || '₺')}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">
+                              {transaction.psp || 'Unknown'}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">
+                              {formatDate(transaction.created_at || transaction.date || '')}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div className="flex items-center space-x-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleViewDetails(transaction)}
+                                className="text-blue-600 hover:text-blue-900"
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEditTransaction(transaction)}
+                                className="text-green-600 hover:text-green-900"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeleteTransaction(transaction.id)}
+                                className="text-red-600 hover:text-red-900"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Professional Pagination */}
+                <ProfessionalPagination
+                  currentPage={pagination.page}
+                  totalPages={pagination.pages}
+                  totalItems={pagination.total}
+                  itemsPerPage={pagination.per_page}
+                  onPageChange={handlePageChange}
+                  onItemsPerPageChange={handleItemsPerPageChange}
+                  loading={paginationLoading}
+                  showItemsPerPage={true}
+                  showJumpToPage={true}
+                  itemsPerPageOptions={[10, 25, 50, 100, 200, 500, 1000, 2000, 5000]}
+                />
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Modals */}
+        {viewModalOpen && selectedTransaction && (
+          <Modal
+            isOpen={viewModalOpen}
+            onClose={() => {
+              setViewModalOpen(false);
+              setSelectedTransaction(null);
+            }}
+            title="Transaction Details"
+          >
+            <TransactionDetailView transaction={selectedTransaction} />
+          </Modal>
+        )}
+
+        {editModalOpen && selectedTransaction && (
+          <Modal
+            isOpen={editModalOpen}
+            onClose={() => {
+              setEditModalOpen(false);
+              setSelectedTransaction(null);
+            }}
+            title="Edit Transaction"
+          >
+            <TransactionEditForm
+              transaction={selectedTransaction}
+              onSave={handleSaveTransaction}
+              onCancel={() => {
+                setEditModalOpen(false);
+                setSelectedTransaction(null);
+              }}
+              dropdownOptions={dropdownOptions}
+            />
+          </Modal>
+        )}
+          </TabsContent>
+
+          <TabsContent value="analytics" className="space-y-6">
+            {/* Analytics Overview Section */}
+            <UnifiedCard>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <LineChart className="h-5 w-5" />
+                  Analytics Overview
+                </CardTitle>
+                <CardDescription>Financial and performance insights</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {/* Professional Charts Section */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Transaction Volume Trend Chart */}
+                  <div className='bg-white rounded-2xl p-6 shadow-sm border border-gray-200 hover:shadow-lg transition-all duration-200'>
+                    <div className='flex items-center justify-between mb-6'>
+                      <h3 className='text-lg font-semibold text-gray-900'>Transaction Volume Trend</h3>
+                      <div className='flex items-center gap-2 text-sm text-gray-500'>
+                        <div className='w-3 h-3 bg-emerald-500 rounded-full'></div>
+                        <span>Deposits</span>
+                        <div className='w-3 h-3 bg-red-500 rounded-full'></div>
+                        <span>Withdrawals</span>
+                      </div>
+                    </div>
+                    <div className='h-64'>
+                      <ResponsiveContainer width='100%' height='100%'>
+                        <RechartsLineChart data={[
+                          { month: '2024-01', deposits: 120000, withdrawals: 80000 },
+                          { month: '2024-02', deposits: 150000, withdrawals: 90000 },
+                          { month: '2024-03', deposits: 180000, withdrawals: 110000 },
+                          { month: '2024-04', deposits: 200000, withdrawals: 120000 },
+                          { month: '2024-05', deposits: 220000, withdrawals: 130000 },
+                          { month: '2024-06', deposits: 250000, withdrawals: 140000 },
+                        ]}>
+                          <CartesianGrid strokeDasharray='3 3' stroke='#f3f4f6' />
+                          <XAxis 
+                            dataKey='month' 
+                            stroke='#6b7280'
+                            fontSize={12}
+                            tickFormatter={(value) => {
+                              const [year, month] = value.split('-');
+                              return `${month}/${year.slice(2)}`;
+                            }}
+                          />
+                          <YAxis 
+                            stroke='#6b7280'
+                            fontSize={12}
+                            tickFormatter={(value) => formatCurrency(value, '₺')}
+                          />
+                          <Tooltip 
+                            formatter={(value: any) => [formatCurrency(value, '₺'), '']}
+                            labelFormatter={(label) => {
+                              const [year, month] = label.split('-');
+                              return `${month}/${year}`;
+                            }}
+                            contentStyle={{
+                              backgroundColor: 'white',
+                              border: '1px solid #e5e7eb',
+                              borderRadius: '8px',
+                              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                            }}
+                          />
+                          <Line 
+                            type='monotone' 
+                            dataKey='deposits' 
+                            stroke='#10b981' 
+                            strokeWidth={3}
+                            dot={{ fill: '#10b981', strokeWidth: 2, r: 4 }}
+                            activeDot={{ r: 6, stroke: '#10b981', strokeWidth: 2 }}
+                          />
+                          <Line 
+                            type='monotone' 
+                            dataKey='withdrawals' 
+                            stroke='#ef4444' 
+                            strokeWidth={3}
+                            dot={{ fill: '#ef4444', strokeWidth: 2, r: 4 }}
+                            activeDot={{ r: 6, stroke: '#ef4444', strokeWidth: 2 }}
+                          />
+                        </RechartsLineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+
+                  {/* Payment Method Distribution Chart */}
+                  <div className='bg-white rounded-2xl p-6 shadow-sm border border-gray-200 hover:shadow-lg transition-all duration-200'>
+                    <div className='flex items-center justify-between mb-6'>
+                      <h3 className='text-lg font-semibold text-gray-900'>Payment Method Distribution</h3>
+                      <div className='text-sm text-gray-500'>Volume by Method</div>
+                    </div>
+                    <div className='h-64'>
+                      <ResponsiveContainer width='100%' height='100%'>
+                        <RechartsPieChart>
+                          <Pie
+                            data={[
+                              { name: 'Bank', volume: 400000, color: '#3b82f6' },
+                              { name: 'Credit Card', volume: 300000, color: '#10b981' },
+                              { name: 'Tether', volume: 200000, color: '#f59e0b' },
+                            ]}
+                            cx='50%'
+                            cy='50%'
+                            innerRadius={60}
+                            outerRadius={100}
+                            paddingAngle={5}
+                            dataKey='volume'
+                          >
+                            {[
+                              { name: 'Bank', volume: 400000, color: '#3b82f6' },
+                              { name: 'Credit Card', volume: 300000, color: '#10b981' },
+                              { name: 'Tether', volume: 200000, color: '#f59e0b' },
+                            ].map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                          </Pie>
+                          <Tooltip 
+                            formatter={(value: any) => [formatCurrency(value, '₺'), 'Volume']}
+                            contentStyle={{
+                              backgroundColor: 'white',
+                              border: '1px solid #e5e7eb',
+                              borderRadius: '8px',
+                              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                            }}
+                          />
+                        </RechartsPieChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </UnifiedCard>
+          </TabsContent>
+
+          <TabsContent value="accounting" className="space-y-6">
+            {/* Accounting Overview Section */}
+            <UnifiedCard>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <DollarSign className="h-5 w-5" />
+                  Accounting Overview
+                </CardTitle>
+                <CardDescription>Financial accounting and reporting tools</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {/* Total Revenue */}
+                  <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6 border border-green-200">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                        <DollarSign className="h-6 w-6 text-green-600" />
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-medium text-green-600">Total Revenue</p>
+                        <p className="text-2xl font-bold text-green-900">
+                          {formatCurrency(
+                            transactions.reduce((sum, t) => sum + (t.amount > 0 ? t.amount : 0), 0),
+                            'TL'
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center text-sm text-green-700">
+                      <TrendingUp className="h-4 w-4 mr-1" />
+                      <span>All time revenue</span>
+                    </div>
+                  </div>
+
+                  {/* Total Commissions */}
+                  <div className="bg-gradient-to-br from-gray-50 to-indigo-50 rounded-xl p-6 border border-gray-200">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
+                        <CreditCard className="h-6 w-6 text-gray-600" />
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-medium text-gray-600">Total Commissions</p>
+                        <p className="text-2xl font-bold text-gray-900">
+                          {formatCurrency(
+                            transactions.reduce((sum, t) => sum + t.commission, 0),
+                            'TL'
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center text-sm text-gray-700">
+                      <TrendingUp className="h-4 w-4 mr-1" />
+                      <span>Commission earned</span>
+                    </div>
+                  </div>
+
+                  {/* Net Profit */}
+                  <div className="bg-gradient-to-br from-purple-50 to-violet-50 rounded-xl p-6 border border-purple-200">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <BarChart3 className="h-6 w-6 text-purple-600" />
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-medium text-purple-600">Net Profit</p>
+                        <p className="text-2xl font-bold text-purple-900">
+                          {formatCurrency(
+                            transactions.reduce((sum, t) => sum + t.net_amount, 0),
+                            'TL'
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center text-sm text-purple-700">
+                      <TrendingUp className="h-4 w-4 mr-1" />
+                      <span>After commissions</span>
+                    </div>
+                  </div>
+
+                  {/* Total Transactions */}
+                  <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl p-6 border border-orange-200">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                        <FileText className="h-6 w-6 text-orange-600" />
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-medium text-orange-600">Total Transactions</p>
+                        <p className="text-2xl font-bold text-orange-900">
+                          {pagination.total.toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center text-sm text-orange-700">
+                      <TrendingUp className="h-4 w-4 mr-1" />
+                      <span>All transactions</span>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </UnifiedCard>
+
+            {/* Financial Reports Section */}
+            <UnifiedCard>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Financial Reports
+                </CardTitle>
+                <CardDescription>Generate and download financial reports</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Button variant="outline" className="h-20 flex flex-col items-center justify-center gap-2">
+                    <Download className="h-6 w-6" />
+                    <span>Monthly Report</span>
+                  </Button>
+                  <Button variant="outline" className="h-20 flex flex-col items-center justify-center gap-2">
+                    <FileText className="h-6 w-6" />
+                    <span>Transaction Summary</span>
+                  </Button>
+                  <Button variant="outline" className="h-20 flex flex-col items-center justify-center gap-2">
+                    <BarChart3 className="h-6 w-6" />
+                    <span>Analytics Report</span>
+                  </Button>
+                </div>
+              </CardContent>
+            </UnifiedCard>
+          </TabsContent>
+        </Tabs>
         </div>
     </>
   );

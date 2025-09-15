@@ -618,6 +618,11 @@ def get_dropdown_options():
                 {'id': 2, 'value': 'USD', 'commission_rate': None, 'created_at': None},
                 {'id': 3, 'value': 'EUR', 'commission_rate': None, 'created_at': None}
             ],
+            'currencies': [  # Add this for frontend compatibility
+                {'id': 1, 'value': 'TL', 'commission_rate': None, 'created_at': None},
+                {'id': 2, 'value': 'USD', 'commission_rate': None, 'created_at': None},
+                {'id': 3, 'value': 'EUR', 'commission_rate': None, 'created_at': None}
+            ],
             'category': [
                 {'id': 1, 'value': 'DEP', 'commission_rate': None, 'created_at': None},
                 {'id': 2, 'value': 'WD', 'commission_rate': None, 'created_at': None}
@@ -820,9 +825,16 @@ def update_dropdown_option(option_id):
         value = data.get('value', '').strip()
         commission_rate = data.get('commission_rate')
         
+        # Debug logging
+        print(f"DEBUG: Updating option {option_id}, field_name: {option.field_name}")
+        print(f"DEBUG: Received value: '{value}', commission_rate: '{commission_rate}'")
+        
         # Convert commission_rate to string if it's a number
         if commission_rate is not None:
             commission_rate = str(commission_rate).strip()
+            # Convert empty string to None
+            if not commission_rate:
+                commission_rate = None
         
         if not value:
             return jsonify({
@@ -844,7 +856,8 @@ def update_dropdown_option(option_id):
                 }), 400
         
         # Commission rate is only required for PSP options
-        if option.field_name == 'psp' and not commission_rate:
+        if option.field_name == 'psp' and commission_rate is None:
+            print(f"DEBUG: PSP option missing commission rate")
             return jsonify({
                 'error': 'Commission rate is required for PSP options'
             }), 400
@@ -858,8 +871,9 @@ def update_dropdown_option(option_id):
         ).first()
         
         if existing:
+            print(f"DEBUG: Duplicate option found: {existing.id}")
             return jsonify({
-                'error': 'This option already exists'
+                'error': f'An option with the value "{value}" already exists for {option.field_name} field'
             }), 400
         
         # Update option

@@ -553,7 +553,7 @@ export default function AddTransaction() {
 
   const handleCancel = () => {
     // Navigate back to transactions page
-    window.location.href = '/transactions';
+    window.location.href = '/clients';
   };
 
   const resetForm = () => {
@@ -623,11 +623,11 @@ export default function AddTransaction() {
               <UnifiedButton
                 variant="primary"
                 size="lg"
-                onClick={() => (window.location.href = '/transactions')}
+                onClick={() => (window.location.href = '/clients')}
                 icon={<FileText className="h-4 w-4" />}
                 className="flex-1"
               >
-                View Transactions
+                View Clients
               </UnifiedButton>
               <UnifiedButton
                 variant="outline"

@@ -585,7 +585,7 @@ export function DemoMobileSystem() {
 
   const navigationItems = [
     { icon: <Home className="w-5 h-5" />, label: 'Dashboard', href: '/dashboard' },
-    { icon: <CreditCard className="w-5 h-5" />, label: 'Transactions', href: '/transactions' },
+    { icon: <CreditCard className="w-5 h-5" />, label: 'Clients', href: '/clients' },
     { icon: <Calculator className="w-5 h-5" />, label: 'Accounting', href: '/accounting' },
     { icon: <BarChart3 className="w-5 h-5" />, label: 'Analytics', href: '/analytics' },
     { icon: <Cog className="w-5 h-5" />, label: 'Settings', href: '/settings' },

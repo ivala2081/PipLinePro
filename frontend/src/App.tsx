@@ -80,14 +80,13 @@ function App() {
                         >
                           <Route index element={<Dashboard />} />
                           <Route path='dashboard' element={<Dashboard />} />
-                          <Route path='transactions' element={<Transactions />} />
+                          <Route path='clients' element={<Clients />} />
                           <Route path='accounting' element={<Accounting />} />
                           <Route path='ledger' element={<Ledger />} />
                           <Route path='transactions/add' element={<AddTransaction />} />
-                          <Route path='transactions/clients' element={<Navigate to="/transactions" replace />} />
+                          <Route path='transactions/clients' element={<Navigate to="/clients" replace />} />
                           
                           {/* Legacy route redirects for backward compatibility */}
-                          <Route path='clients' element={<Clients />} />
                           <Route path='agents' element={<Agents />} />
                           
                           <Route path='analytics' element={<Analytics />} />

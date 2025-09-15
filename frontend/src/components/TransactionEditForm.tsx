@@ -36,6 +36,7 @@ interface TransactionEditFormProps {
     psps: string[];
     payment_methods: string[];
     companies: string[];
+    currencies: string[];
   };
 }
 
@@ -43,11 +44,18 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
   transaction,
   onSave,
   onCancel,
-  dropdownOptions = { categories: [], psps: [], payment_methods: [], companies: [] },
+  dropdownOptions = { categories: [], psps: [], payment_methods: [], companies: [], currencies: [] },
 }) => {
   // Debug: Log the transaction data being received
   console.log('🔄 TransactionEditForm received transaction:', transaction);
   console.log('🔄 TransactionEditForm received dropdownOptions:', dropdownOptions);
+  console.log('🔄 TransactionEditForm dropdownOptions details:', {
+    psps: dropdownOptions.psps?.length || 0,
+    payment_methods: dropdownOptions.payment_methods?.length || 0,
+    categories: dropdownOptions.categories?.length || 0,
+    companies: dropdownOptions.companies?.length || 0,
+    currencies: dropdownOptions.currencies?.length || 0
+  });
 
   const [formData, setFormData] = useState({
     client_name: transaction.client_name || '',
@@ -115,11 +123,28 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
         ...(transaction.company ? [transaction.company] : []),
         ...(transaction.company_order ? [transaction.company_order] : [])
       ])
+    ],
+    currencies: [
+      ...new Set([
+        ...(dropdownOptions.currencies || []),
+        ...(transaction.currency ? [transaction.currency] : [])
+      ])
     ]
   };
 
-  // Debug: Log enhanced dropdown options
-  console.log('🔄 Enhanced dropdown options:', enhancedDropdownOptions);
+  // Debug: Log the enhanced dropdown options
+  console.log('🔄 TransactionEditForm enhanced dropdown options:', enhancedDropdownOptions);
+  console.log('🔄 TransactionEditForm enhanced options counts:', {
+    psps: enhancedDropdownOptions.psps?.length || 0,
+    payment_methods: enhancedDropdownOptions.payment_methods?.length || 0,
+    categories: enhancedDropdownOptions.categories?.length || 0,
+    companies: enhancedDropdownOptions.companies?.length || 0,
+    currencies: enhancedDropdownOptions.currencies?.length || 0
+  });
+  console.log('🔄 TransactionEditForm PSP options list:', enhancedDropdownOptions.psps);
+  console.log('🔄 TransactionEditForm Payment method options list:', enhancedDropdownOptions.payment_methods);
+  console.log('🔄 TransactionEditForm Currency options list:', enhancedDropdownOptions.currencies);
+
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

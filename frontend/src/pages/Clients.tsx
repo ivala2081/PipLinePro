@@ -66,6 +66,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { api } from '../utils/apiClient';
 import { formatCurrency as formatCurrencyUtil, formatCurrencyPositive } from '../utils/currencyUtils';
 import { usePSPRefresh } from '../hooks/usePSPRefresh';
+import { ProfessionalPagination } from '../components/ProfessionalPagination';
 import Modal from '../components/Modal';
 import TransactionDetailView from '../components/TransactionDetailView';
 import TransactionEditForm from '../components/TransactionEditForm';
@@ -307,9 +308,21 @@ export default function Clients() {
   });
   const [exporting, setExporting] = useState(false);
   const location = useLocation();
+  // Tab state - get from localStorage or default to 'overview'
+  const getInitialTab = () => {
+    // Check localStorage for last active tab
+    const lastTab = localStorage.getItem('clients-page-active-tab') as 'overview' | 'transactions' | 'analytics' | 'clients' | 'accounting';
+    if (lastTab) return lastTab;
+    
+    return 'overview';
+  };
+  
   const [activeTab, setActiveTab] = useState<'overview' | 'transactions' | 'analytics' | 'clients' | 'accounting'>(
-    'overview'
+    getInitialTab()
   );
+  const [isChangingPagination, setIsChangingPagination] = useState(false);
+  const [paginationLoading, setPaginationLoading] = useState(false);
+  const [loadingTimeout, setLoadingTimeout] = useState<NodeJS.Timeout | null>(null);
   const [showViewModal, setShowViewModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -410,11 +423,21 @@ export default function Clients() {
     const handleRefresh = (event: Event) => {
       const customEvent = event as CustomEvent;
       console.log('🔄 Clients page: Received transactionsUpdated event', customEvent?.detail);
+      
+      // Skip refresh if this page triggered the update
+      if (customEvent?.detail?.skipCurrentPage) {
+        console.log('🔄 Clients page: Skipping refresh - update originated from this page');
+        return;
+      }
+      
       if (isAuthenticated && !authLoading) {
         console.log('🔄 Clients page: Refreshing data...');
-        // Reset to page 1 when new transactions are created to show the latest
-        setPagination(prev => ({ ...prev, page: 1 }));
-        fetchTransactionsData();
+        // Only reset to page 1 for new transactions, not updates
+        if (customEvent?.detail?.action === 'create') {
+          setPagination(prev => ({ ...prev, page: 1 }));
+        }
+        // Use skipLoadingState to prevent loading conflicts
+        fetchTransactionsData(true);
         fetchClientsData();
       } else {
         console.log('🔄 Clients page: Not authenticated or still loading, skipping refresh');
@@ -429,6 +452,15 @@ export default function Clients() {
     };
   }, [isAuthenticated, authLoading]);
 
+  // Cleanup timeouts on component unmount
+  useEffect(() => {
+    return () => {
+      if (loadingTimeout) {
+        clearTimeout(loadingTimeout);
+      }
+    };
+  }, [loadingTimeout]);
+
   // Retry mechanism for failed clients data
   const retryClientsData = () => {
     setClientsError(null);
@@ -437,6 +469,13 @@ export default function Clients() {
 
   const fetchTransactions = useCallback(async () => {
     console.log('🎯 fetchTransactions called!');
+    
+    // Prevent multiple simultaneous calls
+    if (loading) {
+      console.log('🔄 fetchTransactions: Already loading, skipping...');
+      return;
+    }
+    
     try {
       setLoading(true);
       setError(null);
@@ -444,7 +483,7 @@ export default function Clients() {
       // Check authentication first
       if (!isAuthenticated) {
         console.log('🔄 Clients: Not authenticated, skipping transactions fetch');
-        setTransactions([]);
+        // Don't clear transactions here - let the main effect handle it
         return;
       }
 
@@ -473,7 +512,16 @@ export default function Clients() {
       if (filters.sort_order && filters.sort_order.trim() !== '') params.append('sort_order', filters.sort_order);
 
       console.log('🔄 Clients: Fetching transactions...');
+      console.log('🔄 API URL:', `/api/v1/transactions/?${params.toString()}`);
+      
       const response = await api.get(`/api/v1/transactions/?${params.toString()}`);
+
+      console.log('🔍 Transactions API Response:', response);
+      console.log('🔍 Response Type:', typeof response);
+      console.log('🔍 Is Response Object:', response instanceof Response);
+      console.log('🔍 Response OK:', response.ok);
+      console.log('🔍 Response Status:', response.status);
+      console.log('🔍 Response StatusText:', response.statusText);
 
       if (response.status === 401) {
         console.log('🔄 Clients: Authentication failed, clearing transactions data');
@@ -481,12 +529,6 @@ export default function Clients() {
         setError('Authentication required. Please log in again.');
         return;
       }
-
-      console.log('🔍 Transactions API Response:', response);
-      console.log('🔍 Response Type:', typeof response);
-      console.log('🔍 Is Response Object:', response instanceof Response);
-      console.log('🔍 Response OK:', response.ok);
-      console.log('🔍 Response Status:', response.status);
 
       // Handle both Response objects and cached plain objects
       let data: any;
@@ -496,11 +538,25 @@ export default function Clients() {
         // Fresh API call - response is a Response object
         if (response.ok) {
           data = await api.parseResponse(response);
+          console.log('✅ API Response parsed successfully:', {
+            hasTransactions: !!data?.transactions,
+            transactionCount: data?.transactions?.length || 0,
+            hasPagination: !!data?.pagination,
+            paginationData: data?.pagination,
+            responseKeys: Object.keys(data || {})
+          });
           isSuccess = true;
         } else {
           console.error('❌ API Response not OK:', response.status, response.statusText);
-          const errorData = await api.parseResponse(response).catch(() => ({}));
-          setError(errorData.message || 'Failed to fetch transactions');
+          console.error('❌ Response headers:', Object.fromEntries(response.headers.entries()));
+          try {
+            const errorData = await api.parseResponse(response);
+            console.error('❌ Error data from API:', errorData);
+            setError(errorData.message || 'Failed to fetch transactions');
+          } catch (parseError) {
+            console.error('❌ Failed to parse error response:', parseError);
+            setError(`Failed to fetch transactions: ${response.status} ${response.statusText}`);
+          }
           return;
         }
       } else {
@@ -523,12 +579,27 @@ export default function Clients() {
         if (data?.transactions) {
           // Process transaction data
           setTransactions(data.transactions);
+          // Calculate pages properly
+          const total = data.pagination?.total || data.transactions.length;
+          const perPage = pagination.per_page || 100;
+          const calculatedPages = Math.ceil(total / perPage);
+          
           setPagination(prev => ({
             ...prev,
-            total: data.pagination?.total || data.transactions.length,
-            pages: data.pagination?.pages || prev.pages,
-            page: data.pagination?.page || prev.page
+            total: total,
+            pages: data.pagination?.pages || calculatedPages,
+            page: data.pagination?.page || pagination.page
           }));
+          
+          // Debug pagination data
+          console.log('🔍 Pagination Debug:', {
+            total,
+            perPage,
+            calculatedPages,
+            apiPages: data.pagination?.pages,
+            finalPages: data.pagination?.pages || calculatedPages,
+            currentPage: data.pagination?.page || pagination.page
+          });
           console.log('✅ Transactions loaded successfully:', data.transactions.length);
         } else {
           console.error('❌ No transaction data in response:', data);
@@ -547,24 +618,38 @@ export default function Clients() {
       setError(getUserFriendlyMessage(pipLineError));
     } finally {
       setLoading(false);
+      setPaginationLoading(false);
+      // Clear any pending timeouts
+      if (loadingTimeout) {
+        clearTimeout(loadingTimeout);
+        setLoadingTimeout(null);
+      }
     }
   }, [filters, pagination]);
 
-  // Update active tab based on route
+  // Update active tab based on route - only on initial load or route change
   useEffect(() => {
+    // Don't change tabs if we're in the middle of changing pagination
+    if (isChangingPagination) return;
+    
+    // Only change tabs on actual route changes, not on data updates
     if (location.pathname === '/transactions') {
-      setActiveTab('overview');
+      setActiveTab('transactions');
       // Refresh data when navigating to transactions if we don't have recent data
       if (isAuthenticated && !authLoading && transactions.length === 0) {
         console.log('🔄 Clients: Navigating to transactions, refreshing data...');
         loadAllData();
       }
     } else if (location.pathname === '/clients') {
-      setActiveTab('clients');
+      // Only set to 'clients' if we don't already have a tab set from localStorage
+      const savedTab = localStorage.getItem('clients-page-active-tab');
+      if (!savedTab) {
+        setActiveTab('clients');
+      }
     } else if (location.pathname === '/accounting') {
       setActiveTab('accounting');
     }
-  }, [location.pathname, isAuthenticated, authLoading, transactions.length]);
+  }, [location.pathname, isAuthenticated, authLoading, isChangingPagination]); // Removed transactions.length dependency
 
   // Main data loading effect - simplified and reliable
   useEffect(() => {
@@ -591,17 +676,22 @@ export default function Clients() {
         });
       }
     } else if (!isAuthenticated && !authLoading) {
-      // Clear data when not authenticated
-      console.log('🔄 Clients: Clearing data - not authenticated');
-      setClients([]);
-      setTransactions([]);
-      setError(null);
-      // Also clear localStorage when not authenticated
-      try {
-        localStorage.removeItem('pipeline_clients_data');
-        localStorage.removeItem('pipeline_transactions_data');
-      } catch (error) {
-        console.error('Failed to clear localStorage:', error);
+      // Only clear data if we actually have data to clear
+      if (clients.length > 0 || transactions.length > 0) {
+        console.log('🔄 Clients: Clearing data - not authenticated', {
+          clientsLength: clients.length,
+          transactionsLength: transactions.length
+        });
+        setClients([]);
+        setTransactions([]);
+        setError(null);
+        // Also clear localStorage when not authenticated
+        try {
+          localStorage.removeItem('pipeline_clients_data');
+          localStorage.removeItem('pipeline_transactions_data');
+        } catch (error) {
+          console.error('Failed to clear localStorage:', error);
+        }
       }
     }
   }, [isAuthenticated, authLoading]); // Removed activeTab from dependencies
@@ -640,12 +730,30 @@ export default function Clients() {
     if (transactions.length > 0) {
       try {
         localStorage.setItem('pipeline_transactions_data', JSON.stringify(transactions));
-        console.log('🔄 Clients: Saved transactions data to localStorage:', transactions.length, 'transactions');
+        console.log('💾 Transactions data saved to localStorage:', transactions.length, 'transactions');
       } catch (error) {
         console.error('Failed to save transactions data to localStorage:', error);
       }
     }
   }, [transactions]);
+  
+  // Restore transactions from localStorage on component mount
+  useEffect(() => {
+    if (isAuthenticated && !authLoading && transactions.length === 0) {
+      try {
+        const saved = localStorage.getItem('pipeline_transactions_data');
+        if (saved) {
+          const parsedTransactions = JSON.parse(saved);
+          if (Array.isArray(parsedTransactions) && parsedTransactions.length > 0) {
+            console.log('🔄 Restoring transactions from localStorage:', parsedTransactions.length, 'transactions');
+            setTransactions(parsedTransactions);
+          }
+        }
+      } catch (error) {
+        console.error('Error restoring transactions from localStorage:', error);
+      }
+    }
+  }, [isAuthenticated, authLoading]);
 
   // Cleanup localStorage on component unmount (only for logout scenarios)
   useEffect(() => {
@@ -687,8 +795,12 @@ export default function Clients() {
     if (isAuthenticated && !authLoading && activeTab === 'transactions') {
       // Debounce filter changes to avoid too many API calls
       const timeoutId = setTimeout(() => {
-        fetchTransactionsData();
-      }, 300);
+        console.log('🔄 Clients: Filter changed, refreshing transactions...');
+        // Only fetch if we don't already have data or if filters actually changed
+        if (transactions.length === 0 || Object.values(filters).some(filter => filter && filter.trim() !== '')) {
+          fetchTransactionsData();
+        }
+      }, 1000); // Increased to 1000ms debounce to prevent flickering
       
       return () => clearTimeout(timeoutId);
     }
@@ -771,7 +883,7 @@ export default function Clients() {
         if (data) {
           // Extract just the 'value' property from each option object
           setDropdownOptions({
-            currencies: (data.currency || []).map((option: any) => option.value),
+            currencies: (data.currencies || data.currency || []).map((option: any) => option.value),
             payment_methods: (data.payment_method || []).map((option: any) => option.value),
             categories: (data.category || []).map((option: any) => option.value),
             psps: (data.psp || []).map((option: any) => option.value),
@@ -787,15 +899,21 @@ export default function Clients() {
     }
   };
 
-  const fetchTransactionsData = async () => {
+  const fetchTransactionsData = async (skipLoadingState = false) => {
     try {
       // Check authentication first
       if (!isAuthenticated) {
         console.log('🔄 Clients: Not authenticated, skipping transactions fetch');
         return [];
       }
+      
+      // Prevent multiple simultaneous calls unless explicitly allowed
+      if (loading && !skipLoadingState) {
+        console.log('🔄 fetchTransactionsData: Already loading, skipping...');
+        return [];
+      }
 
-      console.log('🔄 Clients: Fetching transactions data...');
+      console.log('🔄 Clients: Fetching transactions data...', { skipLoadingState });
 
       const params = new URLSearchParams();
       
@@ -822,7 +940,16 @@ export default function Clients() {
       if (filters.sort_order && filters.sort_order.trim() !== '') params.append('sort_order', filters.sort_order);
 
       console.log('🔄 Clients: Fetching transactions...');
+      console.log('🔄 API URL:', `/api/v1/transactions/?${params.toString()}`);
+      
       const response = await api.get(`/api/v1/transactions/?${params.toString()}`);
+
+      console.log('🔍 fetchTransactionsData API Response:', response);
+      console.log('🔍 Response Type:', typeof response);
+      console.log('🔍 Is Response Object:', response instanceof Response);
+      console.log('🔍 Response OK:', response.ok);
+      console.log('🔍 Response Status:', response.status);
+      console.log('🔍 Response StatusText:', response.statusText);
 
       if (response.status === 401) {
         console.log('🔄 Clients: Authentication failed, clearing transactions data');
@@ -833,13 +960,26 @@ export default function Clients() {
 
       if (response.ok) {
         const data = await api.parseResponse(response);
+        console.log('✅ fetchTransactionsData API Response parsed successfully:', {
+          hasTransactions: !!data?.transactions,
+          transactionCount: data?.transactions?.length || 0,
+          hasPagination: !!data?.pagination,
+          paginationData: data?.pagination,
+          responseKeys: Object.keys(data || {})
+        });
+        
         const transactionsData = Array.isArray(data.transactions) ? data.transactions : [];
         console.log('🔄 Clients: Setting transactions data:', transactionsData.length, 'transactions');
         setTransactions(transactionsData);
+        // Calculate pages properly
+        const total = data.total || 0;
+        const perPage = pagination.per_page || 100;
+        const calculatedPages = Math.ceil(total / perPage);
+        
         setPagination(prev => ({
           ...prev,
-          total: data.total || 0,
-          pages: data.pages || 0,
+          total: total,
+          pages: data.pages || calculatedPages,
         }));
         
         // Fetch daily net balances for all dates
@@ -849,8 +989,13 @@ export default function Clients() {
       }
       return [];
     } catch (error) {
-      console.error('Error fetching transactions:', error);
-      setError('Failed to load transactions');
+      console.error('❌ Error fetching transactions:', error);
+      console.error('❌ Error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        error: error
+      });
+      setError(`Failed to load transactions: ${error instanceof Error ? error.message : 'Unknown error'}`);
       return [];
     }
   };
@@ -1537,6 +1682,9 @@ export default function Clients() {
 
   const handleEditTransaction = async (transaction: Transaction) => {
     try {
+      // Ensure dropdown options are loaded before opening edit modal
+      await fetchDropdownOptionsData();
+      
       // Fetch full transaction details before editing
       const response = await api.get(`/api/v1/transactions/${transaction.id}`);
       if (response.ok) {
@@ -2499,6 +2647,64 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
     }
   };
 
+  // Handle tab change and save to localStorage
+  const handleTabChange = (value: string) => {
+    const newTab = value as 'overview' | 'transactions' | 'analytics' | 'clients' | 'accounting';
+    console.log('🔄 Clients page - Tab change:', newTab, 'Previous tab:', activeTab);
+    setActiveTab(newTab);
+    
+    // Save tab state to localStorage for persistence across page reloads
+    localStorage.setItem('clients-page-active-tab', newTab);
+  };
+
+  // Handle page change with loading state
+  const handlePageChange = (newPage: number) => {
+    console.log('🔄 Clients page - Page change:', newPage);
+    setPaginationLoading(true);
+    setIsChangingPagination(true);
+    setPagination(prev => ({ ...prev, page: newPage }));
+    
+    // Clear the flag after a short delay
+    setTimeout(() => setIsChangingPagination(false), 100);
+    
+    // Set a timeout to prevent stuck loading states
+    if (loadingTimeout) {
+      clearTimeout(loadingTimeout);
+    }
+    const timeout = setTimeout(() => {
+      console.log('🔄 Loading timeout reached, clearing loading states');
+      setPaginationLoading(false);
+      setLoading(false);
+    }, 10000); // 10 second timeout
+    setLoadingTimeout(timeout);
+  };
+
+  // Handle items per page change
+  const handleItemsPerPageChange = (newItemsPerPage: number) => {
+    console.log('🔄 Clients page - Items per page change:', newItemsPerPage);
+    setPaginationLoading(true);
+    setIsChangingPagination(true);
+    setPagination(prev => ({ 
+      ...prev, 
+      per_page: newItemsPerPage, 
+      page: 1 // Reset to first page when changing page size
+    }));
+    
+    // Clear the flag after a short delay
+    setTimeout(() => setIsChangingPagination(false), 100);
+    
+    // Set a timeout to prevent stuck loading states
+    if (loadingTimeout) {
+      clearTimeout(loadingTimeout);
+    }
+    const timeout = setTimeout(() => {
+      console.log('🔄 Loading timeout reached, clearing loading states');
+      setPaginationLoading(false);
+      setLoading(false);
+    }, 10000); // 10 second timeout
+    setLoadingTimeout(timeout);
+  };
+
   // Loading state
   if (loading) {
     return (
@@ -2651,7 +2857,7 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
       </div>
 
       {/* Tab Navigation */}
-      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'overview' | 'transactions' | 'analytics' | 'clients' | 'accounting')} className="w-full">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="overview" className="flex items-center gap-2">
             <BarChart3 className="h-4 w-4" />
@@ -2659,7 +2865,7 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
           </TabsTrigger>
           <TabsTrigger value="clients" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
-            Clients
+            Info
           </TabsTrigger>
           <TabsTrigger value="transactions" className="flex items-center gap-2">
             <FileText className="h-4 w-4" />
@@ -3389,77 +3595,23 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                     </span>
                   </div>
                 </div>
+
+                {/* Professional Pagination */}
+                <ProfessionalPagination
+                  currentPage={pagination.page}
+                  totalPages={pagination.pages || Math.ceil((pagination.total || transactions.length) / pagination.per_page)}
+                  totalItems={pagination.total || transactions.length}
+                  itemsPerPage={pagination.per_page}
+                  onPageChange={handlePageChange}
+                  onItemsPerPageChange={handleItemsPerPageChange}
+                  loading={paginationLoading}
+                  showItemsPerPage={true}
+                  showJumpToPage={true}
+                  itemsPerPageOptions={[25, 50, 100, 200, 300, 500, 1000, 2000, 5000]}
+                />
               </div>
             )}
 
-            {/* Pagination */}
-            {pagination.pages > 1 && (
-              <div className='px-6 py-4 border-t border-gray-200 bg-gray-50'>
-                <div className='flex items-center justify-between'>
-                  <div className='text-sm text-gray-700'>
-                    Showing page {pagination.page} of {pagination.pages} • {pagination.total} {t('dashboard.total_transactions').toLowerCase()}
-                  </div>
-                  <div className='flex items-center gap-4'>
-                    {/* Page Size Selector */}
-                    <div className='flex items-center gap-2'>
-                      <label htmlFor="pageSize" className='text-sm text-gray-600'>Show:</label>
-                      <select
-                        id="pageSize"
-                        value={pagination.per_page}
-                        onChange={(e) => {
-                          const newSize = parseInt(e.target.value);
-                          setPagination(prev => ({ 
-                            ...prev, 
-                            per_page: newSize, 
-                            page: 1 // Reset to first page when changing page size
-                          }));
-                        }}
-                        className='px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500'
-                      >
-                        <option value={50}>50</option>
-                        <option value={100}>100</option>
-                        <option value={200}>200</option>
-                        <option value={500}>500</option>
-                      </select>
-                      <span className='text-sm text-gray-500'>per page</span>
-                    </div>
-                    
-                    {/* Navigation Buttons */}
-                    <div className='flex items-center gap-2'>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          if (pagination.page > 1) {
-                            setPagination(prev => ({ ...prev, page: prev.page - 1 }));
-                          }
-                        }}
-                        disabled={pagination.page <= 1}
-                        className="flex items-center gap-2"
-                      >
-                        Previous
-                      </Button>
-                      <span className='px-3 py-2 text-sm text-gray-700'>
-                        {pagination.page} / {pagination.pages}
-                      </span>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          if (pagination.page < pagination.pages) {
-                            setPagination(prev => ({ ...prev, page: prev.page + 1 }));
-                          }
-                        }}
-                        disabled={pagination.page >= pagination.pages}
-                        className="flex items-center gap-2"
-                      >
-                        Next
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
             </CardContent>
           </UnifiedCard>
 
@@ -3786,8 +3938,8 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                     <Users className='w-5 h-5 text-gray-600' />
                   </div>
                   <div>
-                    <h2 className='text-xl font-semibold text-gray-900'>Clients</h2>
-                    <p className='text-sm text-gray-500'>Manage your client relationships</p>
+                    <h2 className='text-xl font-semibold text-gray-900'>Client Information</h2>
+                    <p className='text-sm text-gray-500'>Manage your client relationships and details</p>
                   </div>
                 </div>
                 <div className='flex items-center gap-3'>
@@ -4999,10 +5151,13 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
           <TransactionEditForm
             transaction={selectedTransaction}
             onSave={(updatedTransaction) => {
+              console.log('🔄 Transaction updated, refreshing local state...', updatedTransaction.id);
+              
               // Update the transaction in the local state
               setTransactions(prev => 
                 prev.map(t => t.id === updatedTransaction.id ? updatedTransaction : t)
               );
+              
               // Update in client transactions if it exists
               if (clientTransactions[updatedTransaction.client_name]) {
                 setClientTransactions(prev => ({
@@ -5018,15 +5173,17 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                 fetchDailySummary(updatedTransaction.date);
               }
               
-              // Dispatch event to refresh transaction lists in other components
+              // Close the modal first
+              setShowEditTransactionModal(false);
+              
+              // Dispatch event to refresh transaction lists in other components (but not this one)
               window.dispatchEvent(new CustomEvent('transactionsUpdated', {
                 detail: { 
                   action: 'update',
-                  transactionId: updatedTransaction.id
+                  transactionId: updatedTransaction.id,
+                  skipCurrentPage: true // Flag to skip refresh on current page
                 }
               }));
-              
-              setShowEditTransactionModal(false);
             }}
             onCancel={() => setShowEditTransactionModal(false)}
             dropdownOptions={dropdownOptions}

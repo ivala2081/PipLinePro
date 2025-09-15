@@ -133,6 +133,7 @@ export default function Settings() {
     value: '',
     commission_rate: '',
   });
+  const [securityCode, setSecurityCode] = useState('');
 
   // Department management state
   const [departments, setDepartments] = useState<string[]>([
@@ -180,6 +181,7 @@ export default function Settings() {
 
       if (response.ok) {
         const data = await api.parseResponse(response);
+        console.log('DEBUG: Dropdown options data structure:', data);
         setDropdownOptions(data || {});
       } else {
         console.error('Failed to fetch dropdown options');
@@ -380,20 +382,92 @@ export default function Settings() {
 
   // Dropdown management functions
   const handleAddOption = async () => {
+    // Validate form data before sending
+    if (!formData.field_name) {
+      alert('Please select a field type');
+      return;
+    }
+
+    // Check if this is a protected field and validate security code
+    const fieldType = fieldTypes.find(f => f.value === formData.field_name);
+    if (fieldType?.isProtected) {
+      if (!securityCode.trim()) {
+        alert('Security code is required for adding protected options');
+        return;
+      }
+      if (securityCode.trim() !== '4561') {
+        alert('Invalid security code');
+        return;
+      }
+    }
+
+    if (!formData.value.trim()) {
+      alert('Option value is required');
+      return;
+    }
+
+    // Check for duplicate values
+    const currentOptions = dropdownOptions[formData.field_name] || [];
+    const duplicateOption = currentOptions.find(option => 
+      option.value === formData.value.trim()
+    );
+    
+    if (duplicateOption) {
+      alert(`An option with the value "${formData.value.trim()}" already exists for ${fieldType?.label || formData.field_name} field`);
+      return;
+    }
+
+    // For PSP options, validate commission rate
+    if (formData.field_name === 'psp') {
+      if (!formData.commission_rate || formData.commission_rate.trim() === '') {
+        alert('Commission rate is required for PSP options');
+        return;
+      }
+
+      const commissionRate = parseFloat(formData.commission_rate);
+      if (isNaN(commissionRate)) {
+        alert('Commission rate must be a valid number');
+        return;
+      }
+
+      if (commissionRate < 0 || commissionRate > 1) {
+        alert('Commission rate must be between 0 and 1 (e.g., 0.05 for 5%)');
+        return;
+      }
+    }
+
     try {
       // The API client automatically handles CSRF tokens
       const response = await api.post(
         '/api/v1/transactions/dropdown-options',
-        formData
+        {
+          field_name: formData.field_name,
+          value: formData.value.trim(),
+          commission_rate: formData.commission_rate && formData.commission_rate.trim() ? formData.commission_rate.trim() : null,
+        }
       );
+      
       if (response.ok) {
         setShowAddModal(false);
         setFormData({ field_name: '', value: '', commission_rate: '' });
+        setSecurityCode('');
         await fetchDropdownOptions();
         alert('Option added successfully!');
       } else {
-        const data = await api.parseResponse(response);
-        alert(data?.error || 'Failed to add option');
+        console.error('Add failed - response status:', response.status);
+        
+        // Handle error response directly without parseResponse
+        let errorMessage = 'Failed to add option';
+        try {
+          const errorText = await response.text();
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.error || errorData.message || errorMessage;
+        } catch (parseError) {
+          console.error('Failed to parse error response:', parseError);
+        }
+        
+        console.error('Add failed - error message:', errorMessage);
+        alert(errorMessage);
       }
     } catch (error) {
       console.error('Error adding option:', error);
@@ -404,27 +478,98 @@ export default function Settings() {
   const handleEditOption = async () => {
     if (!editingOption) return;
 
+    // Check if this is a protected field and validate security code
+    const fieldType = fieldTypes.find(f => f.value === formData.field_name);
+    if (fieldType?.isProtected) {
+      if (!securityCode.trim()) {
+        alert('Security code is required for editing protected options');
+        return;
+      }
+      if (securityCode.trim() !== '4561') {
+        alert('Invalid security code');
+        return;
+      }
+    }
+
+    // Check for duplicate values (excluding current option)
+    const currentOptions = dropdownOptions[formData.field_name] || [];
+    console.log('DEBUG: Current options for field:', formData.field_name, currentOptions);
+    console.log('DEBUG: Looking for duplicate of:', formData.value.trim());
+    console.log('DEBUG: Current editing option ID:', editingOption.id);
+    
+    const duplicateOption = currentOptions.find(option => 
+      option.value === formData.value.trim() && option.id !== editingOption.id
+    );
+    
+    if (duplicateOption) {
+      console.log('DEBUG: Found duplicate option:', duplicateOption);
+      alert(`An option with the value "${formData.value.trim()}" already exists for ${fieldType?.label || formData.field_name} field`);
+      return;
+    }
+
+    // Validate form data before sending
+    if (!formData.value.trim()) {
+      alert('Option value is required');
+      return;
+    }
+
+    // For PSP options, validate commission rate
+    if (formData.field_name === 'psp') {
+      if (!formData.commission_rate || formData.commission_rate.trim() === '') {
+        alert('Commission rate is required for PSP options');
+        return;
+      }
+
+      const commissionRate = parseFloat(formData.commission_rate);
+      if (isNaN(commissionRate)) {
+        alert('Commission rate must be a valid number');
+        return;
+      }
+
+      if (commissionRate < 0 || commissionRate > 1) {
+        alert('Commission rate must be between 0 and 1 (e.g., 0.05 for 5%)');
+        return;
+      }
+    }
+
     try {
       const response = await api.put(
         `/api/v1/transactions/dropdown-options/${editingOption.id}`,
         {
-          value: formData.value,
-          commission_rate: formData.commission_rate,
+          value: formData.value.trim(),
+          commission_rate: formData.commission_rate && formData.commission_rate.trim() ? formData.commission_rate.trim() : null,
         }
       );
+      
       if (response.ok) {
         setShowEditModal(false);
         setEditingOption(null);
         setFormData({ field_name: '', value: '', commission_rate: '' });
+        setSecurityCode('');
         await fetchDropdownOptions();
         alert('Option updated successfully!');
       } else {
-        const data = await api.parseResponse(response);
-        alert(data?.error || 'Failed to update option');
+        console.error('Update failed - response status:', response.status);
+        console.error('Update failed - response:', response);
+        
+        // Handle error response directly without parseResponse
+        let errorMessage = 'Failed to update option';
+        try {
+          const errorText = await response.text();
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.error || errorData.message || errorMessage;
+        } catch (parseError) {
+          console.error('Failed to parse error response:', parseError);
+        }
+        
+        console.error('Update failed - error message:', errorMessage);
+        alert(errorMessage);
       }
     } catch (error) {
       console.error('Error updating option:', error);
-      alert('Failed to update option. Please try again.');
+      // Check if it's a parsed error with a specific message
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update option. Please try again.';
+      alert(errorMessage);
     }
   };
 
@@ -466,8 +611,19 @@ export default function Settings() {
         await fetchDropdownOptions();
         alert('Option deleted successfully!');
       } else {
-        const data = await api.parseResponse(response);
-        alert(data?.error || 'Failed to delete option');
+        console.error('Delete failed - response status:', response.status);
+        
+        // Handle error response directly without parseResponse
+        let errorMessage = 'Failed to delete option';
+        try {
+          const errorText = await response.text();
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.error || errorData.message || errorMessage;
+        } catch (parseError) {
+          console.error('Failed to parse error response:', parseError);
+        }
+        
+        alert(errorMessage);
       }
     } catch (error) {
       console.error('Error deleting option:', error);
@@ -482,6 +638,7 @@ export default function Settings() {
       value: option.value,
       commission_rate: option.commission_rate?.toString() || '',
     });
+    setSecurityCode(''); // Clear security code when opening modal
     setShowEditModal(true);
   };
 
@@ -657,7 +814,10 @@ export default function Settings() {
                 <UnifiedButton
                   variant="primary"
                   size="lg"
-                  onClick={() => setShowAddModal(true)}
+                  onClick={() => {
+                    setSecurityCode(''); // Clear security code when opening modal
+                    setShowAddModal(true);
+                  }}
                   icon={<Plus className="h-5 w-5" />}
                   iconPosition="left"
                   className="px-6 py-3 font-semibold shadow-lg hover:shadow-lg"
@@ -1769,6 +1929,27 @@ export default function Settings() {
                     placeholder='0.025 (2.5%)'
                     required
                   />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Enter as decimal (0.025 = 2.5%, 0.1 = 10%)
+                  </p>
+                </div>
+              )}
+              {fieldTypes.find(f => f.value === formData.field_name)
+                ?.isProtected && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Security Code <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    type="password"
+                    value={securityCode}
+                    onChange={e => setSecurityCode(e.target.value)}
+                    placeholder="Enter security code..."
+                    required
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Required for adding protected options
+                  </p>
                 </div>
               )}
             </div>
@@ -1788,7 +1969,10 @@ export default function Settings() {
                   !formData.value ||
                   (fieldTypes.find(f => f.value === formData.field_name)
                     ?.requiresCommission &&
-                    !formData.commission_rate)
+                    !formData.commission_rate) ||
+                  (fieldTypes.find(f => f.value === formData.field_name)
+                    ?.isProtected &&
+                    !securityCode)
                 }
                 className="flex-1"
               >
@@ -1867,6 +2051,27 @@ export default function Settings() {
                     placeholder="0.025 (2.5%)"
                     required
                   />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Enter as decimal (0.025 = 2.5%, 0.1 = 10%)
+                  </p>
+                </div>
+              )}
+              {fieldTypes.find(f => f.value === formData.field_name)
+                ?.isProtected && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Security Code <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    type="password"
+                    value={securityCode}
+                    onChange={e => setSecurityCode(e.target.value)}
+                    placeholder="Enter security code..."
+                    required
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Required for editing protected options
+                  </p>
                 </div>
               )}
             </div>
@@ -1885,7 +2090,10 @@ export default function Settings() {
                   !formData.value ||
                   (fieldTypes.find(f => f.value === formData.field_name)
                     ?.requiresCommission &&
-                    !formData.commission_rate)
+                    !formData.commission_rate) ||
+                  (fieldTypes.find(f => f.value === formData.field_name)
+                    ?.isProtected &&
+                    !securityCode)
                 }
                 className="flex-1"
               >
