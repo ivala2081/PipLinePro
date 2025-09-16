@@ -6,12 +6,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "dev:optimized": "vite --config vite.config.optimized.ts",
     "build": "tsc && vite build",
-    "build:optimized": "tsc && vite build --config vite.config.optimized.ts",
-    "build:analyze": "tsc && vite build --config vite.config.optimized.ts && npx vite-bundle-analyzer dist",
+    "build:analyze": "tsc && vite build && npx vite-bundle-analyzer dist",
     "preview": "vite preview",
-    "preview:optimized": "vite preview --config vite.config.optimized.ts",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives",
     "lint:strict": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "type-check": "tsc --noEmit",

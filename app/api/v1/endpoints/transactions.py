@@ -89,9 +89,18 @@ def create_transaction():
                 'error': 'Invalid transaction date format. Use YYYY-MM-DD'
             }), 400
         
+        # Check for manual commission override first
+        use_manual_commission = data.get('use_manual_commission', False)
+        manual_commission_rate = data.get('manual_commission_rate')
+        
         # Calculate commission strictly based on PSP rate when available (no defaults)
         commission_rate: Decimal | None = None
-        if psp:
+        
+        if use_manual_commission and manual_commission_rate is not None:
+            # Use manual commission rate (convert percentage to decimal)
+            commission_rate = Decimal(str(manual_commission_rate)) / Decimal('100')
+            logger.info(f"Using manual commission rate: {manual_commission_rate}% (decimal: {commission_rate})")
+        elif psp:
             try:
                 from app.services.psp_options_service import PspOptionsService
                 from app.services.company_options_service import CompanyOptionsService
@@ -350,25 +359,50 @@ def get_psp_summary_stats():
         logger.info("Starting PSP summary stats query...")
         
         # Get PSP statistics from actual transactions using TRY amounts
+        # Calculate deposits and withdrawals separately, then compute net total
+        # Use separate queries to avoid SQLAlchemy case function issues
         psp_stats = db.session.query(
             Transaction.psp,
             func.count(Transaction.id).label('transaction_count'),
-            func.sum(
-                func.coalesce(Transaction.amount_try, Transaction.amount)
-            ).label('total_amount_try'),
-            func.avg(
-                func.coalesce(Transaction.amount_try, Transaction.amount)
-            ).label('average_amount_try')
+            func.sum(func.coalesce(Transaction.amount_try, Transaction.amount)).label('total_amount_try'),
+            func.avg(func.coalesce(Transaction.amount_try, Transaction.amount)).label('average_amount_try')
         ).filter(
             Transaction.psp.isnot(None),
             Transaction.psp != ''
         ).group_by(Transaction.psp).all()
         
+        # Get deposits separately
+        psp_deposits = db.session.query(
+            Transaction.psp,
+            func.sum(func.coalesce(Transaction.amount_try, Transaction.amount)).label('total_deposits_try')
+        ).filter(
+            Transaction.psp.isnot(None),
+            Transaction.psp != '',
+            func.upper(Transaction.category).in_(['DEP', 'DEPOSIT', 'INVESTMENT'])
+        ).group_by(Transaction.psp).all()
+        
+        # Get withdrawals separately
+        psp_withdrawals = db.session.query(
+            Transaction.psp,
+            func.sum(func.coalesce(Transaction.amount_try, Transaction.amount)).label('total_withdrawals_try')
+        ).filter(
+            Transaction.psp.isnot(None),
+            Transaction.psp != '',
+            func.upper(Transaction.category).in_(['WD', 'WITHDRAW', 'WITHDRAWAL'])
+        ).group_by(Transaction.psp).all()
+        
+        # Create lookup dictionaries
+        deposits_dict = {psp.psp: float(psp.total_deposits_try) if psp.total_deposits_try else 0.0 for psp in psp_deposits}
+        withdrawals_dict = {psp.psp: float(psp.total_withdrawals_try) if psp.total_withdrawals_try else 0.0 for psp in psp_withdrawals}
+        
         logger.info(f"PSP stats query completed, found {len(psp_stats)} PSPs")
         
         psp_data = []
         for psp in psp_stats:
-            total_amount = float(psp.total_amount_try) if psp.total_amount_try else 0.0
+            # Calculate net total: deposits - withdrawals using lookup dictionaries
+            total_deposits = deposits_dict.get(psp.psp, 0.0)
+            total_withdrawals = withdrawals_dict.get(psp.psp, 0.0)
+            total_amount = total_deposits - total_withdrawals  # Net total (deposits - withdrawals)
             
             # Get the actual commission rate for this PSP from options (no defaults)
             commission_rate = None
@@ -396,6 +430,8 @@ def get_psp_summary_stats():
             psp_data.append({
                 'psp': psp.psp,
                 'total_amount': total_amount,
+                'total_deposits': total_deposits,
+                'total_withdrawals': total_withdrawals,
                 'total_commission': total_commission,
                 'total_net': total_net,
                 'transaction_count': psp.transaction_count,
@@ -863,18 +899,20 @@ def update_dropdown_option(option_id):
             }), 400
         
         # Check if option already exists (excluding current option)
-        existing = Option.query.filter(
-            Option.field_name == option.field_name,
-            Option.value == value,
-            Option.id != option_id,
-            Option.is_active == True
-        ).first()
-        
-        if existing:
-            print(f"DEBUG: Duplicate option found: {existing.id}")
-            return jsonify({
-                'error': f'An option with the value "{value}" already exists for {option.field_name} field'
-            }), 400
+        # Only check for duplicates if the value is actually changing
+        if option.value != value:
+            existing = Option.query.filter(
+                Option.field_name == option.field_name,
+                Option.value == value,
+                Option.id != option_id,
+                Option.is_active == True
+            ).first()
+            
+            if existing:
+                print(f"DEBUG: Duplicate option found: {existing.id}")
+                return jsonify({
+                    'error': f'An option with the value "{value}" already exists for {option.field_name} field'
+                }), 400
         
         # Update option
         option.value = value
@@ -1172,9 +1210,18 @@ def update_transaction(transaction_id):
                 'error': 'Invalid transaction date format. Use YYYY-MM-DD'
             }), 400
         
+        # Check for manual commission override first
+        use_manual_commission = data.get('use_manual_commission', False)
+        manual_commission_rate = data.get('manual_commission_rate')
+        
         # Calculate commission strictly based on PSP rate when available (no defaults)
         commission_rate: Decimal | None = None
-        if psp:
+        
+        if use_manual_commission and manual_commission_rate is not None:
+            # Use manual commission rate (convert percentage to decimal)
+            commission_rate = Decimal(str(manual_commission_rate)) / Decimal('100')
+            logger.info(f"Using manual commission rate: {manual_commission_rate}% (decimal: {commission_rate})")
+        elif psp:
             try:
                 from app.models.config import Option
                 psp_option = Option.query.filter_by(

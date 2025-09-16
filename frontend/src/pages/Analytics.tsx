@@ -334,22 +334,22 @@ export default function Analytics() {
           
           {/* Tab Navigation */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="overview" className="flex items-center gap-2">
-                <BarChart3 className="h-4 w-4" />
-                Overview
+            <TabsList className="grid w-full grid-cols-4 bg-gray-50/80 border border-gray-200/60 shadow-sm">
+              <TabsTrigger value="overview" className="group flex items-center gap-2 transition-all duration-300 ease-in-out hover:bg-white/90 hover:shadow-md hover:scale-[1.02] data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-gray-200">
+                <BarChart3 className="h-4 w-4 transition-all duration-300 ease-in-out group-hover:scale-110 group-hover:text-blue-600" />
+                <span className="transition-all duration-300 ease-in-out group-hover:font-semibold">Overview</span>
               </TabsTrigger>
-              <TabsTrigger value="performance" className="flex items-center gap-2">
-                <TrendingUp className="h-4 w-4" />
-                Performance
+              <TabsTrigger value="performance" className="group flex items-center gap-2 transition-all duration-300 ease-in-out hover:bg-white/90 hover:shadow-md hover:scale-[1.02] data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-gray-200">
+                <TrendingUp className="h-4 w-4 transition-all duration-300 ease-in-out group-hover:scale-110 group-hover:text-blue-600" />
+                <span className="transition-all duration-300 ease-in-out group-hover:font-semibold">Performance</span>
               </TabsTrigger>
-              <TabsTrigger value="clients" className="flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                Clients
+              <TabsTrigger value="clients" className="group flex items-center gap-2 transition-all duration-300 ease-in-out hover:bg-white/90 hover:shadow-md hover:scale-[1.02] data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-gray-200">
+                <Users className="h-4 w-4 transition-all duration-300 ease-in-out group-hover:scale-110 group-hover:text-blue-600" />
+                <span className="transition-all duration-300 ease-in-out group-hover:font-semibold">Clients</span>
               </TabsTrigger>
-              <TabsTrigger value="insights" className="flex items-center gap-2">
-                <Target className="h-4 w-4" />
-                Insights
+              <TabsTrigger value="insights" className="group flex items-center gap-2 transition-all duration-300 ease-in-out hover:bg-white/90 hover:shadow-md hover:scale-[1.02] data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-gray-200">
+                <Target className="h-4 w-4 transition-all duration-300 ease-in-out group-hover:scale-110 group-hover:text-blue-600" />
+                <span className="transition-all duration-300 ease-in-out group-hover:font-semibold">Insights</span>
               </TabsTrigger>
             </TabsList>
           </Tabs>

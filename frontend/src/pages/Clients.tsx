@@ -260,10 +260,28 @@ export default function Clients() {
   // State for daily net balances
   const [dailyNetBalances, setDailyNetBalances] = useState<Record<string, number>>({});
   
-  // State for exchange rates (removed - no longer needed with automatic yfinance integration)
-  // const [showExchangeRateModal, setShowExchangeRateModal] = useState(false);
-  // const [exchangeRates, setExchangeRates] = useState<Record<string, number>>({});
-  // const [exchangeRateLoading, setExchangeRateLoading] = useState(false);
+  // State for current exchange rate (for fallback calculations)
+  const [currentUsdRate, setCurrentUsdRate] = useState<number>(48.9); // Default fallback rate
+
+  // Fetch current exchange rate for fallback calculations
+  const fetchCurrentExchangeRate = async () => {
+    try {
+      const response = await api.get('/api/v1/exchange-rates/current');
+      if (response.ok) {
+        const data = await api.parseResponse(response);
+        if (data && data.rates && data.rates.USD_TRY) {
+          setCurrentUsdRate(data.rates.USD_TRY.rate);
+        }
+      }
+    } catch (error) {
+      console.warn('Failed to fetch current exchange rate, using fallback:', error);
+    }
+  };
+
+  // Fetch current exchange rate on component mount
+  useEffect(() => {
+    fetchCurrentExchangeRate();
+  }, []);
 
 
 
@@ -1112,10 +1130,25 @@ export default function Clients() {
   const formatDateHeader = (dateString: string) => {
     if (!dateString) return 'N/A';
     const date = new Date(dateString);
-    return date.toLocaleDateString('tr-TR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    // Check if it's today
+    if (date.toDateString() === today.toDateString()) {
+      return 'Today';
+    }
+    
+    // Check if it's yesterday
+    if (date.toDateString() === yesterday.toDateString()) {
+      return 'Yesterday';
+    }
+    
+    // For other dates, show formatted date
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
     });
   };
 
@@ -2438,35 +2471,90 @@ export default function Clients() {
 
     return groupedTransactions.map((dateGroup, groupIndex) => (
       <div key={dateGroup.dateKey} className='border-b border-gray-100 last:border-b-0'>
-        {/* Date Header */}
-        <div className='px-6 py-4 bg-gradient-to-r from-gray-50/50 to-purple-50/50 border-b border-gray-100'>
-          <div className='flex items-center justify-between'>
-            <div className='flex items-center gap-3'>
-              <div className='w-8 h-8 bg-gradient-to-br from-gray-500 to-purple-600 rounded-lg flex items-center justify-center shadow-sm'>
-                <Calendar className='h-4 w-4 text-white' />
+        {/* Enhanced Date Header */}
+        <div className='group relative px-6 py-5 bg-gradient-to-r from-slate-50 via-blue-50/30 to-indigo-50/40 border-b border-gray-200/60 hover:from-slate-100 hover:via-blue-50/50 hover:to-indigo-50/60 transition-all duration-300 ease-out'>
+          {/* Subtle background pattern */}
+          <div className='absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-out'></div>
+          
+          <div className='relative flex items-center justify-between'>
+            <div className='flex items-center gap-4'>
+              {/* Enhanced Date Icon */}
+              <div className='relative'>
+                <div className='w-10 h-10 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl group-hover:scale-105 transition-all duration-300 ease-out'>
+                  <Calendar className='h-5 w-5 text-white' />
+                </div>
+                {/* Subtle glow effect */}
+                <div className='absolute inset-0 bg-gradient-to-br from-blue-400 to-purple-500 rounded-xl opacity-0 group-hover:opacity-20 blur-sm transition-opacity duration-300 ease-out'></div>
               </div>
-              <div>
-                <h4 className='text-lg font-bold text-gray-800'>
-                  {formatDateHeader(dateGroup.date)}
-                </h4>
-                <p className='text-xs text-gray-500'>
-                  {dateGroup.transactions.length} transaction{dateGroup.transactions.length !== 1 ? 's' : ''} • {dateGroup.netBalance ? formatCurrency(dateGroup.netBalance, '₺') : formatCurrency(dateGroup.transactions.reduce((sum, t) => sum + (t.amount || 0), 0), '₺')} {dateGroup.netBalance ? 'net balance' : 'total'}
-                </p>
+              
+              <div className='space-y-1'>
+                {/* Enhanced Date Title */}
+                <div className='flex items-center gap-3'>
+                  <h4 className='text-xl font-bold text-gray-900 group-hover:text-gray-800 transition-colors duration-200 ease-out'>
+                    {formatDateHeader(dateGroup.date)}
+                  </h4>
+                  {/* Day indicator */}
+                  <span className='inline-flex items-center px-2 py-1 text-xs font-medium text-blue-700 bg-blue-100 rounded-full'>
+                    {new Date(dateGroup.date).toLocaleDateString('en-US', { weekday: 'short' })}
+                  </span>
+                </div>
+                
+                {/* Enhanced Stats */}
+                <div className='flex items-center gap-4 text-sm'>
+                  <div className='flex items-center gap-1.5 text-gray-600'>
+                    <div className='w-2 h-2 bg-green-500 rounded-full'></div>
+                    <span className='font-medium'>{dateGroup.transactions.length}</span>
+                    <span className='text-gray-500'>transaction{dateGroup.transactions.length !== 1 ? 's' : ''}</span>
+                  </div>
+                  <div className='flex items-center gap-1.5 text-gray-600'>
+                    <div className='w-2 h-2 bg-blue-500 rounded-full'></div>
+                    <span className='font-medium'>
+                      {dateGroup.netBalance ? formatCurrency(dateGroup.netBalance, '₺') : formatCurrency(dateGroup.transactions.reduce((sum, t) => {
+                        // Convert to TRY using each transaction's own exchange rate
+                        const amount = t.amount || 0;
+                        let amountInTRY = amount;
+                        
+                        if ((t.currency === 'USD' || t.currency === 'EUR') && t.exchange_rate) {
+                          // Use transaction's own exchange rate for accurate conversion
+                          amountInTRY = amount * t.exchange_rate;
+                        } else if (t.currency === 'USD' && !t.exchange_rate) {
+                          // Fallback to current USD rate if transaction doesn't have exchange rate
+                          amountInTRY = amount * currentUsdRate;
+                        }
+                        
+                        // Apply deposit/withdrawal logic (same as backend)
+                        const isWithdrawal = t.category && t.category.toUpperCase() === 'WD';
+                        return isWithdrawal ? sum - amountInTRY : sum + amountInTRY;
+                      }, 0), '₺')}
+                    </span>
+                    <span className='text-gray-500'>{dateGroup.netBalance ? 'net balance' : 'total'}</span>
+                  </div>
+                </div>
               </div>
             </div>
+            
+            {/* Enhanced Action Buttons */}
             <div className='flex items-center gap-3'>
               <button
                 onClick={() => fetchDailySummary(dateGroup.date)}
                 disabled={dailySummaryLoading}
-                className='inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-purple-500 to-pink-600 text-white text-xs font-medium rounded-lg hover:from-purple-600 hover:to-pink-700 hover:shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed'
+                className='group/btn inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-medium rounded-lg hover:from-blue-700 hover:to-indigo-700 hover:shadow-lg hover:scale-105 transition-all duration-200 ease-out disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100'
               >
-                <BarChart className='h-3 w-3' />
+                <BarChart className='h-4 w-4 group-hover/btn:scale-110 transition-transform duration-200 ease-out' />
                 {dailySummaryLoading && selectedDate === dateGroup.date ? 'Loading...' : 'Summary'}
               </button>
-              <div className='bg-white px-3 py-1 rounded-lg border border-gray-200 shadow-sm'>
-                <span className='text-sm font-medium text-gray-700'>
-                  {dateGroup.transactions.length} transaction{dateGroup.transactions.length !== 1 ? 's' : ''}
-                </span>
+              
+              {/* Enhanced Transaction Counter */}
+              <div className='bg-white/80 backdrop-blur-sm px-4 py-2 rounded-lg border border-gray-200/60 shadow-sm group-hover:shadow-md group-hover:bg-white transition-all duration-200 ease-out'>
+                <div className='flex items-center gap-2'>
+                  <div className='w-2 h-2 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full'></div>
+                  <span className='text-sm font-semibold text-gray-800'>
+                    {dateGroup.transactions.length}
+                  </span>
+                  <span className='text-xs text-gray-500 font-medium'>
+                    transaction{dateGroup.transactions.length !== 1 ? 's' : ''}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -2512,7 +2600,7 @@ export default function Clients() {
             </thead>
             <tbody className='bg-white divide-y divide-gray-200'>
               {dateGroup.transactions.map((transaction) => (
-                <tr key={transaction.id} className='hover:bg-gray-50 transition-colors duration-200'>
+                <tr key={transaction.id} className='hover:bg-gray-50 hover:scale-[1.02] transition-all duration-300 ease-in-out cursor-pointer'>
                   <td className='px-6 py-4 whitespace-nowrap border-b border-gray-100'>
                     <div className='flex items-center'>
                       <div className='w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center mr-3'>
@@ -2858,26 +2946,26 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
 
       {/* Tab Navigation */}
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="overview" className="flex items-center gap-2">
-            <BarChart3 className="h-4 w-4" />
-            Overview
+        <TabsList className="grid w-full grid-cols-5 bg-gray-50/80 border border-gray-200/60 shadow-sm">
+          <TabsTrigger value="overview" className="group flex items-center gap-2 transition-all duration-300 ease-in-out hover:bg-white/90 hover:shadow-md hover:scale-[1.02] data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-gray-200">
+            <BarChart3 className="h-4 w-4 transition-all duration-300 ease-in-out group-hover:scale-110 group-hover:text-blue-600" />
+            <span className="transition-all duration-300 ease-in-out group-hover:font-semibold">Overview</span>
           </TabsTrigger>
-          <TabsTrigger value="clients" className="flex items-center gap-2">
-            <Users className="h-4 w-4" />
-            Info
+          <TabsTrigger value="clients" className="group flex items-center gap-2 transition-all duration-300 ease-in-out hover:bg-white/90 hover:shadow-md hover:scale-[1.02] data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-gray-200">
+            <Users className="h-4 w-4 transition-all duration-300 ease-in-out group-hover:scale-110 group-hover:text-blue-600" />
+            <span className="transition-all duration-300 ease-in-out group-hover:font-semibold">Info</span>
           </TabsTrigger>
-          <TabsTrigger value="transactions" className="flex items-center gap-2">
-            <FileText className="h-4 w-4" />
-            Transactions
+          <TabsTrigger value="transactions" className="group flex items-center gap-2 transition-all duration-300 ease-in-out hover:bg-white/90 hover:shadow-md hover:scale-[1.02] data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-gray-200">
+            <FileText className="h-4 w-4 transition-all duration-300 ease-in-out group-hover:scale-110 group-hover:text-blue-600" />
+            <span className="transition-all duration-300 ease-in-out group-hover:font-semibold">Transactions</span>
           </TabsTrigger>
-          <TabsTrigger value="analytics" className="flex items-center gap-2">
-            <LineChart className="h-4 w-4" />
-            Analytics
+          <TabsTrigger value="analytics" className="group flex items-center gap-2 transition-all duration-300 ease-in-out hover:bg-white/90 hover:shadow-md hover:scale-[1.02] data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-gray-200">
+            <LineChart className="h-4 w-4 transition-all duration-300 ease-in-out group-hover:scale-110 group-hover:text-blue-600" />
+            <span className="transition-all duration-300 ease-in-out group-hover:font-semibold">Analytics</span>
           </TabsTrigger>
-          <TabsTrigger value="accounting" className="flex items-center gap-2">
-            <DollarSign className="h-4 w-4" />
-            Accounting
+          <TabsTrigger value="accounting" className="group flex items-center gap-2 transition-all duration-300 ease-in-out hover:bg-white/90 hover:shadow-md hover:scale-[1.02] data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-gray-200">
+            <DollarSign className="h-4 w-4 transition-all duration-300 ease-in-out group-hover:scale-110 group-hover:text-blue-600" />
+            <span className="transition-all duration-300 ease-in-out group-hover:font-semibold">Accounting</span>
           </TabsTrigger>
         </TabsList>
 
@@ -3974,7 +4062,7 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                     <tbody>
                       {clients.map((client, index) => (
                         <React.Fragment key={index}>
-                          <tr className='border-b border-gray-50 hover:bg-gray-50'>
+                          <tr className='border-b border-gray-50 hover:bg-gray-50 hover:scale-[1.01] transition-all duration-300 ease-in-out cursor-pointer'>
                             <td className='py-4 px-4'>
                               <div className='flex items-center gap-3'>
                                 <div className='w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center'>
@@ -4224,7 +4312,7 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                 </thead>
                 <tbody>
                   {clients.map((client, index) => (
-                    <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
+                    <tr key={index} className="border-b border-gray-100 hover:bg-gray-50 hover:scale-[1.01] transition-all duration-300 ease-in-out cursor-pointer">
                       <td className="py-4 px-4">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
@@ -4946,7 +5034,7 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                     {clients.map((client) => (
                       <React.Fragment key={client.client_name}>
                         {/* Client Row */}
-                        <tr className='hover:bg-gray-50 transition-colors duration-200'>
+                        <tr className='hover:bg-gray-50 hover:scale-[1.01] transition-all duration-300 ease-in-out cursor-pointer'>
                           <td className='px-6 py-4 whitespace-nowrap'>
                             <div className='flex items-center'>
                               <button
@@ -5066,7 +5154,7 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
                                       </thead>
                                       <tbody className='bg-white divide-y divide-gray-200'>
                                         {clientTransactions[client.client_name].map((transaction) => (
-                                          <tr key={transaction.id} className='hover:bg-gray-50'>
+                                          <tr key={transaction.id} className='hover:bg-gray-50 hover:scale-[1.02] transition-all duration-300 ease-in-out cursor-pointer'>
                                             <td className='px-4 py-2 whitespace-nowrap text-sm text-gray-900'>
                                               {transaction.date ? formatDate(transaction.date) : 'N/A'}
                                             </td>

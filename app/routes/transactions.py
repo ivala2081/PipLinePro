@@ -1339,9 +1339,10 @@ def daily_summary(date):
             if transaction.currency and transaction.currency.upper() == 'USD':
                 if is_withdrawal:
                     psp_data[psp]['withdrawals_usd'] += amount
+                    psp_data[psp]['amount_usd'] -= amount  # Subtract withdrawals from total
                 else:
                     psp_data[psp]['deposits_usd'] += amount
-                psp_data[psp]['amount_usd'] += amount
+                    psp_data[psp]['amount_usd'] += amount  # Add deposits to total
                 psp_data[psp]['commission_usd'] += commission
                 psp_data[psp]['net_usd'] += net_amount
                 
@@ -1353,27 +1354,30 @@ def daily_summary(date):
                     
                     if is_withdrawal:
                         psp_data[psp]['withdrawals_tl'] += amount_tl
+                        psp_data[psp]['amount_tl'] -= amount_tl  # Subtract withdrawals from total
                     else:
                         psp_data[psp]['deposits_tl'] += amount_tl
-                    psp_data[psp]['amount_tl'] += amount_tl
+                        psp_data[psp]['amount_tl'] += amount_tl  # Add deposits to total
                     psp_data[psp]['commission_tl'] += commission_tl
                     psp_data[psp]['net_tl'] += net_amount_tl
                 else:
                     # Fallback to USD amount
                     if is_withdrawal:
                         psp_data[psp]['withdrawals_tl'] += amount
+                        psp_data[psp]['amount_tl'] -= amount  # Subtract withdrawals from total
                     else:
                         psp_data[psp]['deposits_tl'] += amount
-                    psp_data[psp]['amount_tl'] += amount
+                        psp_data[psp]['amount_tl'] += amount  # Add deposits to total
                     psp_data[psp]['commission_tl'] += commission
                     psp_data[psp]['net_tl'] += net_amount
             else:
                 # TL transactions
                 if is_withdrawal:
                     psp_data[psp]['withdrawals_tl'] += amount
+                    psp_data[psp]['amount_tl'] -= amount  # Subtract withdrawals from total
                 else:
                     psp_data[psp]['deposits_tl'] += amount
-                psp_data[psp]['amount_tl'] += amount
+                    psp_data[psp]['amount_tl'] += amount  # Add deposits to total
                 psp_data[psp]['commission_tl'] += commission
                 psp_data[psp]['net_tl'] += net_amount
             psp_data[psp]['count'] += 1
@@ -1455,8 +1459,8 @@ def daily_summary(date):
                 'withdrawals_tl': float(data['withdrawals_tl']),
                 'deposits_usd': float(data['deposits_usd']),
                 'withdrawals_usd': float(data['withdrawals_usd']),
-                'amount_tl': float(data['amount_tl']),  # Total (deposits + withdrawals)
-                'amount_usd': float(data['amount_usd']),  # Total (deposits + withdrawals)
+                'amount_tl': float(data['amount_tl']),  # Total (deposits - withdrawals)
+                'amount_usd': float(data['amount_usd']),  # Total (deposits - withdrawals)
                 'commission_tl': float(data['commission_tl']),
                 'commission_usd': float(data['commission_usd']),
                 'net_tl': float(data['net_tl']),

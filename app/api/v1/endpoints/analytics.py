@@ -549,23 +549,41 @@ def get_ledger_data():
             # This is the correct way to classify transactions
             if transaction.category == 'DEP':
                 daily_data[date_key]['psps'][psp]['deposit'] += abs(amount)
+                daily_data[date_key]['psps'][psp]['toplam'] += abs(amount)  # Add deposits to total
             elif transaction.category == 'WD':
                 daily_data[date_key]['psps'][psp]['withdraw'] += abs(amount)
+                daily_data[date_key]['psps'][psp]['toplam'] -= abs(amount)  # Subtract withdrawals from total
             else:
                 # Fallback: use amount sign for backward compatibility
                 if amount > 0:
                     daily_data[date_key]['psps'][psp]['deposit'] += amount
+                    daily_data[date_key]['psps'][psp]['toplam'] += amount  # Add deposits to total
                 else:
                     daily_data[date_key]['psps'][psp]['withdraw'] += abs(amount)
-            
-            daily_data[date_key]['psps'][psp]['toplam'] += amount
+                    daily_data[date_key]['psps'][psp]['toplam'] -= abs(amount)  # Subtract withdrawals from total
             daily_data[date_key]['psps'][psp]['komisyon'] += commission
-            daily_data[date_key]['psps'][psp]['net'] += net_amount
+            # NET will be calculated as TOTAL - COMMISSION after all transactions are processed
             
-            # Update totals
-            daily_data[date_key]['totals']['toplam'] += amount
+            # Update totals - use the same logic as PSP totals
+            if transaction.category == 'DEP':
+                daily_data[date_key]['totals']['toplam'] += abs(amount)  # Add deposits to total
+            elif transaction.category == 'WD':
+                daily_data[date_key]['totals']['toplam'] -= abs(amount)  # Subtract withdrawals from total
+            else:
+                # Fallback: use amount sign for backward compatibility
+                if amount > 0:
+                    daily_data[date_key]['totals']['toplam'] += amount  # Add deposits to total
+                else:
+                    daily_data[date_key]['totals']['toplam'] -= abs(amount)  # Subtract withdrawals from total
             daily_data[date_key]['totals']['komisyon'] += commission
-            daily_data[date_key]['totals']['net'] += net_amount
+            # NET will be calculated as TOTAL - COMMISSION after all transactions are processed
+        
+        # Calculate NET as TOTAL - COMMISSION for all PSPs and daily totals
+        for date_key, data in daily_data.items():
+            for psp, psp_data in data['psps'].items():
+                psp_data['net'] = psp_data['toplam'] - psp_data['komisyon']
+            # Calculate daily totals NET
+            data['totals']['net'] = data['totals']['toplam'] - data['totals']['komisyon']
         
         # Fetch saved allocations from database
         from app.models.financial import PSPAllocation
@@ -615,6 +633,11 @@ def get_ledger_data():
             
             if abs(calculated_total - data['totals']['toplam']) > 0.01:
                 validation_errors.append(f"Total mismatch for {date_key}: calculated={calculated_total}, stored={data['totals']['toplam']}")
+            
+            # Validate NET calculation: NET should equal TOTAL - COMMISSION
+            expected_net = calculated_total - calculated_commission
+            if abs(calculated_net - expected_net) > 0.01:
+                validation_errors.append(f"NET calculation error for {date_key}: calculated={calculated_net}, expected={expected_net}")
             
             if abs(calculated_commission - data['totals']['komisyon']) > 0.01:
                 validation_errors.append(f"Commission mismatch for {date_key}: calculated={calculated_commission}, stored={data['totals']['komisyon']}")

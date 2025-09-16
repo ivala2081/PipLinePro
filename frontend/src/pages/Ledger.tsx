@@ -107,6 +107,10 @@ export default function Ledger() {
   const [refreshing, setRefreshing] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'ledger' | 'analytics' | 'risk-monitoring'>('overview');
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [selectedPsp, setSelectedPsp] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [detailsData, setDetailsData] = useState<any>(null);
   const [ledgerData, setLedgerData] = useState<DayData[]>([]);
   const [ledgerLoading, setLedgerLoading] = useState(false);
   const [allocationSaving, setAllocationSaving] = useState<{[key: string]: boolean}>({});
@@ -650,7 +654,72 @@ export default function Ledger() {
     }
   };
 
+  const handlePspDetails = async (psp: string) => {
+    setSelectedPsp(psp);
+    setSelectedDate(null);
+    setShowDetailsModal(true);
+    
+    try {
+      // Fetch PSP-specific transaction details
+      const response = await api.get(`/api/v1/transactions?psp=${encodeURIComponent(psp)}&per_page=100`);
+      if (response.ok) {
+        const data = await api.parseResponse(response);
+        setDetailsData({
+          type: 'psp',
+          psp: psp,
+          transactions: data.transactions || [],
+          total: data.total || 0
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching PSP details:', error);
+      setDetailsData({
+        type: 'psp',
+        psp: psp,
+        transactions: [],
+        total: 0,
+        error: 'Failed to load details'
+      });
+    }
+  };
 
+  const handleDailyDetails = async (date: string, psp: string) => {
+    setSelectedDate(date);
+    setSelectedPsp(psp);
+    setShowDetailsModal(true);
+    
+    try {
+      // Fetch daily transaction details for specific PSP
+      const response = await api.get(`/api/v1/transactions?date=${date}&psp=${encodeURIComponent(psp)}&per_page=100`);
+      if (response.ok) {
+        const data = await api.parseResponse(response);
+        setDetailsData({
+          type: 'daily',
+          date: date,
+          psp: psp,
+          transactions: data.transactions || [],
+          total: data.total || 0
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching daily details:', error);
+      setDetailsData({
+        type: 'daily',
+        date: date,
+        psp: psp,
+        transactions: [],
+        total: 0,
+        error: 'Failed to load details'
+      });
+    }
+  };
+
+  const closeDetailsModal = () => {
+    setShowDetailsModal(false);
+    setSelectedPsp(null);
+    setSelectedDate(null);
+    setDetailsData(null);
+  };
 
   const formatNumber = (num: number) => {
     return new Intl.NumberFormat('en-US').format(num);
@@ -802,22 +871,22 @@ export default function Ledger() {
 
       {/* Modern Tab Navigation */}
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="overview" className="flex items-center gap-2">
-            <LayoutGrid className="h-4 w-4" />
-            Overview
+        <TabsList className="grid w-full grid-cols-4 bg-gray-50/80 border border-gray-200/60 shadow-sm">
+          <TabsTrigger value="overview" className="group flex items-center gap-2 transition-all duration-300 ease-in-out hover:bg-white/90 hover:shadow-md hover:scale-[1.02] data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-gray-200">
+            <LayoutGrid className="h-4 w-4 transition-all duration-300 ease-in-out group-hover:scale-110 group-hover:text-blue-600" />
+            <span className="transition-all duration-300 ease-in-out group-hover:font-semibold">Overview</span>
           </TabsTrigger>
-          <TabsTrigger value="ledger" className="flex items-center gap-2">
-            <Table className="h-4 w-4" />
-            Ledger
+          <TabsTrigger value="ledger" className="group flex items-center gap-2 transition-all duration-300 ease-in-out hover:bg-white/90 hover:shadow-md hover:scale-[1.02] data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-gray-200">
+            <Table className="h-4 w-4 transition-all duration-300 ease-in-out group-hover:scale-110 group-hover:text-blue-600" />
+            <span className="transition-all duration-300 ease-in-out group-hover:font-semibold">Ledger</span>
           </TabsTrigger>
-          <TabsTrigger value="analytics" className="flex items-center gap-2">
-            <LineChart className="h-4 w-4" />
-            Analytics
+          <TabsTrigger value="analytics" className="group flex items-center gap-2 transition-all duration-300 ease-in-out hover:bg-white/90 hover:shadow-md hover:scale-[1.02] data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-gray-200">
+            <LineChart className="h-4 w-4 transition-all duration-300 ease-in-out group-hover:scale-110 group-hover:text-blue-600" />
+            <span className="transition-all duration-300 ease-in-out group-hover:font-semibold">Analytics</span>
           </TabsTrigger>
-          <TabsTrigger value="risk-monitoring" className="flex items-center gap-2">
-            <Shield className="h-4 w-4" />
-            Risk Monitoring
+          <TabsTrigger value="risk-monitoring" className="group flex items-center gap-2 transition-all duration-300 ease-in-out hover:bg-white/90 hover:shadow-md hover:scale-[1.02] data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-gray-200">
+            <Shield className="h-4 w-4 transition-all duration-300 ease-in-out group-hover:scale-110 group-hover:text-blue-600" />
+            <span className="transition-all duration-300 ease-in-out group-hover:font-semibold">Risk Monitoring</span>
           </TabsTrigger>
         </TabsList>
 
@@ -1453,7 +1522,10 @@ export default function Ledger() {
                                   </span>
                                 </td>
                                 <td className='px-6 py-4 text-center'>
-                                  <button className='inline-flex items-center gap-1 px-3 py-1 text-xs font-medium text-gray-600 bg-gray-50 border border-gray-200 rounded-md hover:bg-gray-100 transition-colors duration-200'>
+                                  <button 
+                                    onClick={() => handlePspDetails(psp)}
+                                    className='inline-flex items-center gap-1 px-3 py-1 text-xs font-medium text-gray-600 bg-gray-50 border border-gray-200 rounded-md hover:bg-gray-100 transition-colors duration-200'
+                                  >
                                     <Eye className='h-3 w-3' />
                                     Details
                                   </button>
@@ -1890,7 +1962,10 @@ export default function Ledger() {
                               </div>
                             </td>
                             <td className='px-6 py-4 text-center'>
-                              <button className='inline-flex items-center gap-1 px-3 py-1 text-xs font-medium text-gray-600 bg-gray-50 border border-gray-200 rounded-md hover:bg-gray-100 transition-colors duration-200'>
+                              <button 
+                                onClick={() => handleDailyDetails(pspData.date, pspData.psp)}
+                                className='inline-flex items-center gap-1 px-3 py-1 text-xs font-medium text-gray-600 bg-gray-50 border border-gray-200 rounded-md hover:bg-gray-100 transition-colors duration-200'
+                              >
                                 <Eye className='h-3 w-3' />
                                 View Details
                               </button>
@@ -2162,6 +2237,134 @@ export default function Ledger() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Details Modal */}
+      {showDetailsModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900">
+                {detailsData?.type === 'psp' 
+                  ? `PSP Details: ${detailsData.psp}` 
+                  : `Daily Details: ${detailsData?.date} - ${detailsData?.psp}`
+                }
+              </h3>
+              <button
+                onClick={closeDetailsModal}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+              {detailsData?.error ? (
+                <div className="text-center py-8">
+                  <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+                  <p className="text-red-600">{detailsData.error}</p>
+                </div>
+              ) : detailsData?.transactions?.length > 0 ? (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <div className="text-sm text-gray-600">Total Transactions</div>
+                      <div className="text-2xl font-bold text-gray-900">{detailsData.transactions.length}</div>
+                    </div>
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <div className="text-sm text-gray-600">Total Amount</div>
+                      <div className="text-2xl font-bold text-gray-900">
+                        {formatCurrency(
+                          detailsData.transactions.reduce((sum: number, t: any) => sum + (t.amount || 0), 0),
+                          '₺'
+                        )}
+                      </div>
+                    </div>
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <div className="text-sm text-gray-600">Total Commission</div>
+                      <div className="text-2xl font-bold text-gray-900">
+                        {formatCurrency(
+                          detailsData.transactions.reduce((sum: number, t: any) => sum + (t.commission || 0), 0),
+                          '₺'
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Date
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Amount
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Commission
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Net Amount
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Category
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Status
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {detailsData.transactions.map((transaction: any, index: number) => (
+                          <tr key={index} className="hover:bg-gray-50">
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {new Date(transaction.date || transaction.created_at).toLocaleDateString()}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {formatCurrency(transaction.amount || 0, '₺')}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {formatCurrency(transaction.commission || 0, '₺')}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {formatCurrency(transaction.net_amount || 0, '₺')}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                                transaction.category === 'DEP' 
+                                  ? 'bg-green-100 text-green-800' 
+                                  : 'bg-red-100 text-red-800'
+                              }`}>
+                                {transaction.category === 'DEP' ? 'Deposit' : 'Withdrawal'}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                                transaction.status === 'completed' 
+                                  ? 'bg-green-100 text-green-800' 
+                                  : 'bg-yellow-100 text-yellow-800'
+                              }`}>
+                                {transaction.status || 'Pending'}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <Activity className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-600">No transactions found</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

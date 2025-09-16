@@ -22,6 +22,14 @@ except ImportError:
 # Import PSP options service
 from app.services.psp_options_service import PspOptionsService
 
+# Import enhanced services
+try:
+    from app.services.event_service import event_service, EventType
+    from app.services.enhanced_cache_service import cache_service
+    ENHANCED_SERVICES_AVAILABLE = True
+except ImportError:
+    ENHANCED_SERVICES_AVAILABLE = False
+
 logger = logging.getLogger(__name__)
 
 def safe_float(value, default=0.0):
@@ -98,6 +106,25 @@ class TransactionService:
             db.session.add(transaction)
             db.session.commit()
             
+            # Publish event for real-time updates
+            if ENHANCED_SERVICES_AVAILABLE:
+                try:
+                    event_service.publish_event(
+                        EventType.TRANSACTION_CREATED,
+                        {
+                            'transaction_id': transaction.id,
+                            'client_name': transaction.client_name,
+                            'amount': float(transaction.amount),
+                            'currency': transaction.currency,
+                            'psp': transaction.psp,
+                            'category': transaction.category,
+                            'user_id': user_id
+                        },
+                        source='transaction_service'
+                    )
+                except Exception as event_error:
+                    logger.warning(f"Event publishing failed: {event_error}")
+            
             # Update daily balance
             TransactionService.update_daily_balance(data['date'], data.get('psp', ''))
             
@@ -109,12 +136,19 @@ class TransactionService:
                     logger.warning(f'PSP Track sync failed after transaction creation: {sync_error}')
             
             # Invalidate relevant caches after transaction creation
-            try:
-                from app.services.query_service import QueryService
-                QueryService.invalidate_transaction_cache()
-                logger.info("Cache invalidated after transaction creation")
-            except Exception as cache_error:
-                logger.warning(f"Failed to invalidate cache after transaction creation: {cache_error}")
+            if ENHANCED_SERVICES_AVAILABLE:
+                try:
+                    cache_service.invalidate_transaction_cache(transaction.id)
+                    logger.info("Cache invalidated after transaction creation")
+                except Exception as cache_error:
+                    logger.warning(f"Cache invalidation failed: {cache_error}")
+            else:
+                try:
+                    from app.services.query_service import QueryService
+                    QueryService.invalidate_transaction_cache()
+                    logger.info("Cache invalidated after transaction creation")
+                except Exception as cache_error:
+                    logger.warning(f"Failed to invalidate cache after transaction creation: {cache_error}")
             
             return transaction
             

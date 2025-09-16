@@ -185,7 +185,13 @@ class TransactionCalculationService:
             
             # Update daily totals
             daily_data[transaction.date]['totals']['total_psp'] = len(daily_data[transaction.date]['psps'])
-            daily_data[transaction.date]['totals']['toplam'] += amounts['amount']
+            # Only add deposits to daily total, subtract withdrawals
+            if transaction.category in ['Deposit', 'Investment']:
+                daily_data[transaction.date]['totals']['toplam'] += amounts['amount']
+            elif transaction.category in ['Withdraw', 'Withdrawal']:
+                daily_data[transaction.date]['totals']['toplam'] -= amounts['amount']
+            else:
+                daily_data[transaction.date]['totals']['toplam'] += amounts['amount']
             daily_data[transaction.date]['totals']['komisyon'] += amounts['commission']
             daily_data[transaction.date]['totals']['net'] += (amounts['amount'] - amounts['commission'])
             daily_data[transaction.date]['totals']['carry_over'] += (amounts['amount'] - amounts['commission'])

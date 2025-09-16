@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Save, X, AlertCircle, DollarSign } from 'lucide-react';
+import { Save, X, AlertCircle, DollarSign, Shield, CheckCircle, Info } from 'lucide-react';
 import { api } from '../utils/apiClient';
 import { formatCurrency } from '../utils/currencyUtils';
 import CurrencyConversionModal from './CurrencyConversionModal';
@@ -69,6 +69,13 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
     notes: transaction.notes || '',
     date: transaction.date ? transaction.date.split('T')[0] : new Date().toISOString().split('T')[0],
   });
+
+  // Manual commission state
+  const [showManualCommission, setShowManualCommission] = useState(false);
+  const [securityCode, setSecurityCode] = useState('');
+  const [manualCommission, setManualCommission] = useState('');
+  const [securityCodeVerified, setSecurityCodeVerified] = useState(false);
+  const [securityCodeError, setSecurityCodeError] = useState('');
 
   // Debug: Log the initialized form data
   console.log('🔄 TransactionEditForm initialized formData:', formData);
@@ -239,6 +246,25 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
     return true;
   };
 
+  const handleSecurityCodeVerification = () => {
+    if (securityCode === '4561') {
+      setSecurityCodeVerified(true);
+      setSecurityCodeError('');
+      setShowManualCommission(true);
+    } else {
+      setSecurityCodeError('Invalid security code. Please try again.');
+      setSecurityCodeVerified(false);
+    }
+  };
+
+  const handleManualCommissionToggle = () => {
+    if (!securityCodeVerified) {
+      setShowManualCommission(false);
+      setSecurityCode('');
+      setSecurityCodeError('');
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -256,6 +282,11 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
         amount: parseFloat(formData.amount),
         eur_rate: formData.currency === 'EUR' ? parseFloat(eurRate) : undefined,
         usd_rate: formData.currency === 'USD' ? parseFloat(usdRate) : undefined,
+        // Add manual commission if enabled and provided
+        ...(securityCodeVerified && manualCommission && parseFloat(manualCommission) > 0 && {
+          manual_commission_rate: parseFloat(manualCommission),
+          use_manual_commission: true
+        })
       };
 
       console.log('🔄 Sending transaction update data:', updateData);
@@ -558,6 +589,70 @@ const TransactionEditForm: React.FC<TransactionEditFormProps> = ({
           )}
         </div>
       )}
+
+      {/* Manual Commission - Minimal Design */}
+      <div className="bg-white border border-gray-200 rounded-lg p-4">
+        <div className="flex items-center justify-between mb-3">
+          <h4 className="text-sm font-medium text-gray-900">Manual Commission</h4>
+          {securityCodeVerified && (
+            <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-green-700 bg-green-100 rounded-full">
+              <CheckCircle className="h-3 w-3" />
+              Active
+            </span>
+          )}
+        </div>
+        
+        {!securityCodeVerified ? (
+          <div className="space-y-3">
+            <div className="flex gap-2">
+              <input
+                type="password"
+                value={securityCode}
+                onChange={e => setSecurityCode(e.target.value)}
+                className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Security code"
+              />
+              <button
+                type="button"
+                onClick={handleSecurityCodeVerification}
+                className="px-3 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:ring-1 focus:ring-blue-500"
+              >
+                Enable
+              </button>
+            </div>
+            {securityCodeError && (
+              <p className="text-xs text-red-600">{securityCodeError}</p>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <div className="flex gap-2">
+              <input
+                type="number"
+                step="0.01"
+                value={manualCommission}
+                onChange={e => setManualCommission(e.target.value)}
+                className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Commission %"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  setSecurityCodeVerified(false);
+                  setShowManualCommission(false);
+                  setSecurityCode('');
+                  setManualCommission('');
+                  setSecurityCodeError('');
+                }}
+                className="px-3 py-2 text-sm font-medium text-gray-600 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200"
+              >
+                Disable
+              </button>
+            </div>
+            <p className="text-xs text-gray-500">Overrides automatic PSP commission rate</p>
+          </div>
+        )}
+      </div>
 
       {/* Description */}
       <div className="bg-gray-50 rounded-lg p-4">

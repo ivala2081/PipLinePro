@@ -1076,22 +1076,22 @@ export default function Transactions() {
 
         {/* Tabs Navigation */}
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="overview" className="flex items-center gap-2">
-                <BarChart3 className="h-4 w-4" />
-                Overview
+            <TabsList className="grid w-full grid-cols-4 bg-gray-50/80 border border-gray-200/60 shadow-sm">
+              <TabsTrigger value="overview" className="group flex items-center gap-2 transition-all duration-300 ease-in-out hover:bg-white/90 hover:shadow-md hover:scale-[1.02] data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-gray-200">
+                <BarChart3 className="h-4 w-4 transition-all duration-300 ease-in-out group-hover:scale-110 group-hover:text-blue-600" />
+                <span className="transition-all duration-300 ease-in-out group-hover:font-semibold">Overview</span>
               </TabsTrigger>
-              <TabsTrigger value="transactions" className="flex items-center gap-2">
-                <FileText className="h-4 w-4" />
-                Transactions
+              <TabsTrigger value="transactions" className="group flex items-center gap-2 transition-all duration-300 ease-in-out hover:bg-white/90 hover:shadow-md hover:scale-[1.02] data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-gray-200">
+                <FileText className="h-4 w-4 transition-all duration-300 ease-in-out group-hover:scale-110 group-hover:text-blue-600" />
+                <span className="transition-all duration-300 ease-in-out group-hover:font-semibold">Transactions</span>
               </TabsTrigger>
-              <TabsTrigger value="analytics" className="flex items-center gap-2">
-                <LineChart className="h-4 w-4" />
-                Analytics
+              <TabsTrigger value="analytics" className="group flex items-center gap-2 transition-all duration-300 ease-in-out hover:bg-white/90 hover:shadow-md hover:scale-[1.02] data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-gray-200">
+                <LineChart className="h-4 w-4 transition-all duration-300 ease-in-out group-hover:scale-110 group-hover:text-blue-600" />
+                <span className="transition-all duration-300 ease-in-out group-hover:font-semibold">Analytics</span>
               </TabsTrigger>
-              <TabsTrigger value="accounting" className="flex items-center gap-2">
-                <DollarSign className="h-4 w-4" />
-                Accounting
+              <TabsTrigger value="accounting" className="group flex items-center gap-2 transition-all duration-300 ease-in-out hover:bg-white/90 hover:shadow-md hover:scale-[1.02] data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-gray-200">
+                <DollarSign className="h-4 w-4 transition-all duration-300 ease-in-out group-hover:scale-110 group-hover:text-blue-600" />
+                <span className="transition-all duration-300 ease-in-out group-hover:font-semibold">Accounting</span>
               </TabsTrigger>
             </TabsList>
 

@@ -105,14 +105,41 @@ export const ModernSidebar: React.FC<ModernSidebarProps> = ({
             key={item.name}
             to={item.href}
             onClick={() => onPageChange(item.name.toLowerCase())}
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${
+            className={`group relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ease-out ${
               item.current
-                ? 'bg-gray-900 text-white'
-                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                ? 'bg-gray-800 text-white shadow-sm'
+                : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100/80'
             }`}
           >
-            <item.icon className="w-4 h-4" />
-            {item.name}
+            {/* Subtle hover background */}
+            <div className={`absolute inset-0 rounded-lg transition-all duration-200 ease-out ${
+              item.current 
+                ? 'bg-gray-800' 
+                : 'bg-transparent group-hover:bg-gray-100/80'
+            }`} />
+            
+            {/* Icon with subtle animation */}
+            <item.icon className={`relative z-10 w-4 h-4 transition-all duration-200 ease-out ${
+              item.current 
+                ? 'text-white' 
+                : 'text-gray-500 group-hover:text-gray-700'
+            }`} />
+            
+            {/* Text with subtle animation */}
+            <span className={`relative z-10 transition-all duration-200 ease-out ${
+              item.current 
+                ? 'text-white' 
+                : 'text-gray-600 group-hover:text-gray-800'
+            }`}>
+              {item.name}
+            </span>
+            
+            {/* Minimal hover indicator */}
+            <div className={`absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-0 rounded-r-full transition-all duration-200 ease-out ${
+              item.current 
+                ? 'bg-white h-5' 
+                : 'bg-transparent group-hover:bg-gray-400 group-hover:h-3'
+            }`} />
           </Link>
         ))}
       </nav>
@@ -120,15 +147,15 @@ export const ModernSidebar: React.FC<ModernSidebarProps> = ({
       {/* User Footer */}
       <div className="p-4 border-t border-gray-200 bg-gray-50">
         {/* User Profile */}
-        <div className="bg-white border border-gray-200 rounded-md p-3">
+        <div className="group bg-white border border-gray-200 rounded-lg p-3 transition-all duration-200 ease-out hover:bg-gray-50/50">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gray-600 rounded-md flex items-center justify-center">
-                <User className="w-4 h-4 text-white" />
+              <div className="w-8 h-8 bg-gray-600 rounded-lg flex items-center justify-center transition-all duration-200 ease-out group-hover:bg-gray-700">
+                <User className="w-4 h-4 text-white transition-all duration-200 ease-out" />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-900">Admin User</p>
-                <p className="text-xs text-gray-500">Administrator</p>
+                <p className="text-sm font-medium text-gray-900 transition-all duration-200 ease-out group-hover:text-gray-800">Admin User</p>
+                <p className="text-xs text-gray-500 transition-all duration-200 ease-out group-hover:text-gray-600">Administrator</p>
               </div>
             </div>
             
@@ -137,33 +164,33 @@ export const ModernSidebar: React.FC<ModernSidebarProps> = ({
                 variant="ghost"
                 size="sm"
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
-                className="h-6 w-6 p-0 hover:bg-gray-100"
+                className="h-6 w-6 p-0 hover:bg-gray-100 transition-all duration-200 ease-out"
               >
-                <ChevronDown className={`w-3 h-3 ${userMenuOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`w-3 h-3 transition-all duration-200 ease-out ${userMenuOpen ? 'rotate-180' : ''}`} />
               </Button>
               
               {/* User Menu Dropdown */}
               {userMenuOpen && (
-                <div className="absolute bottom-full right-0 mb-2 w-40 bg-white rounded-md shadow-md border border-gray-200 py-1 z-50">
+                <div className="absolute bottom-full right-0 mb-2 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50 animate-in slide-in-from-bottom-2 duration-200">
                   <button
                     onClick={() => {
                       navigate('/settings');
                       setUserMenuOpen(false);
                     }}
-                    className="flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                    className="group flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-all duration-200 ease-out"
                   >
-                    <Settings className="w-3 h-3" />
-                    Settings
+                    <Settings className="w-3 h-3 transition-all duration-200 ease-out group-hover:text-gray-900" />
+                    <span className="transition-all duration-200 ease-out group-hover:text-gray-900">Settings</span>
                   </button>
                   <button
                     onClick={() => {
                       onLogout();
                       setUserMenuOpen(false);
                     }}
-                    className="flex items-center gap-2 w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+                    className="group flex items-center gap-2 w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-all duration-200 ease-out"
                   >
-                    <LogOut className="w-3 h-3" />
-                    Sign Out
+                    <LogOut className="w-3 h-3 transition-all duration-200 ease-out group-hover:text-red-700" />
+                    <span className="transition-all duration-200 ease-out group-hover:text-red-700">Sign Out</span>
                   </button>
                 </div>
               )}
@@ -172,19 +199,23 @@ export const ModernSidebar: React.FC<ModernSidebarProps> = ({
           
           {/* System Status */}
           <div className="flex items-center justify-between text-xs text-gray-500 pt-2 border-t border-gray-100">
-            <div className="flex items-center gap-1">
-              <div className={`w-2 h-2 rounded-full ${
-                systemStatus === 'online' ? 'bg-green-500' : 'bg-amber-500'
+            <div className="flex items-center gap-1 group/status">
+              <div className={`w-2 h-2 rounded-full transition-all duration-200 ease-out ${
+                systemStatus === 'online' ? 'bg-green-500 group-hover/status:bg-green-400' : 'bg-amber-500 group-hover/status:bg-amber-400'
               }`}></div>
-              <span>{systemStatus === 'online' ? 'Online' : 'Maintenance'}</span>
+              <span className="transition-all duration-200 ease-out group-hover/status:text-gray-600">
+                {systemStatus === 'online' ? 'Online' : 'Maintenance'}
+              </span>
             </div>
-            <div className="flex items-center gap-1">
-              <Clock className="w-3 h-3" />
-              <span>{currentTime.toLocaleTimeString('en-US', { 
-                hour: '2-digit', 
-                minute: '2-digit',
-                hour12: false 
-              })}</span>
+            <div className="flex items-center gap-1 group/time">
+              <Clock className="w-3 h-3 transition-all duration-200 ease-out group-hover/time:text-gray-600" />
+              <span className="transition-all duration-200 ease-out group-hover/time:text-gray-600">
+                {currentTime.toLocaleTimeString('en-US', { 
+                  hour: '2-digit', 
+                  minute: '2-digit',
+                  hour12: false 
+                })}
+              </span>
             </div>
           </div>
         </div>

@@ -266,6 +266,19 @@ def create_app(config_name=None):
     background_task_service.init_app(app)
     app.background_task_service = background_task_service
     
+    # Initialize enhanced services
+    from app.services.event_service import event_service
+    from app.services.enhanced_cache_service import cache_service
+    from app.services.microservice_service import microservice_service
+    from app.services.real_time_service import init_real_time_service
+    
+    # Initialize real-time service with SocketIO
+    real_time_service = init_real_time_service(socketio, event_service)
+    app.real_time_service = real_time_service
+    app.event_service = event_service
+    app.cache_service = cache_service
+    app.microservice_service = microservice_service
+    
     # Performance monitoring context
     @app.context_processor
     def inject_performance_data():
@@ -398,7 +411,9 @@ def create_app(config_name=None):
     
     # Register API blueprints
     from app.api.v1 import api_v1
+    from app.api.v2 import api_v2
     app.register_blueprint(api_v1)
+    app.register_blueprint(api_v2)
     app.register_blueprint(auth_api, url_prefix='/api/v1/auth')
     app.register_blueprint(transactions_api, url_prefix='/api/v1/transactions')
     app.register_blueprint(users_api, url_prefix='/api/v1/users')

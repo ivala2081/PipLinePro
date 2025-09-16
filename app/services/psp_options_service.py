@@ -68,7 +68,7 @@ class PspOptionsService:
                 unique_psps.append(psp)
                 seen.add(psp)
         
-        # Default commission rates for common PSPs
+        # Default commission rates for common PSPs (fallback only)
         default_rates = {
             'stripe': Decimal('0.029'),  # 2.9%
             'paypal': Decimal('0.034'),  # 3.4%
@@ -90,15 +90,26 @@ class PspOptionsService:
             'cpo py kk': Decimal('0.11'),     # 11.0%
             'filbox kk': Decimal('0.12'),     # 12.0%
             'kuyumcu': Decimal('0.12'),       # 12.0%
-            'sipay': Decimal('0.12'),         # 12.0%
+            'sipay': Decimal('0.0015'),       # 0.15% - Updated rate
+            'sipay-15': Decimal('0.0015'),    # 0.15% - Updated rate
             'tether': Decimal('0.0'),         # 0.0% - No commission for TETHER
         }
         
         fixed_options = []
         for psp in unique_psps:
-            # Use default rate based on PSP name (no database lookup to avoid duplicates)
-            psp_lower = psp.lower().strip()
-            commission_rate = default_rates.get(psp_lower, Decimal('0.025'))  # Default 2.5%
+            # First try to get rate from database
+            db_option = Option.query.filter_by(
+                field_name='psp',
+                value=psp,
+                is_active=True
+            ).first()
+            
+            if db_option and db_option.commission_rate is not None:
+                commission_rate = db_option.commission_rate
+            else:
+                # Fallback to default rate based on PSP name
+                psp_lower = psp.lower().strip()
+                commission_rate = default_rates.get(psp_lower, Decimal('0.025'))  # Default 2.5%
             
             # Log commission rate only once per PSP
             rate_key = f"rate_{psp}_{commission_rate}"
@@ -124,7 +135,17 @@ class PspOptionsService:
     def get_psp_commission_rate(psp: str) -> Decimal:
         """Get commission rate for a specific PSP"""
         try:
-            # Use default rates (no database lookup to avoid duplicates)
+            # First try to get rate from database
+            db_option = Option.query.filter_by(
+                field_name='psp',
+                value=psp,
+                is_active=True
+            ).first()
+            
+            if db_option and db_option.commission_rate is not None:
+                return db_option.commission_rate
+            
+            # Fallback to default rates
             default_rates = {
                 'stripe': Decimal('0.029'),
                 'paypal': Decimal('0.034'),
@@ -146,7 +167,8 @@ class PspOptionsService:
                 'cpo py kk': Decimal('0.11'),     # 11.0%
                 'filbox kk': Decimal('0.12'),     # 12.0%
                 'kuyumcu': Decimal('0.12'),       # 12.0%
-                'sipay': Decimal('0.12'),         # 12.0%
+                'sipay': Decimal('0.0015'),       # 0.15% - Updated rate
+                'sipay-15': Decimal('0.0015'),    # 0.15% - Updated rate
                 'tether': Decimal('0.0'),         # 0.0% - No commission for TETHER
             }
             
