@@ -599,6 +599,115 @@ const Dashboard = memo(() => {
             </Section>
           )}
 
+          {/* Revenue Analytics */}
+          <Section title="Revenue Analytics" subtitle="Company revenue breakdown by time period" spacing="lg">
+            {/* Debug Info */}
+            {process.env.NODE_ENV === 'development' && (
+              <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <h4 className="font-semibold text-yellow-800 mb-2">Debug Info:</h4>
+                <pre className="text-xs text-yellow-700 overflow-auto max-h-40">
+                  {JSON.stringify({
+                    daily_revenue: (dashboardData?.summary as any)?.daily_revenue,
+                    weekly_revenue: (dashboardData?.summary as any)?.weekly_revenue,
+                    monthly_revenue: (dashboardData?.summary as any)?.monthly_revenue,
+                    annual_revenue: (dashboardData?.summary as any)?.annual_revenue,
+                    has_revenue_trends: !!(dashboardData as any)?.revenue_trends,
+                    revenue_trends_length: (dashboardData as any)?.revenue_trends?.length || 0,
+                    summary_keys: dashboardData?.summary ? Object.keys(dashboardData.summary) : [],
+                    full_summary: dashboardData?.summary
+                  }, null, 2)}
+                </pre>
+              </div>
+            )}
+            <CardGrid cols={4} gap="lg">
+              <MetricCard
+                title="Daily Revenue"
+                value={formatCurrency((dashboardData?.summary as any)?.daily_revenue || 0, '₺')}
+                icon={Calendar}
+                color="indigo"
+                subtitle="Today's revenue"
+              />
+              
+              <MetricCard
+                title="Weekly Revenue"
+                value={formatCurrency((dashboardData?.summary as any)?.weekly_revenue || 0, '₺')}
+                icon={TrendingUp}
+                color="green"
+                subtitle="This week's revenue"
+              />
+              
+              <MetricCard
+                title="Monthly Revenue"
+                value={formatCurrency((dashboardData?.summary as any)?.monthly_revenue || 0, '₺')}
+                icon={BarChart3}
+                color="purple"
+                subtitle="This month's revenue"
+              />
+              
+              <MetricCard
+                title="Annual Revenue"
+                value={formatCurrency((dashboardData?.summary as any)?.annual_revenue || 0, '₺')}
+                icon={DollarSign}
+                color="orange"
+                subtitle="This year's revenue"
+              />
+            </CardGrid>
+            
+            {/* Revenue Trend Chart */}
+            {(dashboardData as any)?.revenue_trends && (
+              <div className="mt-6">
+                <div className="bg-white rounded-xl border border-gray-200 p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">Revenue Trend</h3>
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <TrendingUp className="h-4 w-4" />
+                      <span>Last 30 days</span>
+                    </div>
+                  </div>
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <RechartsLineChart data={(dashboardData as any).revenue_trends}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                        <XAxis 
+                          dataKey="date" 
+                          stroke="#6b7280"
+                          fontSize={12}
+                          tickLine={false}
+                          axisLine={false}
+                        />
+                        <YAxis 
+                          stroke="#6b7280"
+                          fontSize={12}
+                          tickLine={false}
+                          axisLine={false}
+                          tickFormatter={(value) => `₺${(value / 1000).toFixed(0)}k`}
+                        />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: 'white',
+                            border: '1px solid #e5e7eb',
+                            borderRadius: '8px',
+                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                          }}
+                          formatter={(value: any) => [formatCurrency(value, '₺'), 'Revenue']}
+                          labelFormatter={(label) => `Date: ${label}`}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="revenue" 
+                          stroke="#3b82f6" 
+                          strokeWidth={3}
+                          dot={{ fill: '#3b82f6', strokeWidth: 2, r: 4 }}
+                          activeDot={{ r: 6, stroke: '#3b82f6', strokeWidth: 2 }}
+                        />
+                      </RechartsLineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              </div>
+            )}
+          </Section>
+
           {/* Quick Actions */}
           <Section title="Quick Actions" subtitle="Common tasks and shortcuts" spacing="lg">
             <CardGrid cols={4} gap="lg">

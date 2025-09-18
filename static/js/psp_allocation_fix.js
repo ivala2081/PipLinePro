@@ -159,16 +159,16 @@
         let statusText, statusClass;
         
         if (rolloverAmount <= 0) {
-            // Fully paid - rollover is 0 or negative (overpaid)
-            statusText = 'Paid';
+            // PSP owes company money (positive for company)
+            statusText = 'PSP Owes You';
             statusClass = 'status-paid';
         } else if (rolloverAmount < parseFloat(row.querySelector('.amount-net')?.textContent.replace(/[^\d.-]/g, '') || 0) * 0.1) {
-            // Almost paid - less than 10% remaining
-            statusText = 'Almost Paid';
+            // Company owes PSP small amount
+            statusText = 'Small Debt';
             statusClass = 'status-almost-paid';
         } else {
-            // Still has outstanding amount
-            statusText = 'Unpaid';
+            // Company owes PSP significant amount
+            statusText = 'You Owe PSP';
             statusClass = 'status-unpaid';
         }
         

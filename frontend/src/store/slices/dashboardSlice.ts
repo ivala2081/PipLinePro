@@ -29,6 +29,15 @@ export interface DashboardData {
     total_net: number;
     transaction_count: number;
     active_clients: number;
+    // Revenue Analytics
+    daily_revenue: number;
+    weekly_revenue: number;
+    monthly_revenue: number;
+    annual_revenue: number;
+    daily_revenue_trend: number;
+    weekly_revenue_trend: number;
+    monthly_revenue_trend: number;
+    annual_revenue_trend: number;
   };
   chart_data?: {
     daily_revenue: Array<{ date: string; amount: number }>;
@@ -39,6 +48,7 @@ export interface DashboardData {
     }>;
     client_distribution: Array<{ name: string; value: number }>;
   };
+  revenue_trends?: Array<{ date: string; revenue: number }>;
 }
 
 export interface ClientSegment {
@@ -331,6 +341,15 @@ export const fetchDashboardData = createAsyncThunk(
             total_net: data.dashboard_stats.total_revenue - data.dashboard_stats.total_commission,
             transaction_count: data.dashboard_stats.total_transactions,
             active_clients: data.dashboard_stats.unique_clients,
+            // Revenue Analytics
+            daily_revenue: data.dashboard_stats.daily_revenue || 0,
+            weekly_revenue: data.dashboard_stats.weekly_revenue || 0,
+            monthly_revenue: data.dashboard_stats.monthly_revenue || 0,
+            annual_revenue: data.dashboard_stats.annual_revenue || 0,
+            daily_revenue_trend: data.dashboard_stats.daily_revenue_trend || 0,
+            weekly_revenue_trend: data.dashboard_stats.weekly_revenue_trend || 0,
+            monthly_revenue_trend: data.dashboard_stats.monthly_revenue_trend || 0,
+            annual_revenue_trend: data.dashboard_stats.annual_revenue_trend || 0,
           },
           chart_data: {
             daily_revenue: data.revenue_trends.map((trend: any) => ({
@@ -343,6 +362,10 @@ export const fetchDashboardData = createAsyncThunk(
               value: client.total_volume,
             })),
           },
+          revenue_trends: data.revenue_trends.map((trend: any) => ({
+            date: trend.date,
+            revenue: trend.revenue,
+          })),
         },
         topPerformers: {
           volume_leaders: data.top_performers.map((performer: any) => ({

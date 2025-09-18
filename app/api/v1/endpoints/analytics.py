@@ -1,7 +1,7 @@
 """
 Analytics API endpoints for Flask
 """
-from flask import Blueprint, request, jsonify, session
+from flask import Blueprint, request, jsonify, session, Response
 from flask_login import login_required, current_user
 from flask_limiter.util import get_remote_address
 from datetime import date, timedelta, datetime
@@ -345,6 +345,85 @@ def dashboard_stats():
         # Generate chart data
         chart_data = generate_chart_data(time_range)
         
+        # Calculate revenue analytics (daily, weekly, monthly, annual)
+        # Get allocation data for revenue calculations
+        from app.models.financial import PSPAllocation
+        
+        # Calculate daily revenue (today's allocations)
+        today_start = datetime.combine(today, datetime.min.time()).replace(tzinfo=timezone.utc)
+        today_end = datetime.combine(today, datetime.max.time()).replace(tzinfo=timezone.utc)
+        daily_allocations = PSPAllocation.query.filter(
+            PSPAllocation.date >= today_start.date(),
+            PSPAllocation.date <= today_end.date()
+        ).all()
+        daily_revenue = sum(float(allocation.allocation_amount) for allocation in daily_allocations)
+        
+        # Calculate weekly revenue (this week's allocations)
+        week_start = today - timedelta(days=today.weekday())
+        week_end = week_start + timedelta(days=6)
+        weekly_allocations = PSPAllocation.query.filter(
+            PSPAllocation.date >= week_start,
+            PSPAllocation.date <= week_end
+        ).all()
+        weekly_revenue = sum(float(allocation.allocation_amount) for allocation in weekly_allocations)
+        
+        # Calculate monthly revenue (this month's allocations)
+        month_start = today.replace(day=1)
+        month_end = (month_start + timedelta(days=32)).replace(day=1) - timedelta(days=1)
+        monthly_allocations = PSPAllocation.query.filter(
+            PSPAllocation.date >= month_start,
+            PSPAllocation.date <= month_end
+        ).all()
+        monthly_revenue = sum(float(allocation.allocation_amount) for allocation in monthly_allocations)
+        
+        # Calculate annual revenue (this year's allocations)
+        year_start = today.replace(month=1, day=1)
+        year_end = today.replace(month=12, day=31)
+        annual_allocations = PSPAllocation.query.filter(
+            PSPAllocation.date >= year_start,
+            PSPAllocation.date <= year_end
+        ).all()
+        annual_revenue = sum(float(allocation.allocation_amount) for allocation in annual_allocations)
+        
+        # Calculate trends (comparing with previous periods)
+        # Daily trend (today vs yesterday)
+        yesterday = today - timedelta(days=1)
+        yesterday_allocations = PSPAllocation.query.filter(
+            PSPAllocation.date == yesterday
+        ).all()
+        yesterday_revenue = sum(float(allocation.allocation_amount) for allocation in yesterday_allocations)
+        daily_revenue_trend = ((daily_revenue - yesterday_revenue) / yesterday_revenue * 100) if yesterday_revenue > 0 else 0
+        
+        # Weekly trend (this week vs last week)
+        last_week_start = week_start - timedelta(days=7)
+        last_week_end = last_week_start + timedelta(days=6)
+        last_week_allocations = PSPAllocation.query.filter(
+            PSPAllocation.date >= last_week_start,
+            PSPAllocation.date <= last_week_end
+        ).all()
+        last_week_revenue = sum(float(allocation.allocation_amount) for allocation in last_week_allocations)
+        weekly_revenue_trend = ((weekly_revenue - last_week_revenue) / last_week_revenue * 100) if last_week_revenue > 0 else 0
+        
+        # Monthly trend (this month vs last month)
+        last_month_start = (month_start - timedelta(days=1)).replace(day=1)
+        last_month_end = month_start - timedelta(days=1)
+        last_month_allocations = PSPAllocation.query.filter(
+            PSPAllocation.date >= last_month_start,
+            PSPAllocation.date <= last_month_end
+        ).all()
+        last_month_revenue = sum(float(allocation.allocation_amount) for allocation in last_month_allocations)
+        monthly_revenue_trend = ((monthly_revenue - last_month_revenue) / last_month_revenue * 100) if last_month_revenue > 0 else 0
+        
+        # Annual trend (this year vs last year)
+        last_year_start = year_start.replace(year=year_start.year - 1)
+        last_year_end = year_end.replace(year=year_end.year - 1)
+        last_year_allocations = PSPAllocation.query.filter(
+            PSPAllocation.date >= last_year_start,
+            PSPAllocation.date <= last_year_end
+        ).all()
+        last_year_revenue = sum(float(allocation.allocation_amount) for allocation in last_year_allocations)
+        annual_revenue_trend = ((annual_revenue - last_year_revenue) / last_year_revenue * 100) if last_year_revenue > 0 else 0
+        
         return jsonify({
             'stats': {
                 'total_revenue': {
@@ -363,11 +442,21 @@ def dashboard_stats():
                 'total_commission': total_commission,
                 'total_net': total_net,
                 'transaction_count': total_transactions,
-                'active_clients': unique_clients
+                'active_clients': unique_clients,
+                # Revenue Analytics
+                'daily_revenue': daily_revenue,
+                'weekly_revenue': weekly_revenue,
+                'monthly_revenue': monthly_revenue,
+                'annual_revenue': annual_revenue,
+                'daily_revenue_trend': daily_revenue_trend,
+                'weekly_revenue_trend': weekly_revenue_trend,
+                'monthly_revenue_trend': monthly_revenue_trend,
+                'annual_revenue_trend': annual_revenue_trend
             },
             'chart_data': {
                 'daily_revenue': chart_data.get('daily_revenue', [])[:30]  # Limit to 30 days
-            }
+            },
+            'revenue_trends': chart_data.get('daily_revenue', [])[:30]  # For the revenue trend chart
         })
         
     except Exception as e:
@@ -666,6 +755,205 @@ def get_ledger_data():
             'error': 'Failed to retrieve ledger data',
             'message': str(e)
         }), 500
+
+@analytics_api.route("/allocation-history", methods=['GET'])
+@login_required
+def get_allocation_history():
+    """Get allocation history with filtering and pagination"""
+    try:
+        from app.models.financial import PSPAllocation
+        from datetime import datetime, timedelta
+        import logging
+        
+        logger = logging.getLogger(__name__)
+        
+        # Get query parameters
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
+        psp_filter = request.args.get('psp')
+        page = int(request.args.get('page', 1))
+        per_page = int(request.args.get('per_page', 50))
+        
+        # Build query
+        query = PSPAllocation.query
+        
+        # Apply date filters
+        if start_date:
+            try:
+                start_date_obj = datetime.strptime(start_date, '%Y-%m-%d').date()
+                query = query.filter(PSPAllocation.date >= start_date_obj)
+            except ValueError:
+                return jsonify({'error': 'Invalid start_date format. Use YYYY-MM-DD'}), 400
+        
+        if end_date:
+            try:
+                end_date_obj = datetime.strptime(end_date, '%Y-%m-%d').date()
+                query = query.filter(PSPAllocation.date <= end_date_obj)
+            except ValueError:
+                return jsonify({'error': 'Invalid end_date format. Use YYYY-MM-DD'}), 400
+        
+        # Apply PSP filter
+        if psp_filter:
+            query = query.filter(PSPAllocation.psp_name.ilike(f'%{psp_filter}%'))
+        
+        # Order by date descending (newest first)
+        query = query.order_by(PSPAllocation.date.desc(), PSPAllocation.created_at.desc())
+        
+        # Get total count for pagination
+        total_count = query.count()
+        
+        # Apply pagination
+        allocations = query.paginate(
+            page=page, 
+            per_page=per_page, 
+            error_out=False
+        )
+        
+        # Convert to response format
+        history_data = []
+        for allocation in allocations.items:
+            history_data.append({
+                'id': allocation.id,
+                'date': allocation.date.isoformat(),
+                'psp_name': allocation.psp_name,
+                'allocation_amount': float(allocation.allocation_amount),
+                'created_at': allocation.created_at.isoformat(),
+                'updated_at': allocation.updated_at.isoformat()
+            })
+        
+        logger.info(f"Retrieved {len(history_data)} allocation history records")
+        
+        return jsonify({
+            'success': True,
+            'data': history_data,
+            'pagination': {
+                'page': page,
+                'per_page': per_page,
+                'total': total_count,
+                'pages': allocations.pages,
+                'has_next': allocations.has_next,
+                'has_prev': allocations.has_prev
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"Error retrieving allocation history: {e}")
+        return jsonify({'error': 'Failed to retrieve allocation history'}), 500
+
+@analytics_api.route("/allocation-history/export", methods=['GET'])
+@login_required
+def export_allocation_history():
+    """Export allocation history to CSV"""
+    try:
+        from app.models.financial import PSPAllocation
+        from datetime import datetime
+        import logging
+        import csv
+        import io
+        
+        logger = logging.getLogger(__name__)
+        
+        # Get query parameters
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
+        psp_filter = request.args.get('psp')
+        export_format = request.args.get('format', 'csv')  # csv, json
+        
+        # Build query (same as history endpoint)
+        query = PSPAllocation.query
+        
+        # Apply date filters
+        if start_date:
+            try:
+                start_date_obj = datetime.strptime(start_date, '%Y-%m-%d').date()
+                query = query.filter(PSPAllocation.date >= start_date_obj)
+            except ValueError:
+                return jsonify({'error': 'Invalid start_date format. Use YYYY-MM-DD'}), 400
+        
+        if end_date:
+            try:
+                end_date_obj = datetime.strptime(end_date, '%Y-%m-%d').date()
+                query = query.filter(PSPAllocation.date <= end_date_obj)
+            except ValueError:
+                return jsonify({'error': 'Invalid end_date format. Use YYYY-MM-DD'}), 400
+        
+        # Apply PSP filter
+        if psp_filter:
+            query = query.filter(PSPAllocation.psp_name.ilike(f'%{psp_filter}%'))
+        
+        # Order by date descending
+        query = query.order_by(PSPAllocation.date.desc(), PSPAllocation.created_at.desc())
+        
+        # Get all records (no pagination for export)
+        allocations = query.all()
+        
+        if export_format == 'csv':
+            # Create CSV response
+            output = io.StringIO()
+            writer = csv.writer(output)
+            
+            # Write header
+            writer.writerow([
+                'Date', 'PSP Name', 'Allocation Amount', 'Created At', 'Updated At'
+            ])
+            
+            # Write data
+            for allocation in allocations:
+                writer.writerow([
+                    allocation.date.isoformat(),
+                    allocation.psp_name,
+                    float(allocation.allocation_amount),
+                    allocation.created_at.isoformat(),
+                    allocation.updated_at.isoformat()
+                ])
+            
+            # Create response
+            output.seek(0)
+            response_data = output.getvalue()
+            output.close()
+            
+            # Generate filename with date range
+            filename = f"allocation_history_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+            
+            return Response(
+                response_data,
+                mimetype='text/csv',
+                headers={
+                    'Content-Disposition': f'attachment; filename={filename}',
+                    'Content-Type': 'text/csv; charset=utf-8'
+                }
+            )
+        
+        elif export_format == 'json':
+            # Create JSON response
+            history_data = []
+            for allocation in allocations:
+                history_data.append({
+                    'id': allocation.id,
+                    'date': allocation.date.isoformat(),
+                    'psp_name': allocation.psp_name,
+                    'allocation_amount': float(allocation.allocation_amount),
+                    'created_at': allocation.created_at.isoformat(),
+                    'updated_at': allocation.updated_at.isoformat()
+                })
+            
+            filename = f"allocation_history_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+            
+            return Response(
+                json.dumps(history_data, indent=2),
+                mimetype='application/json',
+                headers={
+                    'Content-Disposition': f'attachment; filename={filename}',
+                    'Content-Type': 'application/json; charset=utf-8'
+                }
+            )
+        
+        else:
+            return jsonify({'error': 'Invalid export format. Use csv or json'}), 400
+        
+    except Exception as e:
+        logger.error(f"Error exporting allocation history: {e}")
+        return jsonify({'error': 'Failed to export allocation history'}), 500
 
 @analytics_api.route("/update-allocation", methods=['POST'])
 @login_required
@@ -1640,12 +1928,102 @@ def get_dashboard_stats_optimized(start_date, end_date):
                 Transaction.created_at <= end_date
             ).first()
         
+        # Calculate revenue analytics (daily, weekly, monthly, annual)
+        from app.models.financial import PSPAllocation
+        
+        # Get current date
+        today = datetime.now().date()
+        
+        # Calculate daily revenue (today's allocations)
+        today_start = datetime.combine(today, datetime.min.time()).replace(tzinfo=timezone.utc)
+        today_end = datetime.combine(today, datetime.max.time()).replace(tzinfo=timezone.utc)
+        daily_allocations = PSPAllocation.query.filter(
+            PSPAllocation.date >= today_start.date(),
+            PSPAllocation.date <= today_end.date()
+        ).all()
+        daily_revenue = sum(float(allocation.allocation_amount) for allocation in daily_allocations)
+        
+        # Calculate weekly revenue (this week's allocations)
+        week_start = today - timedelta(days=today.weekday())
+        week_end = week_start + timedelta(days=6)
+        weekly_allocations = PSPAllocation.query.filter(
+            PSPAllocation.date >= week_start,
+            PSPAllocation.date <= week_end
+        ).all()
+        weekly_revenue = sum(float(allocation.allocation_amount) for allocation in weekly_allocations)
+        
+        # Calculate monthly revenue (this month's allocations)
+        month_start = today.replace(day=1)
+        month_end = (month_start + timedelta(days=32)).replace(day=1) - timedelta(days=1)
+        monthly_allocations = PSPAllocation.query.filter(
+            PSPAllocation.date >= month_start,
+            PSPAllocation.date <= month_end
+        ).all()
+        monthly_revenue = sum(float(allocation.allocation_amount) for allocation in monthly_allocations)
+        
+        # Calculate annual revenue (this year's allocations)
+        year_start = today.replace(month=1, day=1)
+        year_end = today.replace(month=12, day=31)
+        annual_allocations = PSPAllocation.query.filter(
+            PSPAllocation.date >= year_start,
+            PSPAllocation.date <= year_end
+        ).all()
+        annual_revenue = sum(float(allocation.allocation_amount) for allocation in annual_allocations)
+        
+        # Calculate trends (comparing with previous periods)
+        # Daily trend (today vs yesterday)
+        yesterday = today - timedelta(days=1)
+        yesterday_allocations = PSPAllocation.query.filter(
+            PSPAllocation.date == yesterday
+        ).all()
+        yesterday_revenue = sum(float(allocation.allocation_amount) for allocation in yesterday_allocations)
+        daily_revenue_trend = ((daily_revenue - yesterday_revenue) / yesterday_revenue * 100) if yesterday_revenue > 0 else 0
+        
+        # Weekly trend (this week vs last week)
+        last_week_start = week_start - timedelta(days=7)
+        last_week_end = last_week_start + timedelta(days=6)
+        last_week_allocations = PSPAllocation.query.filter(
+            PSPAllocation.date >= last_week_start,
+            PSPAllocation.date <= last_week_end
+        ).all()
+        last_week_revenue = sum(float(allocation.allocation_amount) for allocation in last_week_allocations)
+        weekly_revenue_trend = ((weekly_revenue - last_week_revenue) / last_week_revenue * 100) if last_week_revenue > 0 else 0
+        
+        # Monthly trend (this month vs last month)
+        last_month_start = (month_start - timedelta(days=1)).replace(day=1)
+        last_month_end = month_start - timedelta(days=1)
+        last_month_allocations = PSPAllocation.query.filter(
+            PSPAllocation.date >= last_month_start,
+            PSPAllocation.date <= last_month_end
+        ).all()
+        last_month_revenue = sum(float(allocation.allocation_amount) for allocation in last_month_allocations)
+        monthly_revenue_trend = ((monthly_revenue - last_month_revenue) / last_month_revenue * 100) if last_month_revenue > 0 else 0
+        
+        # Annual trend (this year vs last year)
+        last_year_start = year_start.replace(year=year_start.year - 1)
+        last_year_end = year_end.replace(year=year_end.year - 1)
+        last_year_allocations = PSPAllocation.query.filter(
+            PSPAllocation.date >= last_year_start,
+            PSPAllocation.date <= last_year_end
+        ).all()
+        last_year_revenue = sum(float(allocation.allocation_amount) for allocation in last_year_allocations)
+        annual_revenue_trend = ((annual_revenue - last_year_revenue) / last_year_revenue * 100) if last_year_revenue > 0 else 0
+        
         return {
             'total_transactions': int(stats.total_transactions or 0),
             'total_revenue': float(stats.total_revenue or 0),
             'avg_transaction': float(stats.avg_transaction or 0),
             'unique_clients': int(stats.unique_clients or 0),
-            'total_commission': float(stats.total_commission or 0)
+            'total_commission': float(stats.total_commission or 0),
+            # Revenue Analytics
+            'daily_revenue': daily_revenue,
+            'weekly_revenue': weekly_revenue,
+            'monthly_revenue': monthly_revenue,
+            'annual_revenue': annual_revenue,
+            'daily_revenue_trend': daily_revenue_trend,
+            'weekly_revenue_trend': weekly_revenue_trend,
+            'monthly_revenue_trend': monthly_revenue_trend,
+            'annual_revenue_trend': annual_revenue_trend
         }
     except Exception as e:
         logging.error(f"Error getting dashboard stats: {str(e)}")

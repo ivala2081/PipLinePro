@@ -354,7 +354,7 @@ def get_clients():
 @transactions_api.route("/psp_summary_stats")
 @login_required
 def get_psp_summary_stats():
-    """Get PSP summary statistics"""
+    """Get PSP summary statistics including allocations"""
     try:
         logger.info("Starting PSP summary stats query...")
         
@@ -391,9 +391,17 @@ def get_psp_summary_stats():
             func.upper(Transaction.category).in_(['WD', 'WITHDRAW', 'WITHDRAWAL'])
         ).group_by(Transaction.psp).all()
         
+        # Get allocations from PSPAllocation table
+        from app.models.financial import PSPAllocation
+        psp_allocations = db.session.query(
+            PSPAllocation.psp_name,
+            func.sum(PSPAllocation.allocation_amount).label('total_allocations')
+        ).group_by(PSPAllocation.psp_name).all()
+        
         # Create lookup dictionaries
         deposits_dict = {psp.psp: float(psp.total_deposits_try) if psp.total_deposits_try else 0.0 for psp in psp_deposits}
         withdrawals_dict = {psp.psp: float(psp.total_withdrawals_try) if psp.total_withdrawals_try else 0.0 for psp in psp_withdrawals}
+        allocations_dict = {psp.psp_name: float(psp.total_allocations) if psp.total_allocations else 0.0 for psp in psp_allocations}
         
         logger.info(f"PSP stats query completed, found {len(psp_stats)} PSPs")
         
@@ -403,6 +411,9 @@ def get_psp_summary_stats():
             total_deposits = deposits_dict.get(psp.psp, 0.0)
             total_withdrawals = withdrawals_dict.get(psp.psp, 0.0)
             total_amount = total_deposits - total_withdrawals  # Net total (deposits - withdrawals)
+            
+            # Get total allocations for this PSP
+            total_allocations = allocations_dict.get(psp.psp, 0.0)
             
             # Get the actual commission rate for this PSP from options (no defaults)
             commission_rate = None
@@ -434,6 +445,7 @@ def get_psp_summary_stats():
                 'total_withdrawals': total_withdrawals,
                 'total_commission': total_commission,
                 'total_net': total_net,
+                'total_allocations': total_allocations,
                 'transaction_count': psp.transaction_count,
                 'commission_rate': commission_rate
             })

@@ -22,6 +22,11 @@ export const formatCurrency = (
   currency: string = '₺', // Default to Turkish Lira symbol
   locale: string = 'en-US'
 ): string => {
+  // Handle NaN, null, undefined, or invalid numbers
+  if (isNaN(amount) || amount === null || amount === undefined) {
+    return `${currency}0`;
+  }
+
   // Map internal currency codes to valid ISO 4217 codes for Intl.NumberFormat
   const CURRENCY_MAP: { [key: string]: string } = {
     '₺': 'TRY',  // Turkish Lira symbol → TRY
