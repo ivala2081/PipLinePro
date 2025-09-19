@@ -26,14 +26,14 @@ import './styles/accessibility-enhanced.css'; // Professional accessibility enha
 const Dashboard = lazy(() => import('./pages/ModernDashboardPage'));
 const Analytics = lazy(() => import('./pages/Analytics'));
 const Login = lazy(() => import('./pages/Login'));
-const Clients = lazy(() => import('./pages/clients'));
+const Clients = lazy(() => import('./pages/Clients'));
 const Agents = lazy(() => import('./pages/Agents'));
 const Ledger = lazy(() => import('./pages/Ledger'));
 const Settings = lazy(() => import('./pages/Settings'));
 const Reports = lazy(() => import('./pages/Reports'));
 const BusinessAnalytics = lazy(() => import('./pages/BusinessAnalytics'));
 const SystemMonitor = lazy(() => import('./pages/SystemMonitor'));
-const Transactions = lazy(() => import('./pages/transactions'));
+const Transactions = lazy(() => import('./pages/Transactions'));
 const AddTransaction = lazy(() => import('./pages/AddTransaction'));
 const Accounting = lazy(() => import('./pages/Accounting'));
 const RevenueAnalytics = lazy(() => import('./pages/RevenueAnalytics'));

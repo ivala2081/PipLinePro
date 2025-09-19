@@ -39,7 +39,7 @@ import TransactionDetailView from '../components/TransactionDetailView';
 import TransactionEditForm from '../components/TransactionEditForm';
 // Removed old ProfessionalLayout imports - using modern design system
 import DailyTransactionSummary from '../components/DailyTransactionSummary';
-import Clients from './clients';
+import Clients from './Clients';
 import { RevenueChart } from '../components/modern/RevenueChart';
 import { MetricCard, ProgressRing, MiniChart } from '../components/DataVisualization';
 import { 
