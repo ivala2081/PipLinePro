@@ -288,6 +288,21 @@ class DatabaseOptimizationService:
         try:
             logger.info("Creating performance indexes...")
             
+            # Check database integrity first
+            from app.services.database_recovery_service import database_recovery_service
+            integrity_check = database_recovery_service.check_database_integrity()
+            
+            if integrity_check['corrupted']:
+                logger.error("Database is corrupted, cannot create indexes")
+                return {
+                    'status': 'error',
+                    'indexes_created': 0,
+                    'errors': ['Database is corrupted - run database recovery first'],
+                    'message': 'Database corruption detected. Please run database recovery before creating indexes.',
+                    'corruption_detected': True,
+                    'integrity_check': integrity_check
+                }
+            
             indexes_created = 0
             errors = []
             
@@ -348,10 +363,21 @@ class DatabaseOptimizationService:
                     else:
                         logger.info(f"Index already exists: {index_def['name']}")
                         
-                except Exception as index_error:
+                except SQLAlchemyError as index_error:
                     error_msg = f"Failed to create index {index_def['name']}: {str(index_error)}"
                     logger.warning(error_msg)
                     errors.append(error_msg)
+                    
+                    # Check if this is a corruption-related error
+                    if 'database disk image is malformed' in str(index_error).lower():
+                        logger.error("Database corruption detected during index creation")
+                        return {
+                            'status': 'error',
+                            'indexes_created': indexes_created,
+                            'errors': errors + ['Database corruption detected'],
+                            'message': 'Database corruption detected during index creation. Please run database recovery.',
+                            'corruption_detected': True
+                        }
             
             # Commit all index creations
             db.session.commit()
@@ -363,6 +389,26 @@ class DatabaseOptimizationService:
                 'message': f'Successfully created {indexes_created} performance indexes'
             }
             
+        except SQLAlchemyError as e:
+            logger.error(f"Database error creating performance indexes: {str(e)}")
+            db.session.rollback()
+            
+            # Check if this is a corruption-related error
+            if 'database disk image is malformed' in str(e).lower():
+                return {
+                    'status': 'error',
+                    'indexes_created': 0,
+                    'errors': [str(e)],
+                    'message': 'Database corruption detected. Please run database recovery.',
+                    'corruption_detected': True
+                }
+            
+            return {
+                'status': 'error',
+                'indexes_created': 0,
+                'errors': [str(e)],
+                'message': f'Failed to create performance indexes: {str(e)}'
+            }
         except Exception as e:
             logger.error(f"Error creating performance indexes: {str(e)}")
             db.session.rollback()

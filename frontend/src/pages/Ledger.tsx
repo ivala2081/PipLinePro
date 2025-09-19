@@ -1209,7 +1209,7 @@ export default function Ledger() {
         </TabsList>
 
         {/* Tab Content */}
-        <TabsContent value="overview" className="space-y-6">
+        <TabsContent value="overview" className="mt-8 space-y-8">
           {/* Enhanced Stats Cards Section */}
           <UnifiedCard variant="elevated" className="mb-6">
             <CardHeader>
@@ -1412,7 +1412,7 @@ export default function Ledger() {
           </UnifiedCard>
         </TabsContent>
 
-        <TabsContent value="ledger" className="space-y-8">
+        <TabsContent value="ledger" className="mt-8 space-y-8">
           {/* Enhanced Filters Section with Modern Design */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-b border-gray-200">
@@ -2030,7 +2030,7 @@ export default function Ledger() {
 
 
         {/* Analytics Tab Content */}
-        <TabsContent value="analytics" className="space-y-6">
+        <TabsContent value="analytics" className="mt-8 space-y-8">
           {/* Analytics Header */}
           <div className="flex items-center justify-between">
                   <div>
@@ -2472,7 +2472,7 @@ export default function Ledger() {
         </TabsContent>
 
         {/* History Tab Content */}
-        <TabsContent value="history" className="space-y-6">
+        <TabsContent value="history" className="mt-8 space-y-8">
           {/* History Header with Filters and Export */}
             <UnifiedCard variant="elevated" className="mb-6">
               <CardHeader>

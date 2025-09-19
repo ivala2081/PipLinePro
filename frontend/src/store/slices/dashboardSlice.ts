@@ -305,97 +305,81 @@ export const fetchDashboardData = createAsyncThunk(
   'dashboard/fetchDashboardData',
   async (timeRange: string, { rejectWithValue }) => {
     try {
-      // Use the new consolidated endpoint instead of multiple separate calls
-      const response = await api.get(`/api/v1/analytics/consolidated-dashboard?range=${timeRange}`);
-      const consolidatedData = await api.parseResponse(response);
+      // Use the dashboard stats endpoint instead of consolidated endpoint
+      const response = await api.get(`/api/v1/analytics/dashboard/stats?range=${timeRange}`);
+      const dashboardData = await api.parseResponse(response);
 
-      if (!consolidatedData.success) {
-        throw new Error(consolidatedData.error || 'Failed to fetch consolidated dashboard data');
-      }
-
-      const { data } = consolidatedData;
+      // The dashboard stats endpoint returns data directly, not wrapped in success/data structure
+      const data = dashboardData;
 
       return {
         dashboardData: {
           stats: {
             total_revenue: {
-              value: `₺${data.dashboard_stats.total_revenue.toLocaleString()}`,
-              change: data.dashboard_stats.total_revenue > 0 ? 'N/A' : '0%',
+              value: data.stats?.total_revenue?.value || '₺0',
+              change: 'N/A',
               changeType: 'positive' as const,
             },
             total_transactions: {
-              value: data.dashboard_stats.total_transactions.toString(),
-              change: data.dashboard_stats.total_transactions > 0 ? 'N/A' : '0%',
+              value: data.stats?.total_transactions?.value || '0',
+              change: 'N/A',
               changeType: 'positive' as const,
             },
             active_clients: {
-              value: data.dashboard_stats.unique_clients.toString(),
-              change: data.dashboard_stats.unique_clients > 0 ? 'N/A' : '0%',
+              value: data.stats?.active_clients?.value || '0',
+              change: 'N/A',
               changeType: 'positive' as const,
             },
           },
-          recent_transactions: [], // Would be populated from transaction data
+          recent_transactions: data.recent_transactions || [],
           summary: {
-            total_revenue: data.dashboard_stats.total_revenue,
-            total_commission: data.dashboard_stats.total_commission,
-            total_net: data.dashboard_stats.total_revenue - data.dashboard_stats.total_commission,
-            transaction_count: data.dashboard_stats.total_transactions,
-            active_clients: data.dashboard_stats.unique_clients,
+            total_revenue: data.summary?.total_revenue || 0,
+            total_commission: data.summary?.total_commission || 0,
+            total_net: data.summary?.total_net || 0,
+            transaction_count: data.summary?.transaction_count || 0,
+            active_clients: data.summary?.active_clients || 0,
             // Revenue Analytics
-            daily_revenue: data.dashboard_stats.daily_revenue || 0,
-            weekly_revenue: data.dashboard_stats.weekly_revenue || 0,
-            monthly_revenue: data.dashboard_stats.monthly_revenue || 0,
-            annual_revenue: data.dashboard_stats.annual_revenue || 0,
-            daily_revenue_trend: data.dashboard_stats.daily_revenue_trend || 0,
-            weekly_revenue_trend: data.dashboard_stats.weekly_revenue_trend || 0,
-            monthly_revenue_trend: data.dashboard_stats.monthly_revenue_trend || 0,
-            annual_revenue_trend: data.dashboard_stats.annual_revenue_trend || 0,
+            daily_revenue: data.summary?.daily_revenue || 0,
+            weekly_revenue: data.summary?.weekly_revenue || 0,
+            monthly_revenue: data.summary?.monthly_revenue || 0,
+            annual_revenue: data.summary?.annual_revenue || 0,
+            daily_revenue_trend: data.summary?.daily_revenue_trend || 0,
+            weekly_revenue_trend: data.summary?.weekly_revenue_trend || 0,
+            monthly_revenue_trend: data.summary?.monthly_revenue_trend || 0,
+            annual_revenue_trend: data.summary?.annual_revenue_trend || 0,
           },
           chart_data: {
-            daily_revenue: data.revenue_trends.map((trend: any) => ({
+            daily_revenue: data.chart_data?.daily_revenue?.map((trend: any) => ({
               date: trend.date,
-              amount: trend.revenue,
-            })),
+              amount: trend.revenue || trend.amount,
+            })) || [],
             monthly_trends: [], // Would be populated from monthly data
-            client_distribution: data.client_analytics.map((client: any) => ({
-              name: client.client,
-              value: client.total_volume,
-            })),
+            client_distribution: [], // Would be populated from client data
           },
-          revenue_trends: data.revenue_trends.map((trend: any) => ({
+          revenue_trends: data.revenue_trends?.map((trend: any) => ({
             date: trend.date,
-            revenue: trend.revenue,
-          })),
+            revenue: trend.revenue || trend.amount,
+          })) || [],
         },
         topPerformers: {
-          volume_leaders: data.top_performers.map((performer: any) => ({
-            client_name: performer.client,
-            total_volume: performer.revenue,
-            transaction_count: performer.transactions,
-            average_transaction: performer.revenue / performer.transactions,
-          })),
-          count_leaders: data.top_performers.map((performer: any) => ({
-            client_name: performer.client,
-            transaction_count: performer.transactions,
-            total_volume: performer.revenue,
-            average_transaction: performer.revenue / performer.transactions,
-          })),
+          volume_leaders: [], // Would be populated from separate API call
+          count_leaders: [], // Would be populated from separate API call
           period: `Last ${timeRange}`,
         },
         revenueTrends: {
           success: true,
           data: {
-            daily_revenue: data.revenue_trends.map((trend: any) => ({
+            daily_revenue: data.revenue_trends?.map((trend: any) => ({
               date: trend.date,
-              revenue: trend.revenue,
+              revenue: trend.revenue || trend.amount,
               commission: 0, // Would be calculated from commission data
-              net: trend.revenue,
-              transactions: trend.transactions,
-            })),
+              net: trend.revenue || trend.amount,
+              transactions: trend.transactions || 0,
+            })) || [],
             metrics: {
-              total_revenue: data.dashboard_stats.total_revenue,
-              total_transactions: data.dashboard_stats.total_transactions,
-              avg_transaction_value: data.dashboard_stats.avg_transaction,
+              total_revenue: data.summary?.total_revenue || 0,
+              total_transactions: data.summary?.total_transactions || 0,
+              avg_transaction_value: (data.summary?.total_revenue || 0) / (data.summary?.total_transactions || 1),
               revenue_growth_percent: 15.2, // Would be calculated from trends
               profit_margin: 85.0, // Would be calculated
             },
@@ -414,11 +398,15 @@ export const fetchSecondaryData = createAsyncThunk(
     try {
       // Get the state to access the data that was already fetched by fetchDashboardData
       const state = getState() as { dashboard: DashboardState };
-      const { dashboardData, topPerformers, revenueTrends } = state.dashboard;
+      const { dashboardData, revenueTrends } = state.dashboard;
 
-      if (!dashboardData || !topPerformers || !revenueTrends) {
+      if (!dashboardData || !revenueTrends) {
         throw new Error('Primary dashboard data not available');
       }
+
+      // Fetch top performers data
+      const topPerformersResponse = await api.get(`/api/v1/analytics/top-performers?range=${timeRange}`);
+      const topPerformersData = await api.parseResponse(topPerformersResponse);
 
       // Fetch real data from API endpoints
       const [systemPerformanceRes, dataQualityRes, securityMetricsRes] = await Promise.all([
@@ -432,7 +420,12 @@ export const fetchSecondaryData = createAsyncThunk(
       const securityMetricsData = await api.parseResponse(securityMetricsRes);
 
       return {
-        systemPerformance: systemPerformanceData.success ? systemPerformanceData.data : {
+        topPerformers: {
+          volume_leaders: topPerformersData.volume_leaders || [],
+          count_leaders: topPerformersData.count_leaders || [],
+          period: `Last ${timeRange}`,
+        },
+        systemPerformance: systemPerformanceData || {
           api_response_time: 120,
           database_response_time: 45,
           uptime_percentage: 99.9,
@@ -441,7 +434,7 @@ export const fetchSecondaryData = createAsyncThunk(
           disk_usage: 26.2,
           system_health: 'healthy' as const,
         },
-        dataQuality: dataQualityData.success ? dataQualityData.data : {
+        dataQuality: dataQualityData || {
           overall_quality_score: 95.5,
           client_completeness: 98.2,
           amount_completeness: 99.8,
@@ -475,7 +468,7 @@ export const fetchSecondaryData = createAsyncThunk(
             last_delivery: new Date().toISOString(),
           },
         },
-        securityMetrics: securityMetricsData.success ? securityMetricsData.data : {
+        securityMetrics: securityMetricsData || {
           failed_logins: {
             today: 3,
             this_week: 12,
@@ -621,6 +614,9 @@ const dashboardSlice = createSlice({
       
       // fetchSecondaryData
       .addCase(fetchSecondaryData.fulfilled, (state, action) => {
+        if (action.payload.topPerformers) {
+          state.topPerformers = action.payload.topPerformers;
+        }
         if (action.payload.systemPerformance) {
           state.systemPerformance = action.payload.systemPerformance;
         }
@@ -703,6 +699,42 @@ export const fetchClientAnalytics = createAsyncThunk(
       };
     } catch (error) {
       return rejectWithValue(error instanceof Error ? error.message : 'Failed to fetch client analytics');
+    }
+  }
+);
+
+export const fetchTopPerformers = createAsyncThunk(
+  'dashboard/fetchTopPerformers',
+  async (timeRange: string, { rejectWithValue }) => {
+    try {
+      const response = await api.get(`/api/v1/analytics/top-performers?range=${timeRange}`);
+      const data = await api.parseResponse(response);
+      
+      return {
+        volume_leaders: data.volume_leaders || [],
+        count_leaders: data.count_leaders || [],
+        period: `Last ${timeRange}`,
+      };
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Failed to fetch top performers');
+    }
+  }
+);
+
+export const fetchPspRolloverData = createAsyncThunk(
+  'dashboard/fetchPspRolloverData',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await api.get('/api/v1/analytics/psp-rollover-summary');
+      const data = await api.parseResponse(response);
+      
+      return {
+        psps: data.psps || [],
+        total_rollover: data.total_rollover || 0,
+        period: 'Current',
+      };
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Failed to fetch PSP rollover data');
     }
   }
 );

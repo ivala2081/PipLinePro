@@ -52,30 +52,50 @@ export const RevenueChart: React.FC<RevenueChartProps> = ({
 }) => {
   // Transform API data to chart format
   const chartData = data && data.length > 0 ? data.map(item => {
-    const date = item.date ? new Date(item.date) : null;
-    let formattedDate = item.month;
+    // Handle different date formats from API
+    let date = null;
+    let formattedDate = 'Unknown';
     
-    if (date) {
+    // Try different date field names and formats
+    if (item.date) {
+      date = new Date(item.date);
+    } else if (item.created_at) {
+      date = new Date(item.created_at);
+    } else if (item.transaction_date) {
+      date = new Date(item.transaction_date);
+    }
+    
+    if (date && !isNaN(date.getTime())) {
       // Format based on data density - if we have many data points, show shorter format
       if (data.length > 30) {
-        formattedDate = date.toLocaleDateString('en-US', { month: 'short' });
+        formattedDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
       } else if (data.length > 7) {
         formattedDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
       } else {
         formattedDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
       }
+    } else if (item.month) {
+      // Fallback to month field if available
+      formattedDate = item.month;
     }
     
     return {
       month: formattedDate,
-      revenue: item.amount || item.revenue || 0,
-      amount: item.amount || item.revenue || 0,
+      revenue: item.amount || item.revenue || item.total_amount || 0,
+      amount: item.amount || item.revenue || item.total_amount || 0,
       deposits: item.deposits || 0,
       withdrawals: item.withdrawals || 0,
-      transactions: item.transactions || 0,
+      transactions: item.transactions || item.transaction_count || 0,
       transaction_count: item.transaction_count || item.transactions || 0,
-      clients: item.clients || 0
+      clients: item.clients || 0,
+      date: date // Keep original date for sorting
     };
+  }).sort((a, b) => {
+    // Sort by date if available
+    if (a.date && b.date) {
+      return a.date.getTime() - b.date.getTime();
+    }
+    return 0;
   }) : mockData;
 
   // Debug logging
@@ -83,6 +103,12 @@ export const RevenueChart: React.FC<RevenueChartProps> = ({
   console.log('RevenueChart - Sample raw data:', data?.slice(0, 5));
   console.log('RevenueChart - Chart data length:', chartData.length);
   console.log('RevenueChart - Sample chart data:', chartData.slice(0, 5));
+  console.log('RevenueChart - Date range:', {
+    first: chartData[0]?.month,
+    last: chartData[chartData.length - 1]?.month,
+    firstDate: (chartData[0] as any)?.date,
+    lastDate: (chartData[chartData.length - 1] as any)?.date
+  });
 
 
   const formatCurrency = (value: number) => {
@@ -97,26 +123,30 @@ export const RevenueChart: React.FC<RevenueChartProps> = ({
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
+      const amount = data.amount || data.revenue || 0;
+      const isZero = amount === 0;
+      
       return (
         <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-4 min-w-[200px]">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+              <div className={`w-2 h-2 rounded-full ${isZero ? 'bg-gray-400' : 'bg-blue-500'}`}></div>
               <span className="font-semibold text-gray-900">{label}</span>
+              {isZero && <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">No Activity</span>}
             </div>
             
             <div className="border-t border-gray-100 pt-2 space-y-1">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-600">Net Revenue:</span>
-                <span className={`font-semibold ${data.amount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {formatCurrency(data.amount || data.revenue || 0)}
+                <span className={`font-semibold ${isZero ? 'text-gray-500' : amount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {isZero ? '₺0' : formatCurrency(amount)}
                 </span>
               </div>
               
               {data.deposits !== undefined && (
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">Deposits:</span>
-                  <span className="text-sm font-medium text-green-600">
+                  <span className={`text-sm font-medium ${isZero ? 'text-gray-500' : 'text-green-600'}`}>
                     +{formatCurrency(data.deposits)}
                   </span>
                 </div>
@@ -125,7 +155,7 @@ export const RevenueChart: React.FC<RevenueChartProps> = ({
               {data.withdrawals !== undefined && (
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">Withdrawals:</span>
-                  <span className="text-sm font-medium text-red-600">
+                  <span className={`text-sm font-medium ${isZero ? 'text-gray-500' : 'text-red-600'}`}>
                     -{formatCurrency(data.withdrawals)}
                   </span>
                 </div>
@@ -134,7 +164,7 @@ export const RevenueChart: React.FC<RevenueChartProps> = ({
               {data.transaction_count !== undefined && (
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">Transactions:</span>
-                  <span className="text-sm font-medium text-gray-700">
+                  <span className={`text-sm font-medium ${isZero ? 'text-gray-500' : 'text-gray-700'}`}>
                     {data.transaction_count}
                   </span>
                 </div>
@@ -143,7 +173,7 @@ export const RevenueChart: React.FC<RevenueChartProps> = ({
               {data.clients !== undefined && (
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">Clients:</span>
-                  <span className="text-sm font-medium text-gray-700">
+                  <span className={`text-sm font-medium ${isZero ? 'text-gray-500' : 'text-gray-700'}`}>
                     {data.clients}
                   </span>
                 </div>
@@ -342,17 +372,24 @@ export const RevenueChart: React.FC<RevenueChartProps> = ({
               <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
               <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
             </linearGradient>
+            <linearGradient id="colorRevenueZero" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#94a3b8" stopOpacity={0.2}/>
+              <stop offset="95%" stopColor="#94a3b8" stopOpacity={0}/>
+            </linearGradient>
           </defs>
           <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
           <XAxis 
             dataKey="month" 
             stroke="#64748b"
             fontSize={12}
+            interval="preserveStartEnd"
+            tick={{ fontSize: 11 }}
           />
           <YAxis 
             stroke="#64748b"
             fontSize={12}
             tickFormatter={formatCurrency}
+            domain={['dataMin - 100000', 'dataMax + 100000']}
           />
           <Tooltip content={<CustomTooltip />} />
           <Area
@@ -361,6 +398,7 @@ export const RevenueChart: React.FC<RevenueChartProps> = ({
             stroke="#3b82f6"
             strokeWidth={2}
             fill="url(#colorRevenue)"
+            dot={false}
           />
         </AreaChart>
       )}

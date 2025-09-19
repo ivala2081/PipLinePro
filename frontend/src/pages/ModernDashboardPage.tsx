@@ -1,5 +1,5 @@
 import React from 'react';
-import { ModernDashboard } from '../components/modern/ModernDashboard';
+import ModernDashboard from '../components/modern/ModernDashboard';
 import { useAuth } from '../contexts/AuthContext';
 
 const ModernDashboardPage: React.FC = () => {

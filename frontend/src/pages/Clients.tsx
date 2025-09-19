@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 import { handleApiError, getUserFriendlyMessage } from '../utils/errorHandler';
+import { getRadius, getSectionSpacing } from '../utils/spacingUtils';
 import {
   BarChart3,
   Users,
@@ -79,6 +80,7 @@ import {
   UnifiedGrid 
 } from '../design-system';
 import { Breadcrumb } from '../components/ui';
+// Using Unified components for consistency
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
@@ -2946,7 +2948,7 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
 
       {/* Tab Navigation */}
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="grid w-full grid-cols-5 bg-gray-50/80 border border-gray-200/60 shadow-sm">
+        <TabsList className={`grid w-full grid-cols-5 bg-gray-50/80 border border-gray-200/60 ${getRadius('md')} shadow-sm`}>
           <TabsTrigger value="overview" className="group flex items-center gap-2 transition-all duration-300 ease-in-out hover:bg-white/90 hover:shadow-md hover:scale-[1.02] data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-gray-200">
             <BarChart3 className="h-4 w-4 transition-all duration-300 ease-in-out group-hover:scale-110 group-hover:text-blue-600" />
             <span className="transition-all duration-300 ease-in-out group-hover:font-semibold">Overview</span>
@@ -2970,7 +2972,7 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
         </TabsList>
 
         {/* Tab Content */}
-        <TabsContent value="overview" className="space-y-6">
+        <TabsContent value="overview" className={`${getSectionSpacing('lg').margin} ${getSectionSpacing('lg').padding}`}>
           {/* Professional Financial Metrics Section */}
           <UnifiedCard variant="elevated" className="mb-6">
             <CardHeader>
@@ -3113,7 +3115,7 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
 
         </TabsContent>
 
-        <TabsContent value="transactions" className="space-y-6">
+        <TabsContent value="transactions" className={`${getSectionSpacing('lg').margin} ${getSectionSpacing('lg').padding}`}>
           {/* Transactions Header Section */}
           <UnifiedCard>
             <CardHeader>
@@ -3705,7 +3707,7 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
 
         </TabsContent>
 
-        <TabsContent value="analytics" className="space-y-6">
+        <TabsContent value="analytics" className={`${getSectionSpacing('lg').margin} ${getSectionSpacing('lg').padding}`}>
           {/* Analytics Overview Section */}
           <UnifiedCard>
             <CardHeader>
@@ -4016,7 +4018,7 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
 
       </TabsContent>
 
-      <TabsContent value="clients" className="space-y-6">
+      <TabsContent value="clients" className={`${getSectionSpacing('lg').margin} ${getSectionSpacing('lg').padding}`}>
           {/* Clients Table */}
           <div className='bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden'>
             <div className='px-8 py-6 border-b border-gray-100'>
@@ -4136,7 +4138,7 @@ Mike Johnson,Global Inc,TR1122334455,Wire Transfer,DEP,5000.00,100.00,4900.00,GB
 
       </TabsContent>
 
-      <TabsContent value="accounting" className="space-y-6">
+      <TabsContent value="accounting" className={`${getSectionSpacing('lg').margin} ${getSectionSpacing('lg').padding}`}>
         {/* Accounting Overview Section */}
         <UnifiedCard>
           <CardHeader>

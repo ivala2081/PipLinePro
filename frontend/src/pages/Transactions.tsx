@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { getRadius, getSectionSpacing } from '../utils/spacingUtils';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import {
   Search,
@@ -1076,7 +1077,7 @@ export default function Transactions() {
 
         {/* Tabs Navigation */}
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-            <TabsList className="grid w-full grid-cols-4 bg-gray-50/80 border border-gray-200/60 shadow-sm">
+            <TabsList className={`grid w-full grid-cols-4 bg-gray-50/80 border border-gray-200/60 ${getRadius('md')} shadow-sm`}>
               <TabsTrigger value="overview" className="group flex items-center gap-2 transition-all duration-300 ease-in-out hover:bg-white/90 hover:shadow-md hover:scale-[1.02] data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-gray-200">
                 <BarChart3 className="h-4 w-4 transition-all duration-300 ease-in-out group-hover:scale-110 group-hover:text-blue-600" />
                 <span className="transition-all duration-300 ease-in-out group-hover:font-semibold">Overview</span>
@@ -1097,7 +1098,7 @@ export default function Transactions() {
 
           {/* Tab Content */}
 
-          <TabsContent value="overview" className="space-y-6">
+          <TabsContent value="overview" className={`${getSectionSpacing('lg').margin} ${getSectionSpacing('lg').padding}`}>
             {/* Overview Content */}
             <UnifiedCard variant="elevated" className="mb-6">
               <CardHeader>
@@ -1200,7 +1201,7 @@ export default function Transactions() {
             </UnifiedCard>
           </TabsContent>
 
-          <TabsContent value="transactions" className="space-y-6">
+          <TabsContent value="transactions" className={`${getSectionSpacing('lg').margin} ${getSectionSpacing('lg').padding}`}>
             {/* Error Display */}
             {error && (
               <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
@@ -1538,7 +1539,7 @@ export default function Transactions() {
         )}
           </TabsContent>
 
-          <TabsContent value="analytics" className="space-y-6">
+          <TabsContent value="analytics" className={`${getSectionSpacing('lg').margin} ${getSectionSpacing('lg').padding}`}>
             {/* Analytics Overview Section */}
             <UnifiedCard>
               <CardHeader>
@@ -1669,7 +1670,7 @@ export default function Transactions() {
             </UnifiedCard>
           </TabsContent>
 
-          <TabsContent value="accounting" className="space-y-6">
+          <TabsContent value="accounting" className={`${getSectionSpacing('lg').margin} ${getSectionSpacing('lg').padding}`}>
             {/* Accounting Overview Section */}
             <UnifiedCard>
               <CardHeader>

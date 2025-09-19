@@ -90,6 +90,11 @@ def generate_chart_data(time_range='7d'):
         if time_range == '7d':
             logging.info(f"Dynamic 7d range: Found latest transaction on {latest_transaction.date if latest_transaction else 'None'}")
             logging.info(f"Chart date range: {start_date.date()} to {end_date.date()}")
+        
+        # Enhanced debug logging for all time ranges
+        logging.info(f"Chart data generation - Time range: {time_range}")
+        logging.info(f"Date range: {start_date.date()} to {end_date.date()}")
+        logging.info(f"Found {len(transactions)} transactions in range")
         # Data validation
         if len(transactions) == 0:
             logging.warning(f"No transactions found for time range {time_range}")
@@ -203,6 +208,12 @@ def generate_chart_data(time_range='7d'):
         if non_zero_count == 0:
             logging.warning("FINAL: No non-zero amounts found in the data!")
         # Final count logging removed for performance
+        
+        # Log the actual data being returned
+        if daily_revenue:
+            logging.info(f"Returning {len(daily_revenue)} daily revenue entries")
+            logging.info(f"First entry: {daily_revenue[0]}")
+            logging.info(f"Last entry: {daily_revenue[-1]}")
         
         return {
             'daily_revenue': daily_revenue
@@ -454,9 +465,9 @@ def dashboard_stats():
                 'annual_revenue_trend': annual_revenue_trend
             },
             'chart_data': {
-                'daily_revenue': chart_data.get('daily_revenue', [])[:30]  # Limit to 30 days
+                'daily_revenue': chart_data.get('daily_revenue', [])[-30:] if time_range != 'all' else chart_data.get('daily_revenue', [])  # Limit to 30 days except for 'all'
             },
-            'revenue_trends': chart_data.get('daily_revenue', [])[:30]  # For the revenue trend chart
+            'revenue_trends': chart_data.get('daily_revenue', [])[-30:] if time_range != 'all' else chart_data.get('daily_revenue', [])  # For the revenue trend chart
         })
         
     except Exception as e:
@@ -958,7 +969,7 @@ def export_allocation_history():
 @analytics_api.route("/update-allocation", methods=['POST'])
 @login_required
 def update_allocation():
-    """Update PSP allocation for a specific date - CSRF disabled for development"""
+    """Update PSP allocation for a specific date"""
     try:
         from app.models.financial import PSPAllocation
         from datetime import datetime
@@ -968,22 +979,6 @@ def update_allocation():
         
         # Log request details for debugging
         logger.info(f"Allocation update request received: {request.get_json()}")
-        logger.info(f"CSRF token in headers: {request.headers.get('X-CSRFToken', 'Not found')}")
-        logger.info(f"Session CSRF token: {session.get('csrf_token', 'Not found')}")
-        logger.info(f"API CSRF token: {session.get('api_csrf_token', 'Not found')}")
-        
-        # Check if CSRF token matches any of the session tokens
-        header_token = request.headers.get('X-CSRFToken', '')
-        session_token = session.get('csrf_token', '')
-        api_token = session.get('api_csrf_token', '')
-        
-        if header_token and (header_token == session_token or header_token == api_token):
-            logger.info("CSRF token validation successful")
-        else:
-            logger.warning("CSRF token mismatch, but proceeding with allocation update")
-            logger.warning(f"Header: {header_token[:20]}...")
-            logger.warning(f"Session: {session_token[:20]}...")
-            logger.warning(f"API: {api_token[:20]}...")
         
         data = request.get_json()
         date_str = data.get('date')
@@ -1050,7 +1045,7 @@ def update_allocation():
 @analytics_api.route("/test-csrf", methods=['POST'])
 @login_required
 def test_csrf():
-    """Test endpoint to verify CSRF is working - CSRF disabled for development"""
+    """Test endpoint to verify CSRF is working"""
     try:
         import logging
         logger = logging.getLogger(__name__)

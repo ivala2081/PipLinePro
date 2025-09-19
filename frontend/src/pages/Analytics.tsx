@@ -18,6 +18,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
+import { getRadius, getSectionSpacing } from '../utils/spacingUtils';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
@@ -76,6 +77,11 @@ export default function Analytics() {
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const handleExportAnalytics = () => {
+    // TODO: Implement analytics data export functionality
+    alert('Analytics export functionality will be implemented soon');
+  };
   const [activeTab, setActiveTab] = useState('overview');
   const [refreshing, setRefreshing] = useState(false);
 
@@ -92,7 +98,7 @@ export default function Analytics() {
     {
       key: 'e',
       ctrlKey: true,
-      action: () => console.log('Export analytics data')
+      action: () => handleExportAnalytics()
     }
   ]);
 
@@ -325,7 +331,7 @@ export default function Analytics() {
                   id: 'export',
                   label: 'Export Data',
                   icon: <FileText className="h-4 w-4" />,
-                  action: () => console.log('Export analytics data'),
+                  action: () => handleExportAnalytics(),
                   variant: 'outline'
                 }
               ]} />
@@ -334,7 +340,7 @@ export default function Analytics() {
           
           {/* Tab Navigation */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-4 bg-gray-50/80 border border-gray-200/60 shadow-sm">
+            <TabsList className={`grid w-full grid-cols-4 bg-gray-50/80 border border-gray-200/60 ${getRadius('md')} shadow-sm`}>
               <TabsTrigger value="overview" className="group flex items-center gap-2 transition-all duration-300 ease-in-out hover:bg-white/90 hover:shadow-md hover:scale-[1.02] data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-gray-200">
                 <BarChart3 className="h-4 w-4 transition-all duration-300 ease-in-out group-hover:scale-110 group-hover:text-blue-600" />
                 <span className="transition-all duration-300 ease-in-out group-hover:font-semibold">Overview</span>
@@ -359,7 +365,7 @@ export default function Analytics() {
       <div className="p-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           {/* Overview Tab */}
-          <TabsContent value="overview" className="space-y-6">
+          <TabsContent value="overview" className={`${getSectionSpacing('lg').margin} ${getSectionSpacing('lg').padding}`}>
             {/* Quick Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {getQuickStats().map((stat, index) => (
@@ -409,7 +415,7 @@ export default function Analytics() {
           </TabsContent>
 
           {/* Performance Tab */}
-          <TabsContent value="performance" className="space-y-6">
+          <TabsContent value="performance" className={`${getSectionSpacing('lg').margin} ${getSectionSpacing('lg').padding}`}>
             {/* PSP Performance */}
             <UnifiedCard variant="elevated">
               <CardHeader>
@@ -504,7 +510,7 @@ export default function Analytics() {
           </TabsContent>
 
           {/* Clients Tab */}
-          <TabsContent value="clients" className="space-y-6">
+          <TabsContent value="clients" className={`${getSectionSpacing('lg').margin} ${getSectionSpacing('lg').padding}`}>
             <UnifiedCard variant="elevated">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -579,7 +585,7 @@ export default function Analytics() {
           </TabsContent>
 
           {/* Insights Tab */}
-          <TabsContent value="insights" className="space-y-6">
+          <TabsContent value="insights" className={`${getSectionSpacing('lg').margin} ${getSectionSpacing('lg').padding}`}>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <UnifiedCard variant="elevated">
                 <CardHeader>

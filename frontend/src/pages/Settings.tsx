@@ -1,4 +1,5 @@
 import { useState, useEffect, lazy, Suspense } from 'react';
+import { getRadius, getSectionSpacing } from '../utils/spacingUtils';
 import {
   Settings as SettingsIcon,
   Shield,
@@ -181,7 +182,7 @@ export default function Settings() {
 
       if (response.ok) {
         const data = await api.parseResponse(response);
-        console.log('DEBUG: Dropdown options data structure:', data);
+        // Debug logging removed for production
         setDropdownOptions(data || {});
       } else {
         console.error('Failed to fetch dropdown options');
@@ -235,7 +236,7 @@ export default function Settings() {
       setNewDepartment('');
       setShowDepartmentModal(false);
       
-      console.log('Department added:', newDepartment);
+      // Department added successfully
     } catch (error) {
       console.error('Error adding department:', error);
     }
@@ -270,7 +271,7 @@ export default function Settings() {
       setIsEditingDepartment(false);
       setShowDepartmentModal(false);
       
-      console.log('Department updated:', editingDepartment);
+      // Department updated successfully
     } catch (error) {
       console.error('Error updating department:', error);
     }
@@ -288,7 +289,7 @@ export default function Settings() {
       // Save to localStorage
       localStorage.setItem('systemDepartments', JSON.stringify(updatedDepartments));
       
-      console.log('Department deleted:', department);
+      // Department deleted successfully
     } catch (error) {
       console.error('Error deleting department:', error);
     }
@@ -493,16 +494,14 @@ export default function Settings() {
 
     // Check for duplicate values (excluding current option)
     const currentOptions = dropdownOptions[formData.field_name] || [];
-    console.log('DEBUG: Current options for field:', formData.field_name, currentOptions);
-    console.log('DEBUG: Looking for duplicate of:', formData.value.trim());
-    console.log('DEBUG: Current editing option ID:', editingOption.id);
+    // Debug logging removed for production
     
     const duplicateOption = currentOptions.find(option => 
       option.value === formData.value.trim() && option.id !== editingOption.id
     );
     
     if (duplicateOption) {
-      console.log('DEBUG: Found duplicate option:', duplicateOption);
+      // Duplicate option found
       alert(`An option with the value "${formData.value.trim()}" already exists for ${fieldType?.label || formData.field_name} field`);
       return;
     }
@@ -1809,7 +1808,7 @@ export default function Settings() {
           
           {/* Tab Navigation */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-7">
+            <TabsList className={`grid w-full grid-cols-7 bg-gray-50/80 border border-gray-200/60 ${getRadius('md')} shadow-sm`}>
               <TabsTrigger value="general" className="flex items-center gap-2">
                 <SettingsIcon className="h-4 w-4" />
                 General
@@ -1846,7 +1845,7 @@ export default function Settings() {
       <div className="p-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           {tabs.map(tab => (
-            <TabsContent key={tab.id} value={tab.id} className="space-y-6">
+            <TabsContent key={tab.id} value={tab.id} className={`${getSectionSpacing('lg').margin} ${getSectionSpacing('lg').padding}`}>
               {tab.content}
             </TabsContent>
           ))}

@@ -422,6 +422,31 @@ class DashboardService {
   }
 
   /**
+   * Get PSP rollover summary
+   */
+  async getPspRolloverSummary(): Promise<any> {
+    try {
+      const response = await fetch(`${this.baseUrl}/analytics/psp-rollover-summary`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error fetching PSP rollover summary:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Refresh dashboard data
    */
   async refreshDashboard(timeRange: string = 'all'): Promise<DashboardData> {

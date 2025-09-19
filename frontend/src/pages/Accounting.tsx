@@ -242,7 +242,7 @@ export default function Accounting() {
         </TabsList>
 
         {/* Tab Content */}
-        <TabsContent value="overview" className="space-y-6">
+        <TabsContent value="overview" className="mt-8 space-y-8">
           <div className="p-6">
             {/* Financial Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
@@ -359,7 +359,7 @@ export default function Accounting() {
           </div>
         </TabsContent>
 
-        <TabsContent value="clients" className="space-y-6">
+        <TabsContent value="clients" className="mt-8 space-y-8">
           <div className="p-6">
             <UnifiedCard variant="elevated">
               <CardHeader>
@@ -373,7 +373,7 @@ export default function Accounting() {
           </div>
         </TabsContent>
 
-        <TabsContent value="transactions" className="space-y-6">
+        <TabsContent value="transactions" className="mt-8 space-y-8">
           <div className="p-6">
             <UnifiedCard variant="elevated">
               <CardHeader>
@@ -387,7 +387,7 @@ export default function Accounting() {
           </div>
         </TabsContent>
 
-        <TabsContent value="analytics" className="space-y-6">
+        <TabsContent value="analytics" className="mt-8 space-y-8">
           <div className="p-6">
             <UnifiedCard variant="elevated">
               <CardHeader>
@@ -401,7 +401,7 @@ export default function Accounting() {
           </div>
         </TabsContent>
 
-        <TabsContent value="accounting" className="space-y-6">
+        <TabsContent value="accounting" className="mt-8 space-y-8">
           <div className="p-6">
             <UnifiedCard variant="elevated">
               <CardHeader>

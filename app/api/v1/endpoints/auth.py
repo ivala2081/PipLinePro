@@ -1,7 +1,7 @@
 """
 API Authentication endpoints for React frontend
 """
-from flask import Blueprint, request, jsonify, session
+from flask import Blueprint, request, jsonify, session, current_app
 from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.security import check_password_hash
 from datetime import datetime, timezone, timedelta
@@ -114,6 +114,7 @@ def get_csrf_token():
         }), 500
 
 @auth_api.route('/check', methods=['GET'])
+@limiter.limit("30 per minute")
 def check_auth():
     """Check if user is authenticated"""
     try:
@@ -123,6 +124,31 @@ def check_auth():
         logger.debug(f"Auth check - session: {dict(session)}")
         
         if current_user.is_authenticated:
+            # Check session timeout
+            try:
+                session_timeout = current_app.config.get('PERMANENT_SESSION_LIFETIME')
+                if session_timeout and session.get('_session_created'):
+                    session_created = session.get('_session_created')
+                    if isinstance(session_created, str):
+                        # Parse string datetime
+                        session_created = datetime.fromisoformat(session_created.replace('Z', '+00:00'))
+                    elif not isinstance(session_created, datetime):
+                        # If not a datetime object, skip timeout check
+                        session_created = None
+                    
+                    if session_created:
+                        session_age = datetime.now(timezone.utc) - session_created
+                        if session_age > session_timeout:
+                            # Session expired, logout user
+                            logout_user()
+                            return jsonify({
+                                'authenticated': False,
+                                'message': 'Session expired'
+                            }), 401
+            except Exception as e:
+                logger.warning(f"Session timeout check failed: {str(e)}")
+                # Continue with normal authentication if timeout check fails
+            
             return jsonify({
                 'authenticated': True,
                 'user': current_user.to_dict(),
@@ -184,6 +210,8 @@ def api_login():
                 # Create session token
                 session_token = str(uuid.uuid4())
                 session['session_token'] = session_token
+                session['_session_created'] = datetime.now(timezone.utc).isoformat()
+                session.permanent = True
 
                 # Store session in database
                 user_session = UserSession(

@@ -5,11 +5,18 @@ import { fetchClientAnalytics } from '../../store/slices/dashboardSlice';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
+import { 
+  UnifiedCard, 
+  UnifiedButton, 
+  UnifiedBadge, 
+  UnifiedSection, 
+  UnifiedGrid 
+} from '../../design-system';
+import { Breadcrumb } from '../ui';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { RevenueChart } from './RevenueChart';
 import { DataTable } from './DataTable';
 import { SkeletonLoader } from './SkeletonLoader';
-import { UnifiedCard, UnifiedButton, UnifiedBadge, UnifiedSection, UnifiedGrid } from '../../design-system';
 import { dashboardService, DashboardData, SystemPerformance, DataQuality, SecurityMetrics } from '../../services/dashboardService';
 import { ExcelExportService } from '../../services/excelExportService';
 import { getStatusColor, getHealthColor, getPerformanceColor, getUsageColor, getPriorityColor, statusText } from '../../utils/colorUtils';
@@ -37,33 +44,29 @@ import {
   Globe,
   Plus,
   FileText,
-  Download
+  Download,
+  TrendingUp,
+  Filter,
+  Search
 } from 'lucide-react';
 
 interface ModernDashboardProps {
   user?: {
     username?: string;
   };
-  pspRolloverData?: {
-    psps: Array<{
-      psp: string;
-      total_rollover: number;
-      total_net: number;
-      total_allocations: number;
-      transaction_count: number;
-    }>;
-  };
 }
 
-export const ModernDashboard: React.FC<ModernDashboardProps> = ({ user, pspRolloverData }) => {
+const ModernDashboard: React.FC<ModernDashboardProps> = ({ user }) => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { clientAnalytics } = useAppSelector((state) => state.dashboard);
   
   const [activeView, setActiveView] = useState('overview');
+  const [timeRange, setTimeRange] = useState('all');
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showZeroValues, setShowZeroValues] = useState(true);
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [systemPerformance, setSystemPerformance] = useState<SystemPerformance | null>(null);
   const [dataQuality, setDataQuality] = useState<DataQuality | null>(null);
@@ -73,7 +76,7 @@ export const ModernDashboard: React.FC<ModernDashboardProps> = ({ user, pspRollo
   const [showAllActivities, setShowAllActivities] = useState(false);
   const [lastSystemUpdate, setLastSystemUpdate] = useState<Date>(new Date());
   const [exchangeRates, setExchangeRates] = useState<any>(null);
-  const [timeRange, setTimeRange] = useState('all');
+  const [pspRolloverData, setPspRolloverData] = useState<any>(null);
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
 
   // Generate quick stats from real data
@@ -469,14 +472,16 @@ export const ModernDashboard: React.FC<ModernDashboardProps> = ({ user, pspRollo
           dataQual,
           security,
           commission,
-          exchangeRates
+          exchangeRates,
+          pspRollover
         ] = await Promise.all([
           dashboardService.getDashboardStats(timeRange),
           dashboardService.getSystemPerformance(),
           dashboardService.getDataQuality(),
           dashboardService.getSecurityMetrics(),
           dashboardService.getCommissionAnalytics(timeRange),
-          dashboardService.getExchangeRates()
+          dashboardService.getExchangeRates(),
+          dashboardService.getPspRolloverSummary()
         ]);
 
         // Fetch client analytics separately using Redux
@@ -488,6 +493,21 @@ export const ModernDashboard: React.FC<ModernDashboardProps> = ({ user, pspRollo
         setSecurityMetrics(security);
         setCommissionAnalytics(commission);
         setExchangeRates(exchangeRates);
+        setPspRolloverData(pspRollover);
+        
+        // Debug logging
+        console.log('🔍 Dashboard Data Debug:', {
+          dashboardStats: !!dashboardStats,
+          commission: !!commission,
+          exchangeRates: !!exchangeRates,
+          pspRollover: !!pspRollover,
+          commissionData: commission?.data,
+          exchangeRatesData: exchangeRates?.rates,
+          exchangeRatesSuccess: exchangeRates?.success,
+          exchangeRatesKeys: exchangeRates?.rates ? Object.keys(exchangeRates.rates) : [],
+          pspRolloverData: pspRollover?.data?.psps,
+          pspRolloverSample: pspRollover?.data?.psps?.[0] // Show first PSP data structure
+        });
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
         setError(error instanceof Error ? error.message : 'Failed to load dashboard data');
@@ -668,30 +688,31 @@ export const ModernDashboard: React.FC<ModernDashboardProps> = ({ user, pspRollo
   }
 
   return (
-    <main className={`flex-1 bg-gray-50`}>
-      <div className="px-6 py-6 space-y-4">
-      {/* Header Section */}
-      <div className={`flex flex-col lg:flex-row lg:items-center justify-between ${getGridSpacing('lg')}`}>
-        <div className={getTextSpacing('sm').margin}>
-          <div className={`flex items-center ${getComponentSpacing('sm').gap}`}>
-            <h1 className={getHeadingStyles('h5')}>
-              Dashboard Overview
-            </h1>
-            <Badge variant="outline" className={getUIStyles('badge')}>
-              <CheckCircle className="w-3 h-3 mr-1" />
-              System Operational
-            </Badge>
-          </div>
-          <p className={`${getBodyStyles('default')} text-muted-foreground max-w-2xl`}>
-            Welcome back, {user?.username || 'User'}! Here's what's happening with your business today.
-          </p>
+    <div className={`${getComponentSpacing('lg').padding}`}>
+      {/* Breadcrumb Navigation */}
+      <div className={`${getSectionSpacing('md').margin}`}>
+        <Breadcrumb 
+          items={[
+            { label: 'Dashboard', href: '/', current: true }
+          ]} 
+        />
         </div>
         
-        <div className={`flex items-center ${getComponentSpacing('sm').gap}`}>
+      {/* Page Header */}
+      <div className={`${getSectionSpacing('md').margin}`}>
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
+            <h1 className={`${getTypographyStyles('heading', 'h1')} flex items-center gap-3`}>
+              <BarChart3 className="h-8 w-8 text-gray-600" />
+              Dashboard
+            </h1>
+            <p className={`${getTypographyStyles('body', 'default')} mt-1`}>Business overview and analytics</p>
+          </div>
+          <div className="flex items-center gap-3">
           <select
             value={timeRange}
             onChange={(e) => setTimeRange(e.target.value)}
-            className={`${getTextSpacing('sm').padding} border border-border ${getRadius('md')} bg-background text-foreground ${getUIStyles('button')}`}
+              className={`px-3 py-1 ${getTypographyStyles('body', 'small')} border border-gray-300 ${getRadius('md')} bg-white`}
           >
             <option value="all">All Time</option>
             <option value="7d">Last 7 days</option>
@@ -700,27 +721,44 @@ export const ModernDashboard: React.FC<ModernDashboardProps> = ({ user, pspRollo
             <option value="6m">Last 6 months</option>
             <option value="1y">Last year</option>
           </select>
-          <Button 
+          <UnifiedButton 
+            variant="outline" 
+            size="sm" 
+            onClick={handleGenerateReport}
+            disabled={isGeneratingReport}
+            className="flex items-center gap-2 min-h-[44px] touch-manipulation"
+          >
+            <Download className="w-4 h-4" />
+            {isGeneratingReport ? 'Generating...' : 'Export'}
+          </UnifiedButton>
+          <UnifiedButton 
             variant="outline" 
             size="sm" 
             onClick={handleRefresh}
             disabled={refreshing}
+              className="flex items-center gap-2 min-h-[44px] touch-manipulation"
           >
-            <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
             {refreshing ? 'Loading...' : 'Refresh'}
-          </Button>
-          <Button variant="ghost" size="sm">
+          </UnifiedButton>
+          <UnifiedButton 
+            variant="ghost" 
+            size="sm"
+            onClick={() => navigate('/settings')}
+            className="min-h-[44px] touch-manipulation"
+          >
             <Settings className="w-4 h-4 mr-2" />
             Settings
-          </Button>
+          </UnifiedButton>
+          </div>
         </div>
       </div>
 
       {/* Quick Stats */}
-      <div className={`grid grid-cols-2 lg:grid-cols-4 ${getGridSpacing('lg')}`}>
+      <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 ${getGridSpacing('lg')} ${getSectionSpacing('lg').margin}`}>
         {getQuickStats().map((stat, index) => (
-          <Card key={index} className="border border-border">
-            <CardContent className={getCardSpacing('md').padding}>
+          <UnifiedCard key={index} variant="default">
+            <div className={getCardSpacing('md').padding}>
               <div className={`flex items-center justify-between ${getTextSpacing('md').margin}`}>
                 <div className={`${getComponentSpacing('xs').padding} border border-border ${getRadius('md')}`}>
                   <stat.icon className="w-4 h-4 text-foreground" />
@@ -730,15 +768,15 @@ export const ModernDashboard: React.FC<ModernDashboardProps> = ({ user, pspRollo
                 <p className={getUIStyles('label')}>{stat.label}</p>
                 <p className={getDataStyles('metric')}>{stat.value}</p>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </UnifiedCard>
         ))}
       </div>
 
       {/* Tabs */}
-      <Tabs value={activeView} onValueChange={setActiveView} className={getSectionSpacing('lg').margin}>
-        <div className={`flex flex-col sm:flex-row sm:items-center justify-between ${getGridSpacing('md')}`}>
-          <TabsList className="grid w-fit grid-cols-3">
+      <Tabs value={activeView} onValueChange={setActiveView} className="w-full">
+        <div className={`flex flex-col sm:flex-row sm:items-center justify-between ${getGridSpacing('md')} ${getSectionSpacing('md').margin}`}>
+          <TabsList className={`grid w-full grid-cols-3 bg-gray-50/80 border border-gray-200/60 ${getRadius('md')} shadow-sm`}>
             <TabsTrigger value="overview">
               <BarChart3 className="w-4 h-4 mr-2" />
               Overview
@@ -759,257 +797,211 @@ export const ModernDashboard: React.FC<ModernDashboardProps> = ({ user, pspRollo
         </div>
 
         {/* Overview Tab */}
-        <TabsContent value="overview" className={getSectionSpacing('lg').margin}>
+        <TabsContent value="overview" className={`${getSectionSpacing('lg').margin} ${getSectionSpacing('lg').padding}`}>
           {/* Professional Business Dashboard Layout */}
           
-          {/* Top Section: Revenue Analytics */}
-          <Card className="border border-border">
-            <CardHeader className="border-b border-border">
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="flex items-center gap-3">
-                    <BarChart3 className="w-5 h-5" />
-                    Revenue Analytics
-                  </CardTitle>
-                  <CardDescription className="mt-2">
-                    Your revenue performance over the selected period
-                  </CardDescription>
+          {/* Revenue Analytics Section */}
+          <UnifiedSection 
+            title="Revenue Analytics" 
+            description="Your revenue performance over the selected period"
+            actions={
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="showZeroValues"
+                    checked={showZeroValues}
+                    onChange={(e) => setShowZeroValues(e.target.checked)}
+                    className="w-4 h-4 text-primary bg-background border-border rounded focus:ring-primary focus:ring-2"
+                  />
+                  <label htmlFor="showZeroValues" className="text-sm text-muted-foreground whitespace-nowrap">
+                    Show zero values
+                  </label>
                 </div>
-                <Button variant="outline" size="sm">
+                <select 
+                  value={timeRange} 
+                  onChange={(e) => setTimeRange(e.target.value)}
+                  className="px-3 py-1 text-sm border border-border rounded-md bg-background"
+                >
+                  <option value="all">All Time</option>
+                  <option value="7d">Last 7 Days</option>
+                  <option value="30d">Last 30 Days</option>
+                  <option value="90d">Last 90 Days</option>
+                </select>
+                <UnifiedButton variant="outline" size="sm">
                   View Details
-                </Button>
+                </UnifiedButton>
               </div>
-            </CardHeader>
-            <CardContent className="p-6">
+            }
+          >
+            <UnifiedCard variant="elevated">
+              {/* Revenue Metrics Overview */}
+              {dashboardData?.summary && (
+                <div className="mb-6">
+                  <UnifiedGrid cols={4} gap="md">
+                    <div className="text-center p-4 bg-muted/50 rounded-lg">
+                      <div className="text-2xl font-bold text-primary">
+                        ₺{(dashboardData.summary as any).daily_revenue?.toLocaleString() || '0'}
+                      </div>
+                      <div className="text-sm text-muted-foreground">Daily Revenue</div>
+                      <div className={`text-xs mt-1 ${((dashboardData.summary as any).daily_revenue_trend || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {(dashboardData.summary as any).daily_revenue_trend >= 0 ? '+' : ''}{(dashboardData.summary as any).daily_revenue_trend?.toFixed(1) || '0'}%
+                      </div>
+                    </div>
+                    <div className="text-center p-4 bg-muted/50 rounded-lg">
+                      <div className="text-2xl font-bold text-primary">
+                        ₺{(dashboardData.summary as any).weekly_revenue?.toLocaleString() || '0'}
+                      </div>
+                      <div className="text-sm text-muted-foreground">Weekly Revenue</div>
+                      <div className={`text-xs mt-1 ${((dashboardData.summary as any).weekly_revenue_trend || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {(dashboardData.summary as any).weekly_revenue_trend >= 0 ? '+' : ''}{(dashboardData.summary as any).weekly_revenue_trend?.toFixed(1) || '0'}%
+                      </div>
+                    </div>
+                    <div className="text-center p-4 bg-muted/50 rounded-lg">
+                      <div className="text-2xl font-bold text-primary">
+                        ₺{(dashboardData.summary as any).monthly_revenue?.toLocaleString() || '0'}
+                      </div>
+                      <div className="text-sm text-muted-foreground">Monthly Revenue</div>
+                      <div className={`text-xs mt-1 ${((dashboardData.summary as any).monthly_revenue_trend || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {(dashboardData.summary as any).monthly_revenue_trend >= 0 ? '+' : ''}{(dashboardData.summary as any).monthly_revenue_trend?.toFixed(1) || '0'}%
+                      </div>
+                    </div>
+                    <div className="text-center p-4 bg-muted/50 rounded-lg">
+                      <div className="text-2xl font-bold text-primary">
+                        ₺{(dashboardData.summary as any).annual_revenue?.toLocaleString() || '0'}
+                      </div>
+                      <div className="text-sm text-muted-foreground">Annual Revenue</div>
+                      <div className={`text-xs mt-1 ${((dashboardData.summary as any).annual_revenue_trend || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {(dashboardData.summary as any).annual_revenue_trend >= 0 ? '+' : ''}{(dashboardData.summary as any).annual_revenue_trend?.toFixed(1) || '0'}%
+                      </div>
+                    </div>
+                  </UnifiedGrid>
+                </div>
+              )}
+
+              {/* Revenue Chart */}
+              <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                  <h4 className="font-semibold text-lg">Revenue Trend</h4>
+                  <div className="flex items-center gap-2">
+                    <UnifiedBadge variant="secondary">
+                      {timeRange === 'all' ? 'All Time' : 
+                       timeRange === '7d' ? 'Last 7 Days' :
+                       timeRange === '30d' ? 'Last 30 Days' :
+                       timeRange === '90d' ? 'Last 90 Days' : 'All Time'}
+                    </UnifiedBadge>
+                </div>
+              </div>
+                {dashboardData?.chart_data?.daily_revenue && dashboardData.chart_data.daily_revenue.length > 0 ? (
+                  <div className="space-y-4">
               <RevenueChart 
-                type="bar" 
+                      type="area" 
                 height={300} 
-                data={dashboardData?.chart_data?.daily_revenue || []}
-              />
-            </CardContent>
-          </Card>
-
-
-
-        </TabsContent>
-
-        {/* Analytics Tab */}
-        <TabsContent value="analytics" className="space-y-6">
-          {/* Revenue Analytics */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card className="border border-border">
-              <CardHeader className="border-b border-border">
-                <CardTitle className="flex items-center gap-2">
-                  Revenue Analytics
-                </CardTitle>
-                <CardDescription>
-                  Revenue trends and performance metrics
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-6">
-                {dashboardData ? (
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="text-center p-4 bg-muted/50 rounded-lg">
-                        <div className="text-sm font-bold text-primary">
-                          ₺{(dashboardData.summary?.total_revenue || 0).toLocaleString()}
-                        </div>
-                        <div className="text-sm text-muted-foreground">Total Revenue</div>
-                      </div>
-                      <div className="text-center p-4 bg-muted/50 rounded-lg">
-                        <div className={`text-sm font-bold ${getStatusColor('success').text}`}>
-                          ₺{((dashboardData.summary as any)?.total_deposits || 0).toLocaleString()}
-                        </div>
-                        <div className="text-sm text-muted-foreground">Total Deposits</div>
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm">Transaction Volume</span>
-                        <span className="text-sm font-medium">{dashboardData.stats?.total_transactions?.value || 0}</span>
-                      </div>
-                    </div>
+                      data={(() => {
+                        const data = dashboardData.chart_data.daily_revenue;
+                        if (!showZeroValues) {
+                          // Filter out zero values to make chart cleaner
+                          return data.filter(item => item.amount !== 0);
+                        }
+                        return data;
+                      })()}
+                    />
                   </div>
                 ) : (
-                  <div className="h-32 flex items-center justify-center text-muted-foreground">
-                    Loading revenue data...
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card className="border border-border">
-              <CardHeader className="border-b border-border">
-                <CardTitle className="flex items-center gap-2">
-                  <Building2 className="w-4 h-4" />
-                  PSP Performance
-                </CardTitle>
-                <CardDescription>
-                  Payment service provider analytics
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-6">
-                {commissionAnalytics?.data?.psp_commission ? (
-                  <div className="space-y-3">
-                    {commissionAnalytics.data.psp_commission.slice(0, 3).map((psp: any, index: number) => (
-                      <div key={psp.psp} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-                            <span className="text-sm font-medium text-primary">{index + 1}</span>
-                          </div>
-                          <div>
-                            <p className="font-medium text-sm">{psp.psp || 'Unknown PSP'}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {psp.transaction_count} transactions
-                            </p>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-xs text-muted-foreground mt-1">
-                            ₺{(psp.total_volume || 0).toLocaleString()}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="h-32 flex items-center justify-center text-muted-foreground">
-                    Loading PSP data...
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Business Intelligence Analytics */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-            <Card className="border border-border">
-              <CardHeader className="border-b border-border">
-                <CardTitle className="flex items-center gap-2">
-                  Revenue Trends
-                </CardTitle>
-                <CardDescription>
-                  Revenue analysis and growth patterns
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-6">
-                {dashboardData ? (
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className={`text-center p-3 ${getStatusColor('success').bg} rounded-lg`}>
-                        <div className={`text-sm font-bold ${getStatusColor('success').text}`}>
-                          ₺{((dashboardData.summary as any)?.total_deposits || 0).toLocaleString()}
-                        </div>
-                        <div className="text-xs text-muted-foreground">Total Deposits</div>
-                      </div>
-                      <div className={`text-center p-3 ${getStatusColor('error').bg} rounded-lg`}>
-                        <div className={`text-sm font-bold ${getStatusColor('error').text}`}>
-                          ₺{((dashboardData.summary as any)?.total_withdrawals || 0).toLocaleString()}
-                        </div>
-                        <div className="text-xs text-muted-foreground">Total Withdrawals</div>
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm">Net Revenue</span>
-                        <span className="text-sm font-medium text-primary">
-                          ₺{(((dashboardData.summary as any)?.total_deposits || 0) - ((dashboardData.summary as any)?.total_withdrawals || 0)).toLocaleString()}
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm">Commission Earned</span>
-                        <span className="text-sm font-medium">
-                          ₺{(dashboardData.summary?.total_commission || 0).toLocaleString()}
-                        </span>
-                      </div>
+                  <div className="h-[300px] flex items-center justify-center text-muted-foreground border-2 border-dashed rounded-lg">
+                    <div className="text-center">
+                      <BarChart3 className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                      <p>No revenue data available for the selected period</p>
+                      <p className="text-sm">Data will appear here once transactions are recorded</p>
                     </div>
                   </div>
-                ) : (
-                  <div className="h-32 flex items-center justify-center text-muted-foreground">
-                    Loading revenue trends...
-                  </div>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </UnifiedCard>
+          </UnifiedSection>
 
-            <Card className="border border-border">
-              <CardHeader className="border-b border-border">
-                <CardTitle className="flex items-center gap-2">
-                  <BarChart3 className="w-4 h-4" />
-                  Business KPIs
-                </CardTitle>
-                <CardDescription>
-                  Key performance indicators and metrics
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-6">
-                {dashboardData ? (
-                  <div className="space-y-4">
-                    <div className="text-center p-4 bg-muted/50 rounded-lg">
-                      <div className="text-sm font-bold text-primary">
-                        {dashboardData.stats?.total_transactions?.value || 0}
-                      </div>
-                      <div className="text-sm text-muted-foreground">Total Transactions</div>
-                    </div>
+          {/* Quick Actions Section */}
+          <UnifiedSection title="Quick Actions" description="Common tasks and shortcuts for efficient workflow">
+            <UnifiedCard 
+              variant="default"
+              header={{
+                actions: (
+                  <UnifiedButton 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => navigate('/settings')}
+                  >
+                    <Settings className="w-4 h-4" />
+                  </UnifiedButton>
+                )
+              }}
+            >
+              <UnifiedGrid cols={5} gap="md">
+                <UnifiedButton 
+                  variant="outline" 
+                  className="h-20 flex flex-col items-center justify-center gap-2 hover:bg-primary/5 transition-colors"
+                  onClick={() => navigate('/clients')}
+                >
+                  <Users className="w-6 h-6" />
+                  <span className="text-sm">Add Client</span>
+                </UnifiedButton>
+                <UnifiedButton 
+                  variant="outline" 
+                  className="h-20 flex flex-col items-center justify-center gap-2 hover:bg-primary/5 transition-colors"
+                  onClick={handleAddTransaction}
+                >
+                  <DollarSign className="w-6 h-6" />
+                  <span className="text-sm">New Transaction</span>
+                </UnifiedButton>
+                <UnifiedButton 
+                  variant="outline" 
+                  className="h-20 flex flex-col items-center justify-center gap-2 hover:bg-primary/5 transition-colors"
+                  onClick={() => navigate('/transactions/add')}
+                >
+                  <Plus className="w-6 h-6" />
+                  <span className="text-sm">Quick Add</span>
+                </UnifiedButton>
+                <UnifiedButton 
+                  variant="outline" 
+                  className="h-20 flex flex-col items-center justify-center gap-2 hover:bg-primary/5 transition-colors"
+                  onClick={handleGenerateReport}
+                  disabled={isGeneratingReport}
+                >
+                  <FileText className="w-6 h-6" />
+                  <span className="text-sm">{isGeneratingReport ? 'Generating...' : 'Generate Report'}</span>
+                </UnifiedButton>
+                <UnifiedButton 
+                  variant="outline" 
+                  className="h-20 flex flex-col items-center justify-center gap-2 hover:bg-primary/5 transition-colors"
+                  onClick={handleRefresh}
+                >
+                  <RefreshCw className={`w-6 h-6 ${refreshing ? 'animate-spin' : ''}`} />
+                  <span className="text-sm">Sync Data</span>
+                </UnifiedButton>
+              </UnifiedGrid>
+            </UnifiedCard>
+          </UnifiedSection>
+
+          {/* Top Performers Section */}
+          <UnifiedSection title="Top Performers" description="Best performing PSPs and clients this period">
+            <UnifiedCard 
+              variant="default"
+              header={{
+                actions: (
+                  <UnifiedButton variant="ghost" size="sm">
+                    <Target className="w-4 h-4" />
+                  </UnifiedButton>
+                )
+              }}
+            >
+              {pspRolloverData?.data?.psps && pspRolloverData.data.psps.length > 0 ? (
+                <div className="space-y-4">
+                  <UnifiedGrid cols={2} gap="lg">
                     <div className="space-y-3">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm">Transaction Volume</span>
-                        <span className="text-sm font-medium">
-                          {dashboardData.stats?.total_transactions?.value || 0}
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm">Avg. Daily Revenue</span>
-                        <span className="text-sm font-medium">
-                          ₺{Math.round(((dashboardData.summary as any)?.total_revenue || 0) / 30)}
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm">Success Rate</span>
-                        <Badge variant="default">98.5%</Badge>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm">Customer Satisfaction</span>
-                        <Badge variant="default">4.8/5</Badge>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="h-32 flex items-center justify-center text-muted-foreground">
-                    Loading business KPIs...
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Advanced Analytics */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card className="border border-border">
-              <CardHeader className="border-b border-border">
-                <CardTitle className="flex items-center gap-2">
-                  <Target className="w-4 h-4" />
-                  PSP Performance Analysis
-                </CardTitle>
-                <CardDescription>
-                  Detailed payment service provider analytics
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-6">
-                {commissionAnalytics?.data?.psp_commission ? (
-                  <div className="space-y-4">
-                    <div className="text-center p-4 bg-muted/50 rounded-lg">
-                      <div className="text-sm font-bold text-primary">
-                        {commissionAnalytics.data.psp_commission.length}
-                      </div>
-                      <div className="text-sm text-muted-foreground">Active PSPs</div>
-                    </div>
-                    <div className="space-y-3">
-                      {commissionAnalytics.data.psp_commission.slice(0, 3).map((psp: any, index: number) => (
-                        <div key={psp.psp} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                      {pspRolloverData.data.psps.slice(0, 3).map((psp: any, index: number) => (
+                        <div key={psp.psp} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:scale-110 hover:shadow-lg hover:bg-primary/5 transition-all duration-300 ease-in-out cursor-pointer border border-transparent hover:border-primary/20">
                           <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+                            <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center hover:bg-primary/20 transition-colors duration-300">
                               <span className="text-sm font-medium text-primary">{index + 1}</span>
                             </div>
                             <div>
@@ -1020,91 +1012,664 @@ export const ModernDashboard: React.FC<ModernDashboardProps> = ({ user, pspRollo
                             </div>
                           </div>
                           <div className="text-right">
-                            <p className="text-xs text-muted-foreground mt-1">
-                              ₺{(psp.total_volume || 0).toLocaleString()}
+                            <p className="text-sm font-semibold">
+                              ₺{(psp.total_rollover || 0).toLocaleString()}
                             </p>
                           </div>
                         </div>
                       ))}
                     </div>
-                    <div className="pt-2 border-t">
-                      <div className="flex justify-between items-center text-sm">
-                        <span className="text-muted-foreground">Total Commission</span>
-                        <span className="font-medium">
-                          ₺{commissionAnalytics.data.psp_commission.reduce((sum: number, psp: any) => sum + (psp.total_commission || 0), 0).toLocaleString()}
+                    <div className="space-y-3">
+                      {commissionAnalytics?.data?.psp_commission && commissionAnalytics.data.psp_commission.length > 0 ? (
+                        commissionAnalytics.data.psp_commission
+                          .sort((a: any, b: any) => (b.total_commission || 0) - (a.total_commission || 0))
+                          .slice(0, 3)
+                          .map((psp: any, index: number) => (
+                          <div key={psp.psp} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:scale-110 hover:shadow-lg hover:bg-green-50/50 transition-all duration-300 ease-in-out cursor-pointer border border-transparent hover:border-green-200">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center hover:bg-green-200 transition-colors duration-300">
+                                <span className="text-sm font-medium text-green-600">{index + 1}</span>
+                              </div>
+                              <div>
+                                <p className="font-medium text-sm">{psp.psp || 'Unknown PSP'}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {psp.transaction_count} transactions
+                                </p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-sm font-semibold text-green-600">
+                                ₺{(psp.total_commission || 0).toLocaleString()}
+                              </p>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-center py-4 text-muted-foreground">
+                          <p className="text-sm">No commission data available</p>
+                        </div>
+                      )}
+                    </div>
+                  </UnifiedGrid>
+                </div>
+              ) : (
+                <div className="h-32 flex items-center justify-center text-muted-foreground">
+                  {loading ? (
+                    <>
+                      <RefreshCw className="w-6 h-6 animate-spin mr-2" />
+                      Loading top performers...
+                    </>
+                  ) : (
+                    <div className="text-center">
+                      <Target className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
+                      <p className="text-sm">No PSP rollover data available</p>
+                      <p className="text-xs text-muted-foreground">Rollover data will appear once transactions are processed</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </UnifiedCard>
+          </UnifiedSection>
+
+          {/* Exchange Rates Widget */}
+          <UnifiedSection title="Exchange Rates" description="Current exchange rates and currency information">
+            <UnifiedCard 
+              variant="default"
+              header={{
+                actions: (
+                  <div className="flex gap-2">
+                    <UnifiedButton 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => {
+                        // Refresh exchange rates
+                        const refreshExchangeRates = async () => {
+                          try {
+                            const rates = await dashboardService.getExchangeRates();
+                            setExchangeRates(rates);
+                          } catch (error) {
+                            console.error('Error refreshing exchange rates:', error);
+                          }
+                        };
+                        refreshExchangeRates();
+                      }}
+                    >
+                      <RefreshCw className="w-4 h-4" />
+                    </UnifiedButton>
+                    <UnifiedButton variant="ghost" size="sm">
+                      <Globe className="w-4 h-4" />
+                    </UnifiedButton>
+                  </div>
+                )
+              }}
+            >
+              {exchangeRates?.success && exchangeRates.rates && Object.keys(exchangeRates.rates).length > 0 ? (
+                  <div className="space-y-4">
+                  <UnifiedGrid cols={3} gap="md">
+                    {Object.entries(exchangeRates.rates).slice(0, 6).map(([key, rate]: [string, any]) => (
+                      <div key={key} className="p-4 border rounded-lg hover:shadow-sm transition-shadow">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-sm">{rate.currency_pair}</span>
+                            {rate.is_stale ? (
+                              <UnifiedBadge variant="destructive" className="text-xs">
+                                Stale
+                              </UnifiedBadge>
+                            ) : (
+                              <UnifiedBadge variant="success" className="text-xs">
+                                Live
+                              </UnifiedBadge>
+                            )}
+                        </div>
+                          <div className="text-right">
+                            <div className="text-lg font-bold text-primary">{rate.rate.toFixed(4)}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {rate.age_minutes}m ago
+                      </div>
+                        </div>
+                      </div>
+                        <div className="text-xs text-muted-foreground">
+                          Last updated: {new Date(rate.last_updated).toLocaleTimeString()}
+                        </div>
+                      </div>
+                    ))}
+                  </UnifiedGrid>
+                </div>
+              ) : (
+                <div className="h-32 flex items-center justify-center text-muted-foreground">
+                  {loading ? (
+                    <>
+                      <RefreshCw className="w-6 h-6 animate-spin mr-2" />
+                      Loading exchange rates...
+                    </>
+                  ) : (
+                    <div className="text-center">
+                      <Globe className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
+                      <p className="text-sm">Exchange rates unavailable</p>
+                      <p className="text-xs text-muted-foreground">
+                        {exchangeRates?.success === false 
+                          ? 'Service temporarily unavailable' 
+                          : 'Rates will appear when service is connected'
+                        }
+                      </p>
+                      <UnifiedButton 
+                        variant="outline" 
+                        size="sm" 
+                        className="mt-2"
+                        onClick={() => {
+                          const refreshExchangeRates = async () => {
+                            try {
+                              const rates = await dashboardService.getExchangeRates();
+                              setExchangeRates(rates);
+                            } catch (error) {
+                              console.error('Error refreshing exchange rates:', error);
+                            }
+                          };
+                          refreshExchangeRates();
+                        }}
+                      >
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                        Retry
+                      </UnifiedButton>
+                    </div>
+                  )}
+                </div>
+              )}
+            </UnifiedCard>
+          </UnifiedSection>
+
+          {/* PSP Rollover Status Section */}
+          <UnifiedSection title="PSP Rollover Status" description="Individual PSP rollover amounts and current status">
+            <UnifiedCard 
+              variant="default"
+              header={{
+                actions: (
+                  <UnifiedButton variant="ghost" size="sm">
+                    <Building2 className="w-4 h-4" />
+                  </UnifiedButton>
+                )
+              }}
+            >
+              {pspRolloverData?.data?.psps ? (
+                <div className="space-y-4">
+                  <UnifiedGrid cols={3} gap="md">
+                    {pspRolloverData.data.psps.map((psp: any, index: number) => (
+                      <div key={psp.psp || index} className="p-4 border rounded-lg">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                            <span className="font-medium text-sm">{psp.psp || `PSP ${index + 1}`}</span>
+                          </div>
+                          <UnifiedBadge variant="default">
+                            Active
+                          </UnifiedBadge>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                            <span className="text-sm font-semibold">
+                              ₺{(psp.total_net || 0).toLocaleString()}
+                            </span>
+                      </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm font-semibold text-primary">
+                              ₺{(psp.total_rollover || 0).toLocaleString()}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs text-muted-foreground">
+                              {psp.transaction_count || 0}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </UnifiedGrid>
+                  <div className="pt-4 border-t">
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium">Total Rollover Amount</span>
+                      <span className="text-lg font-bold text-primary">
+                        ₺{pspRolloverData.data.psps.reduce((sum: number, psp: any) => sum + (psp.total_rollover || 0), 0).toLocaleString()}
+                      </span>
+                    </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="h-32 flex items-center justify-center text-muted-foreground">
+                  <RefreshCw className="w-6 h-6 animate-spin mr-2" />
+                  Loading PSP rollover data...
+                  </div>
+                )}
+            </UnifiedCard>
+          </UnifiedSection>
+
+        </TabsContent>
+
+        {/* Analytics Tab */}
+        <TabsContent value="analytics" className={`${getSectionSpacing('lg').margin} ${getSectionSpacing('lg').padding}`}>
+          {/* Analytics Header */}
+          <div className={`${getSectionSpacing('md').margin}`}>
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className={`${getTypographyStyles('heading', 'h2')} flex items-center gap-3`}>
+                  <BarChart3 className="h-6 w-6 text-primary" />
+                  Business Analytics
+                </h2>
+                <p className={`${getTypographyStyles('body', 'default')} mt-1`}>
+                  Comprehensive insights and performance metrics
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <UnifiedButton variant="outline" size="sm" className="flex items-center gap-2">
+                  <Download className="w-4 h-4" />
+                  Export Report
+                </UnifiedButton>
+                <UnifiedButton variant="outline" size="sm" className="flex items-center gap-2">
+                  <RefreshCw className="w-4 h-4" />
+                  Refresh
+                </UnifiedButton>
+              </div>
+            </div>
+          </div>
+
+          {/* Key Metrics Overview */}
+          <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 ${getGridSpacing('lg')} ${getSectionSpacing('md').margin}`}>
+            <UnifiedCard variant="elevated" className="relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-blue-500/10 to-blue-600/10 rounded-full -translate-y-10 translate-x-10"></div>
+              <div className={`${getCardSpacing('md').padding} relative`}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Total Revenue</p>
+                    <p className="text-2xl font-bold text-foreground">
+                      ₺{((dashboardData?.summary as any)?.total_revenue || 0).toLocaleString()}
+                    </p>
+                    <div className="flex items-center gap-1 mt-1">
+                      <TrendingUp className="w-3 h-3 text-green-500" />
+                      <span className="text-xs text-green-500">+12.5%</span>
+                    </div>
+                  </div>
+                  <div className="p-3 bg-blue-500/10 rounded-lg">
+                    <DollarSign className="w-5 h-5 text-blue-500" />
+                  </div>
+                </div>
+              </div>
+            </UnifiedCard>
+
+            <UnifiedCard variant="elevated" className="relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-green-500/10 to-green-600/10 rounded-full -translate-y-10 translate-x-10"></div>
+              <div className={`${getCardSpacing('md').padding} relative`}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Total Transactions</p>
+                    <p className="text-2xl font-bold text-foreground">
+                      {dashboardData?.stats?.total_transactions?.value || 0}
+                    </p>
+                    <div className="flex items-center gap-1 mt-1">
+                      <TrendingUp className="w-3 h-3 text-green-500" />
+                      <span className="text-xs text-green-500">+8.2%</span>
+                    </div>
+                  </div>
+                  <div className="p-3 bg-green-500/10 rounded-lg">
+                    <Activity className="w-5 h-5 text-green-500" />
+                  </div>
+                </div>
+              </div>
+            </UnifiedCard>
+
+            <UnifiedCard variant="elevated" className="relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-purple-500/10 to-purple-600/10 rounded-full -translate-y-10 translate-x-10"></div>
+              <div className={`${getCardSpacing('md').padding} relative`}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Commission Earned</p>
+                    <p className="text-2xl font-bold text-foreground">
+                      ₺{(dashboardData?.summary?.total_commission || 0).toLocaleString()}
+                    </p>
+                    <div className="flex items-center gap-1 mt-1">
+                      <TrendingUp className="w-3 h-3 text-green-500" />
+                      <span className="text-xs text-green-500">+15.3%</span>
+                    </div>
+                  </div>
+                  <div className="p-3 bg-purple-500/10 rounded-lg">
+                    <Target className="w-5 h-5 text-purple-500" />
+                  </div>
+                </div>
+              </div>
+            </UnifiedCard>
+
+            <UnifiedCard variant="elevated" className="relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-orange-500/10 to-orange-600/10 rounded-full -translate-y-10 translate-x-10"></div>
+              <div className={`${getCardSpacing('md').padding} relative`}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Active PSPs</p>
+                    <p className="text-2xl font-bold text-foreground">
+                      {commissionAnalytics?.data?.psp_commission?.length || 0}
+                    </p>
+                    <div className="flex items-center gap-1 mt-1">
+                      <TrendingUp className="w-3 h-3 text-green-500" />
+                      <span className="text-xs text-green-500">+2</span>
+                    </div>
+                  </div>
+                  <div className="p-3 bg-orange-500/10 rounded-lg">
+                    <Building2 className="w-5 h-5 text-orange-500" />
+                  </div>
+                </div>
+              </div>
+            </UnifiedCard>
+          </div>
+
+          {/* Revenue Analysis Section */}
+          <div className={`grid grid-cols-1 lg:grid-cols-2 ${getGridSpacing('lg')} ${getSectionSpacing('md').margin}`}>
+            <UnifiedCard variant="elevated">
+              <div className={`${getCardSpacing('md').padding} border-b border-border`}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className={`${getTypographyStyles('heading', 'h4')} flex items-center gap-2`}>
+                      <TrendingUp className="w-4 h-4 text-green-500" />
+                      Revenue Breakdown
+                    </h3>
+                    <p className={`${getTypographyStyles('body', 'small')} mt-1`}>
+                      Detailed revenue analysis by category
+                    </p>
+                  </div>
+                  <UnifiedButton variant="ghost" size="sm">
+                    <Eye className="w-4 h-4" />
+                  </UnifiedButton>
+                </div>
+              </div>
+              <div className={getCardSpacing('md').padding}>
+                {dashboardData ? (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="text-center p-4 bg-green-50 border border-green-200 rounded-lg">
+                        <div className="text-lg font-bold text-green-700">
+                          ₺{((dashboardData.summary as any)?.total_deposits || 0).toLocaleString()}
+                        </div>
+                        <div className="text-sm text-green-600">Total Deposits</div>
+                        <div className="text-xs text-green-500 mt-1">+5.2% from last month</div>
+                      </div>
+                      <div className="text-center p-4 bg-red-50 border border-red-200 rounded-lg">
+                        <div className="text-lg font-bold text-red-700">
+                          ₺{((dashboardData.summary as any)?.total_withdrawals || 0).toLocaleString()}
+                        </div>
+                        <div className="text-sm text-red-600">Total Withdrawals</div>
+                        <div className="text-xs text-red-500 mt-1">+2.1% from last month</div>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
+                        <span className="text-sm font-medium">Net Revenue</span>
+                        <span className="text-sm font-bold text-primary">
+                          ₺{(((dashboardData.summary as any)?.total_deposits || 0) - ((dashboardData.summary as any)?.total_withdrawals || 0)).toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
+                        <span className="text-sm font-medium">Commission Earned</span>
+                        <span className="text-sm font-bold text-purple-600">
+                          ₺{(dashboardData.summary?.total_commission || 0).toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
+                        <span className="text-sm font-medium">Average Transaction</span>
+                        <span className="text-sm font-bold text-blue-600">
+                          ₺{Math.round(Number((dashboardData.summary as any)?.total_revenue || 0) / (Number(dashboardData.stats?.total_transactions?.value) || 1))}
                         </span>
                       </div>
                     </div>
                   </div>
                 ) : (
-                  <div className="h-32 flex items-center justify-center text-muted-foreground">
-                    Loading PSP analytics...
+                  <div className="h-48 flex items-center justify-center">
+                    <SkeletonLoader />
                   </div>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </UnifiedCard>
 
-            <Card className="border border-border">
-              <CardHeader className="border-b border-border">
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
-                  Performance Forecast
-                </CardTitle>
-                <CardDescription>
-                  Business performance predictions and trends
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-6">
-                <div className="space-y-4">
-                  <div className="text-center p-4 bg-muted/50 rounded-lg">
-                    <div className="text-lg font-bold text-primary">Coming Soon</div>
-                    <div className="text-sm text-muted-foreground">Projected Growth</div>
+            <UnifiedCard variant="elevated">
+              <div className={`${getCardSpacing('md').padding} border-b border-border`}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className={`${getTypographyStyles('heading', 'h4')} flex items-center gap-2`}>
+                      <BarChart3 className="w-4 h-4 text-blue-500" />
+                      Performance KPIs
+                    </h3>
+                    <p className={`${getTypographyStyles('body', 'small')} mt-1`}>
+                      Key performance indicators and metrics
+                    </p>
                   </div>
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm">Next Month Revenue</span>
-                      <span className="text-sm font-medium text-green-600">
-                        ₺{Math.round(((dashboardData?.summary as any)?.total_revenue || 0) * 1.125).toLocaleString()}
-                      </span>
+                  <UnifiedButton variant="ghost" size="sm">
+                    <Settings className="w-4 h-4" />
+                  </UnifiedButton>
+                </div>
+              </div>
+              <div className={getCardSpacing('md').padding}>
+                {dashboardData ? (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="text-center p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                        <div className="text-lg font-bold text-blue-700">
+                          {dashboardData.stats?.total_transactions?.value || 0}
+                        </div>
+                        <div className="text-sm text-blue-600">Total Transactions</div>
+                        <div className="text-xs text-blue-500 mt-1">+8.2% from last month</div>
+                      </div>
+                      <div className="text-center p-4 bg-purple-50 border border-purple-200 rounded-lg">
+                        <div className="text-lg font-bold text-purple-700">
+                          ₺{Math.round(((dashboardData.summary as any)?.total_revenue || 0) / 30)}
+                        </div>
+                        <div className="text-sm text-purple-600">Daily Average</div>
+                        <div className="text-xs text-purple-500 mt-1">+12.5% from last month</div>
+                      </div>
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm">Expected Transactions</span>
-                      <span className="text-sm font-medium">
-                        {Math.round(Number(dashboardData?.stats?.total_transactions?.value || 0) * 1.08)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm">Risk Level</span>
-                      <Badge variant="default">Low</Badge>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm">Market Trend</span>
-                      <Badge variant="default">Positive</Badge>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium">Success Rate</span>
+                        <div className="flex items-center gap-2">
+                          <div className="w-16 h-2 bg-muted rounded-full overflow-hidden">
+                            <div className="w-4/5 h-full bg-green-500 rounded-full"></div>
+                          </div>
+                          <span className="text-sm font-bold text-green-600">98.5%</span>
+                        </div>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium">Customer Satisfaction</span>
+                        <div className="flex items-center gap-2">
+                          <div className="w-16 h-2 bg-muted rounded-full overflow-hidden">
+                            <div className="w-5/6 h-full bg-blue-500 rounded-full"></div>
+                          </div>
+                          <span className="text-sm font-bold text-blue-600">96.2%</span>
+                        </div>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium">System Uptime</span>
+                        <div className="flex items-center gap-2">
+                          <div className="w-16 h-2 bg-muted rounded-full overflow-hidden">
+                            <div className="w-full h-full bg-green-500 rounded-full"></div>
+                          </div>
+                          <span className="text-sm font-bold text-green-600">99.9%</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                  <div className="pt-2 border-t">
-                    <div className="text-xs text-muted-foreground text-center">
-                      Based on historical data and market analysis
-                    </div>
+                ) : (
+                  <div className="h-48 flex items-center justify-center">
+                    <SkeletonLoader />
+                  </div>
+                )}
+              </div>
+            </UnifiedCard>
+          </div>
+
+          {/* PSP Performance Analysis */}
+          <div className={`${getSectionSpacing('md').margin}`}>
+            <UnifiedCard variant="elevated">
+              <div className={`${getCardSpacing('md').padding} border-b border-border`}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className={`${getTypographyStyles('heading', 'h4')} flex items-center gap-2`}>
+                      <Building2 className="w-4 h-4 text-orange-500" />
+                      PSP Performance Analysis
+                    </h3>
+                    <p className={`${getTypographyStyles('body', 'small')} mt-1`}>
+                      Payment service provider performance and commission analysis
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <UnifiedButton variant="outline" size="sm">
+                      <Filter className="w-4 h-4" />
+                      Filter
+                    </UnifiedButton>
+                    <UnifiedButton variant="outline" size="sm">
+                      <Download className="w-4 h-4" />
+                      Export
+                    </UnifiedButton>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+              <div className={getCardSpacing('md').padding}>
+                {commissionAnalytics?.data?.psp_commission ? (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                      <div className="text-center p-4 bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200 rounded-lg">
+                        <div className="text-2xl font-bold text-orange-700">
+                          {commissionAnalytics.data.psp_commission.length}
+                        </div>
+                        <div className="text-sm text-orange-600">Active PSPs</div>
+                      </div>
+                      <div className="text-center p-4 bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg">
+                        <div className="text-2xl font-bold text-green-700">
+                          ₺{commissionAnalytics.data.psp_commission.reduce((sum: number, psp: any) => sum + (psp.total_commission || 0), 0).toLocaleString()}
+                        </div>
+                        <div className="text-sm text-green-600">Total Commission</div>
+                      </div>
+                      <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg">
+                        <div className="text-2xl font-bold text-blue-700">
+                          {commissionAnalytics.data.psp_commission.reduce((sum: number, psp: any) => sum + (psp.transaction_count || 0), 0)}
+                        </div>
+                        <div className="text-sm text-blue-600">Total Transactions</div>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      {commissionAnalytics.data.psp_commission.map((psp: any, index: number) => (
+                        <div key={psp.psp} className="flex items-center justify-between p-4 bg-muted/50 border border-border rounded-lg hover:bg-muted/70 transition-colors">
+                          <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 bg-gradient-to-br from-primary/10 to-primary/20 rounded-full flex items-center justify-center">
+                              <span className="text-sm font-bold text-primary">{index + 1}</span>
+                            </div>
+                            <div>
+                              <p className="font-semibold text-sm">{psp.psp || 'Unknown PSP'}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {psp.transaction_count} transactions • {((Number(psp.transaction_count) / commissionAnalytics.data.psp_commission.reduce((sum: number, p: any) => sum + (Number(p.transaction_count) || 0), 0)) * 100).toFixed(1)}% of total
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm font-bold text-foreground">
+                              ₺{(psp.total_volume || 0).toLocaleString()}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              Commission: ₺{(psp.total_commission || 0).toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="h-64 flex items-center justify-center">
+                    <SkeletonLoader />
+                  </div>
+                )}
+              </div>
+            </UnifiedCard>
+          </div>
+
+          {/* Transaction Data Table */}
+          <div className={`${getSectionSpacing('md').margin}`}>
+            <UnifiedCard variant="elevated">
+              <div className={`${getCardSpacing('md').padding} border-b border-border`}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className={`${getTypographyStyles('heading', 'h4')} flex items-center gap-2`}>
+                      <FileText className="w-4 h-4 text-blue-500" />
+                      Recent Transactions
+                    </h3>
+                    <p className={`${getTypographyStyles('body', 'small')} mt-1`}>
+                      Latest transaction data with detailed information
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <UnifiedButton variant="outline" size="sm">
+                      <Search className="w-4 h-4" />
+                      Search
+                    </UnifiedButton>
+                    <UnifiedButton variant="outline" size="sm">
+                      <Filter className="w-4 h-4" />
+                      Filter
+                    </UnifiedButton>
+                  </div>
+                </div>
+              </div>
+              <div className={getCardSpacing('md').padding}>
+                {dashboardData?.recent_transactions && dashboardData.recent_transactions.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-border">
+                          <th className="text-left py-3 px-4 font-medium text-sm text-muted-foreground">ID</th>
+                          <th className="text-left py-3 px-4 font-medium text-sm text-muted-foreground">Amount</th>
+                          <th className="text-left py-3 px-4 font-medium text-sm text-muted-foreground">Currency</th>
+                          <th className="text-left py-3 px-4 font-medium text-sm text-muted-foreground">Status</th>
+                          <th className="text-left py-3 px-4 font-medium text-sm text-muted-foreground">Date</th>
+                          <th className="text-left py-3 px-4 font-medium text-sm text-muted-foreground">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {dashboardData.recent_transactions.slice(0, 10).map((transaction: any, index: number) => (
+                          <tr key={transaction.id || index} className="border-b border-border/50 hover:bg-muted/50 transition-colors">
+                            <td className="py-3 px-4 text-sm font-mono">{transaction.id || `#${index + 1}`}</td>
+                            <td className="py-3 px-4 text-sm font-medium">₺{(transaction.amount || 0).toLocaleString()}</td>
+                            <td className="py-3 px-4 text-sm">{transaction.currency || 'TRY'}</td>
+                            <td className="py-3 px-4">
+                              <Badge variant={transaction.status === 'completed' ? 'default' : 'secondary'}>
+                                {transaction.status || 'pending'}
+                              </Badge>
+                            </td>
+                            <td className="py-3 px-4 text-sm text-muted-foreground">
+                              {transaction.created_at ? new Date(transaction.created_at).toLocaleDateString() : 'N/A'}
+                            </td>
+                            <td className="py-3 px-4">
+                              <UnifiedButton variant="ghost" size="sm">
+                                <Eye className="w-4 h-4" />
+                              </UnifiedButton>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="h-64 flex items-center justify-center">
+                    <SkeletonLoader />
+                  </div>
+                )}
+              </div>
+            </UnifiedCard>
           </div>
         </TabsContent>
 
         {/* Monitoring Tab */}
-        <TabsContent value="monitoring" className="space-y-6">
+        <TabsContent value="monitoring" className={`${getSectionSpacing('lg').margin} ${getSectionSpacing('lg').padding}`}>
           {/* System Health Overview */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-            <Card className="border border-border">
-              <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2 text-base">
+          <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 ${getGridSpacing('lg')}`}>
+            <UnifiedCard variant="default">
+              <div className={`${getCardSpacing('sm').padding} pb-3`}>
+                <h3 className={`${getTypographyStyles('heading', 'h5')} flex items-center gap-2`}>
                   <CheckCircle className="w-4 h-4" />
                   System Health
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
+                </h3>
+              </div>
+              <div className={getCardSpacing('sm').padding}>
                 <div className="text-center space-y-2">
                   <div className="text-lg font-medium text-foreground">
                     {getSystemHealth()?.overall?.toFixed(1) || '0.0'}%
@@ -1117,17 +1682,17 @@ export const ModernDashboard: React.FC<ModernDashboardProps> = ({ user, pspRollo
                     ></div>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </UnifiedCard>
 
-            <Card className="border border-border">
-              <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2 text-base">
+            <UnifiedCard variant="default">
+              <div className={`${getCardSpacing('sm').padding} pb-3`}>
+                <h3 className={`${getTypographyStyles('heading', 'h5')} flex items-center gap-2`}>
                   <Database className="w-4 h-4" />
                   Database
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
+                </h3>
+              </div>
+              <div className={getCardSpacing('sm').padding}>
                 <div className="text-center space-y-2">
                   <div className="text-lg font-medium text-foreground">
                     {getSystemHealth()?.database?.toFixed(1) || '0.0'}%
@@ -1140,17 +1705,17 @@ export const ModernDashboard: React.FC<ModernDashboardProps> = ({ user, pspRollo
                     ></div>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </UnifiedCard>
 
-            <Card className="border border-border">
-              <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2 text-base">
+            <UnifiedCard variant="default">
+              <div className={`${getCardSpacing('sm').padding} pb-3`}>
+                <h3 className={`${getTypographyStyles('heading', 'h5')} flex items-center gap-2`}>
                   <Zap className="w-4 h-4" />
                   API Performance
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
+                </h3>
+              </div>
+              <div className={getCardSpacing('sm').padding}>
                 <div className="text-center space-y-2">
                   <div className="text-lg font-medium text-foreground">
                     {getSystemHealth()?.api?.toFixed(1) || '0.0'}%
@@ -1165,17 +1730,17 @@ export const ModernDashboard: React.FC<ModernDashboardProps> = ({ user, pspRollo
                     ></div>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </UnifiedCard>
 
-            <Card className="border border-border">
-              <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2 text-base">
+            <UnifiedCard variant="default">
+              <div className={`${getCardSpacing('sm').padding} pb-3`}>
+                <h3 className={`${getTypographyStyles('heading', 'h5')} flex items-center gap-2`}>
                   <Building2 className="w-4 h-4" />
                   PSP Status
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
+                </h3>
+              </div>
+              <div className={getCardSpacing('sm').padding}>
                 <div className="text-center space-y-2">
                   <div className="text-lg font-medium text-foreground">
                     {getSystemHealth()?.psps?.toFixed(1) || '0.0'}%
@@ -1190,17 +1755,17 @@ export const ModernDashboard: React.FC<ModernDashboardProps> = ({ user, pspRollo
                     ></div>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </UnifiedCard>
 
-            <Card className="border border-border">
-              <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2 text-base">
+            <UnifiedCard variant="default">
+              <div className={`${getCardSpacing('sm').padding} pb-3`}>
+                <h3 className={`${getTypographyStyles('heading', 'h5')} flex items-center gap-2`}>
                   <Shield className="w-4 h-4" />
                   Security
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
+                </h3>
+              </div>
+              <div className={getCardSpacing('sm').padding}>
                 <div className="text-center space-y-2">
                   <div className="text-lg font-medium text-foreground">
                     {getSystemHealth()?.security?.toFixed(1) || '0.0'}%
@@ -1215,24 +1780,24 @@ export const ModernDashboard: React.FC<ModernDashboardProps> = ({ user, pspRollo
                     ></div>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </UnifiedCard>
           </div>
 
           {/* Real-time System Metrics */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* System Performance Monitoring */}
-            <Card className="border border-border">
-              <CardHeader className="border-b border-border">
-                <CardTitle className="flex items-center gap-2">
+            <UnifiedCard variant="default">
+              <div className={`${getCardSpacing('md').padding} border-b border-border`}>
+                <h3 className={`${getTypographyStyles('heading', 'h4')} flex items-center gap-2`}>
                   <Activity className="w-4 h-4" />
                   System Performance
-                </CardTitle>
-                <CardDescription>
+                </h3>
+                <p className={`${getTypographyStyles('body', 'small')} mt-1`}>
                   Real-time system resource monitoring
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-6">
+                </p>
+              </div>
+              <div className={getCardSpacing('md').padding}>
                 {systemPerformance ? (
                   <div className="space-y-6">
                     {/* CPU Usage */}
@@ -1314,21 +1879,21 @@ export const ModernDashboard: React.FC<ModernDashboardProps> = ({ user, pspRollo
                     Loading system performance...
                   </div>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </UnifiedCard>
 
             {/* Security Monitoring */}
-            <Card className="border border-border">
-              <CardHeader className="border-b border-border">
-                <CardTitle className="flex items-center gap-2">
+            <UnifiedCard variant="default">
+              <div className={`${getCardSpacing('md').padding} border-b border-border`}>
+                <h3 className={`${getTypographyStyles('heading', 'h4')} flex items-center gap-2`}>
                   <Shield className="w-4 h-4" />
                   Security Monitoring
-                </CardTitle>
-                <CardDescription>
+                </h3>
+                <p className={`${getTypographyStyles('body', 'small')} mt-1`}>
                   Security metrics and threat detection
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-6">
+                </p>
+              </div>
+              <div className={getCardSpacing('md').padding}>
                 {securityMetrics ? (
                   <div className="space-y-6">
                     {/* Security Score */}
@@ -1400,24 +1965,24 @@ export const ModernDashboard: React.FC<ModernDashboardProps> = ({ user, pspRollo
                     Loading security metrics...
                   </div>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </UnifiedCard>
           </div>
 
           {/* Data Quality & Exchange Rate Monitoring */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Data Quality Monitoring */}
-            <Card className="border border-border">
-              <CardHeader className="border-b border-border">
-                <CardTitle className="flex items-center gap-2">
+            <UnifiedCard variant="default">
+              <div className={`${getCardSpacing('md').padding} border-b border-border`}>
+                <h3 className={`${getTypographyStyles('heading', 'h4')} flex items-center gap-2`}>
                   <CheckCircle className="w-4 h-4" />
                   Data Quality Monitoring
-                </CardTitle>
-                <CardDescription>
+                </h3>
+                <p className={`${getTypographyStyles('body', 'small')} mt-1`}>
                   Data integrity and quality assessment
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-6">
+                </p>
+              </div>
+              <div className={getCardSpacing('md').padding}>
                 {dataQuality ? (
                   <div className="space-y-6">
                     {/* Overall Quality Score */}
@@ -1496,21 +2061,21 @@ export const ModernDashboard: React.FC<ModernDashboardProps> = ({ user, pspRollo
                     Loading data quality metrics...
                   </div>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </UnifiedCard>
 
             {/* Exchange Rate Monitoring */}
-            <Card className="border border-border">
-              <CardHeader className="border-b border-border">
-                <CardTitle className="flex items-center gap-2">
+            <UnifiedCard variant="default">
+              <div className={`${getCardSpacing('md').padding} border-b border-border`}>
+                <h3 className={`${getTypographyStyles('heading', 'h4')} flex items-center gap-2`}>
                   <Globe className="w-4 h-4" />
                   Exchange Rate Monitoring
-                </CardTitle>
-                <CardDescription>
+                </h3>
+                <p className={`${getTypographyStyles('body', 'small')} mt-1`}>
                   Real-time exchange rate status and updates
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-6">
+                </p>
+              </div>
+              <div className={getCardSpacing('md').padding}>
                 {exchangeRates?.success && exchangeRates.rates ? (
                   <div className="space-y-4">
                     {Object.entries(exchangeRates.rates).map(([key, rate]: [string, any]) => (
@@ -1557,24 +2122,24 @@ export const ModernDashboard: React.FC<ModernDashboardProps> = ({ user, pspRollo
                     Loading exchange rates...
                   </div>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </UnifiedCard>
           </div>
 
           {/* System Alerts & Activity Logs */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Active Alerts */}
-            <Card className="border border-border">
-              <CardHeader className="border-b border-border">
-                <CardTitle className="flex items-center gap-2">
+            <UnifiedCard variant="default">
+              <div className={`${getCardSpacing('md').padding} border-b border-border`}>
+                <h3 className={`${getTypographyStyles('heading', 'h4')} flex items-center gap-2`}>
                   <AlertTriangle className="w-4 h-4" />
                   Active Alerts
-                </CardTitle>
-                <CardDescription>
+                </h3>
+                <p className={`${getTypographyStyles('body', 'small')} mt-1`}>
                   Current system alerts and notifications
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-6">
+                </p>
+              </div>
+              <div className={getCardSpacing('md').padding}>
                 <div className="space-y-3 max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
                   {getSystemAlerts().length > 0 ? (
                     getSystemAlerts().map((alert, index) => (
@@ -1616,14 +2181,13 @@ export const ModernDashboard: React.FC<ModernDashboardProps> = ({ user, pspRollo
                     </div>
                   )}
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </UnifiedCard>
 
           </div>
         </TabsContent>
       </Tabs>
       </div>
-    </main>
   );
 };
 

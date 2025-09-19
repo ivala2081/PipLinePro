@@ -575,7 +575,7 @@ export default function RevenueAnalytics() {
           </TabsList>
 
           {/* Overview Tab */}
-          <TabsContent value="overview" className="space-y-6">
+          <TabsContent value="overview" className="mt-8 space-y-8">
             {/* Revenue Chart */}
             <Card>
               <CardHeader>
@@ -727,7 +727,7 @@ export default function RevenueAnalytics() {
           </TabsContent>
 
           {/* Trends Tab */}
-          <TabsContent value="trends" className="space-y-6">
+          <TabsContent value="trends" className="mt-8 space-y-8">
             {/* Revenue vs Deposits vs Withdrawals */}
             <Card>
               <CardHeader>
@@ -874,7 +874,7 @@ export default function RevenueAnalytics() {
           </TabsContent>
 
           {/* Clients Tab */}
-          <TabsContent value="clients" className="space-y-6">
+          <TabsContent value="clients" className="mt-8 space-y-8">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -943,7 +943,7 @@ export default function RevenueAnalytics() {
           </TabsContent>
 
           {/* Breakdown Tab */}
-          <TabsContent value="breakdown" className="space-y-6">
+          <TabsContent value="breakdown" className="mt-8 space-y-8">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* PSP Breakdown */}
               <Card>

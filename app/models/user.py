@@ -51,6 +51,9 @@ class User(UserMixin, db.Model):
         db.Index('idx_user_role', 'role'),
         db.Index('idx_user_is_active', 'is_active'),
         db.Index('idx_user_admin_level', 'admin_level'),
+        # Composite indexes for common query patterns
+        db.Index('idx_user_active_admin', 'is_active', 'admin_level'),
+        db.Index('idx_user_role_active', 'role', 'is_active'),
     )
     
     @validates('username')

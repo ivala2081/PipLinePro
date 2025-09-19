@@ -81,7 +81,7 @@ import {
   Divider,
   Spacer
 } from '../components/ProfessionalLayout';
-import { Button } from '../components/ProfessionalButtons';
+import { UnifiedButton } from '../design-system';
 import {
   ResponsiveContainer,
   LineChart as RechartsLineChart,
@@ -133,6 +133,17 @@ const Dashboard = memo(() => {
     lastFetchTime
   } = useAppSelector(state => state.dashboard);
 
+  // Debug logging
+  console.log('Dashboard State:', {
+    loading,
+    error,
+    refreshing,
+    activeTab,
+    dashboardData: !!dashboardData,
+    topPerformers: !!topPerformers,
+    revenueTrends: !!revenueTrends
+  });
+
   // Local state for exchange rates modal
   const [showExchangeRatesModal, setShowExchangeRatesModal] = useState(false);
   
@@ -181,8 +192,7 @@ const Dashboard = memo(() => {
   // Fetch PSP rollover data
   const fetchPspRolloverData = useCallback(async () => {
     try {
-      console.log('🔄 Fetching PSP rollover data...');
-      console.log('🔄 Function called at:', new Date().toISOString());
+console.log('🔄 Function called at:', new Date().toISOString());
       setPspRolloverLoading(true);
       
       const response = await fetch('/api/v1/analytics/psp-rollover-summary', {
@@ -192,16 +202,13 @@ const Dashboard = memo(() => {
         },
       });
       
-      console.log('📡 PSP rollover response status:', response.status);
-      console.log('📡 PSP rollover response headers:', Object.fromEntries(response.headers.entries()));
+console.log('📡 PSP rollover response headers:', Object.fromEntries(response.headers.entries()));
       
       if (response.ok) {
         const data = await response.json();
-        console.log('📊 PSP rollover data received:', data);
-        if (data.success) {
+  if (data.success) {
           setPspRolloverData(data.data);
-          console.log('✅ PSP rollover data loaded:', data.data?.psps?.length || 0, 'PSPs');
-          console.log('✅ PSP rollover data structure:', JSON.stringify(data.data, null, 2));
+    console.log('✅ PSP rollover data structure:', JSON.stringify(data.data, null, 2));
           
           // Show success message if we have data
           if (data.data?.psps?.length > 0) {
@@ -236,8 +243,7 @@ const Dashboard = memo(() => {
       // Check if we need to fetch new data
       // Always fetch when timeRange changes, regardless of cache
       if (!forceRefresh && (now - lastFetchTime) < CACHE_DURATION) {
-        console.log('📦 Using cached dashboard data');
-        return;
+  return;
       }
 
       // Progressive loading steps
@@ -359,8 +365,7 @@ const Dashboard = memo(() => {
   // Quick Actions handlers
   const handleQuickAction = useCallback((action: string, path: string) => {
     try {
-      console.log(`Quick Action: ${action} - Navigating to ${path}`);
-      navigate(path);
+navigate(path);
     } catch (error) {
       console.error(`Navigation error for ${action}:`, error);
       showUniqueError('navigation-error', 'Navigation Error', `Failed to navigate to ${action}`);
@@ -459,12 +464,9 @@ const Dashboard = memo(() => {
   // Listen for transaction updates to automatically refresh dashboard data
   useEffect(() => {
     const handleTransactionsUpdate = (event: any) => {
-      console.log('🔄 Dashboard: Received transaction update event', event.detail);
-      
-      // Refresh dashboard data when transactions are updated
+// Refresh dashboard data when transactions are updated
       if (isAuthenticated && !authLoading) {
-        console.log('🔄 Dashboard: Refreshing data due to transaction updates...');
-        handleFetchDashboardData();
+  handleFetchDashboardData();
       }
     };
 
@@ -490,29 +492,40 @@ const Dashboard = memo(() => {
     return undefined;
   }, [isAuthenticated, authLoading, refreshRates]);
 
-
-
   return (
     <ContentArea spacing="xl">
+      {/* TEST BOX - Should always be visible */}
+      <div style={{backgroundColor: 'yellow', color: 'black', padding: '20px', margin: '20px 0', fontSize: '18px', fontWeight: 'bold'}}>
+        🧪 DASHBOARD COMPONENT IS RENDERING - If you see this, the component is working!
+      </div>
+      
+      {/* Debug Message - Always visible for debugging */}
+      <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <h4 className="font-semibold text-blue-800 mb-2">Dashboard Debug:</h4>
+        <p className="text-sm text-blue-700">
+          Dashboard is rendering! Active tab: {activeTab}, Loading: {loading ? 'Yes' : 'No'}, 
+          Error: {error || 'None'}, Authenticated: {isAuthenticated ? 'Yes' : 'No'}, 
+          Has Dashboard Data: {dashboardData ? 'Yes' : 'No'}, NODE_ENV: {process.env.NODE_ENV}
+        </p>
+      </div>
+      
       {/* Enhanced Page Header */}
       <PageHeader
         title={t('dashboard.title')}
         subtitle={t('dashboard.description')}
         actions={
           <div className='flex items-center gap-3'>
-            <Button
+            <UnifiedButton
               onClick={handleRefresh}
               disabled={refreshing}
               variant="secondary"
             >
               <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
               {refreshing ? t('common.refreshing') : t('common.refresh')}
-            </Button>
+            </UnifiedButton>
           </div>
         }
       />
-
-
 
       {/* Tab Navigation */}
       <DashboardTabNavigation 
@@ -544,14 +557,14 @@ const Dashboard = memo(() => {
                 <h3 className='text-lg font-semibold text-red-800'>Error Loading Dashboard</h3>
                 <p className='text-red-700 mt-1'>{error}</p>
               </div>
-              <Button
+              <UnifiedButton
                 onClick={handleClearError}
                 variant="ghost"
                 size="sm"
                 className='ml-auto text-red-400 hover:text-red-600'
               >
                 <X className='h-5 w-5' />
-              </Button>
+              </UnifiedButton>
             </div>
           </div>
         </Section>
@@ -560,6 +573,10 @@ const Dashboard = memo(() => {
       {/* Tab Content */}
       {activeTab === 'overview' && (
         <ContentArea>
+          {/* TEST BOX - Should always be visible */}
+          <div style={{backgroundColor: 'purple', color: 'white', padding: '20px', margin: '20px 0', fontSize: '18px', fontWeight: 'bold'}}>
+            🧪 OVERVIEW TAB IS RENDERING - If you see this, the tab is working!
+          </div>
           {/* Enhanced Stats Cards */}
           {dashboardData && (
             <Section title="Key Metrics" subtitle="Business overview" spacing="lg">
@@ -607,14 +624,24 @@ const Dashboard = memo(() => {
                 <h4 className="font-semibold text-yellow-800 mb-2">Debug Info:</h4>
                 <pre className="text-xs text-yellow-700 overflow-auto max-h-40">
                   {JSON.stringify({
+                    loading: loading,
+                    error: error,
+                    refreshing: refreshing,
+                    dashboardData_exists: !!dashboardData,
+                    dashboardData_keys: dashboardData ? Object.keys(dashboardData) : [],
+                    summary_exists: !!dashboardData?.summary,
+                    summary_keys: dashboardData?.summary ? Object.keys(dashboardData.summary) : [],
                     daily_revenue: (dashboardData?.summary as any)?.daily_revenue,
                     weekly_revenue: (dashboardData?.summary as any)?.weekly_revenue,
                     monthly_revenue: (dashboardData?.summary as any)?.monthly_revenue,
                     annual_revenue: (dashboardData?.summary as any)?.annual_revenue,
                     has_revenue_trends: !!(dashboardData as any)?.revenue_trends,
                     revenue_trends_length: (dashboardData as any)?.revenue_trends?.length || 0,
-                    summary_keys: dashboardData?.summary ? Object.keys(dashboardData.summary) : [],
-                    full_summary: dashboardData?.summary
+                    topPerformers_exists: !!topPerformers,
+                    topPerformersData_exists: !!topPerformersData,
+                    rates_exists: !!rates,
+                    rates_keys: rates ? Object.keys(rates) : [],
+                    pspRolloverData_exists: !!pspRolloverData
                   }, null, 2)}
                 </pre>
               </div>
@@ -654,17 +681,17 @@ const Dashboard = memo(() => {
             </CardGrid>
             
             {/* Revenue Trend Chart */}
-            {(dashboardData as any)?.revenue_trends && (
-              <div className="mt-6">
-                <div className="bg-white rounded-xl border border-gray-200 p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-gray-900">Revenue Trend</h3>
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <TrendingUp className="h-4 w-4" />
-                      <span>Last 30 days</span>
-                    </div>
+            <div className="mt-6">
+              <div className="bg-white rounded-xl border border-gray-200 p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900">Revenue Trend</h3>
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <TrendingUp className="h-4 w-4" />
+                    <span>Last 30 days</span>
                   </div>
-                  <div className="h-64">
+                </div>
+                <div className="h-64">
+                  {(dashboardData as any)?.revenue_trends && (dashboardData as any).revenue_trends.length > 0 ? (
                     <ResponsiveContainer width="100%" height="100%">
                       <RechartsLineChart data={(dashboardData as any).revenue_trends}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
@@ -702,43 +729,55 @@ const Dashboard = memo(() => {
                         />
                       </RechartsLineChart>
                     </ResponsiveContainer>
-                  </div>
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-gray-500">
+                      <div className="text-center">
+                        <TrendingUp className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                        <p className="text-lg font-medium">No revenue data available</p>
+                        <p className="text-sm text-gray-400 mt-2">Revenue trends will appear here once data is available</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
-            )}
+            </div>
           </Section>
 
           {/* Quick Actions */}
+          <div style={{backgroundColor: 'red', color: 'white', padding: '20px', margin: '20px 0'}}>
+            <h2>🔧 QUICK ACTIONS SECTION - SHOULD BE VISIBLE</h2>
+            <p>If you can see this red box, the section is rendering but might be hidden by CSS.</p>
+          </div>
           <Section title="Quick Actions" subtitle="Common tasks and shortcuts" spacing="lg">
             <CardGrid cols={4} gap="lg">
-              <Button
+              <UnifiedButton
                 variant="outline"
                 className="h-24 flex flex-col items-center justify-center gap-2 hover:bg-gray-50 hover:border-gray-200 transition-colors"
                 onClick={() => handleQuickAction('Add Transaction', '/transactions/add')}
               >
                 <CreditCard className="h-6 w-6 text-gray-600" />
                 <span className="text-sm font-medium">Add Transaction</span>
-              </Button>
+              </UnifiedButton>
               
-              <Button
+              <UnifiedButton
                 variant="outline"
                 className="h-24 flex flex-col items-center justify-center gap-2 hover:bg-green-50 hover:border-green-200 transition-colors"
                 onClick={() => handleQuickAction('Manage Clients', '/clients')}
               >
                 <Users className="h-6 w-6 text-green-600" />
                 <span className="text-sm font-medium">Manage Clients</span>
-              </Button>
+              </UnifiedButton>
               
-              <Button
+              <UnifiedButton
                 variant="outline"
                 className="h-24 flex flex-col items-center justify-center gap-2 hover:bg-purple-50 hover:border-purple-200 transition-colors"
                 onClick={() => handleQuickAction('View Analytics', '/analytics')}
               >
                 <BarChart3 className="h-6 w-6 text-purple-600" />
                 <span className="text-sm font-medium">View Analytics</span>
-              </Button>
+              </UnifiedButton>
               
-              <Button
+              <UnifiedButton
                 variant="outline"
                 className="h-24 flex flex-col items-center justify-center gap-2 hover:bg-orange-50 hover:border-orange-200 transition-colors"
                 onClick={handleRefresh}
@@ -746,50 +785,54 @@ const Dashboard = memo(() => {
               >
                 <RefreshCw className={`h-6 w-6 text-orange-600 ${refreshing ? 'animate-spin' : ''}`} />
                 <span className="text-sm font-medium">{refreshing ? 'Refreshing...' : 'Refresh Data'}</span>
-              </Button>
+              </UnifiedButton>
             </CardGrid>
             
             {/* Additional Quick Actions Row */}
             <CardGrid cols={4} gap="lg" className="mt-4">
-              <Button
+              <UnifiedButton
                 variant="outline"
                 className="h-24 flex flex-col items-center justify-center gap-2 hover:bg-indigo-50 hover:border-indigo-200 transition-colors"
                 onClick={() => handleQuickAction('View Transactions', '/transactions')}
               >
                 <FileText className="h-6 w-6 text-indigo-600" />
                 <span className="text-sm font-medium">View Transactions</span>
-              </Button>
+              </UnifiedButton>
               
-              <Button
+              <UnifiedButton
                 variant="outline"
                 className="h-24 flex flex-col items-center justify-center gap-2 hover:bg-teal-50 hover:border-teal-200 transition-colors"
                 onClick={() => handleQuickAction('Generate Reports', '/reports')}
               >
                 <PieChart className="h-6 w-6 text-teal-600" />
                 <span className="text-sm font-medium">Generate Reports</span>
-              </Button>
+              </UnifiedButton>
               
-              <Button
+              <UnifiedButton
                 variant="outline"
                 className="h-24 flex flex-col items-center justify-center gap-2 hover:bg-rose-50 hover:border-rose-200 transition-colors"
                 onClick={() => handleQuickAction('Settings', '/settings')}
               >
                 <Settings className="h-6 w-6 text-rose-600" />
                 <span className="text-sm font-medium">Settings</span>
-              </Button>
+              </UnifiedButton>
               
-              <Button
+              <UnifiedButton
                 variant="outline"
                 className="h-24 flex flex-col items-center justify-center gap-2 hover:bg-amber-50 hover:border-amber-200 transition-colors"
                 onClick={() => handleQuickAction('System Monitor', '/system-monitor')}
               >
                 <Activity className="h-6 w-6 text-amber-600" />
                 <span className="text-sm font-medium">System Monitor</span>
-              </Button>
+              </UnifiedButton>
             </CardGrid>
           </Section>
 
           {/* Exchange Rates Widget */}
+          <div style={{backgroundColor: 'blue', color: 'white', padding: '20px', margin: '20px 0'}}>
+            <h2>💱 EXCHANGE RATES WIDGET - SHOULD BE VISIBLE</h2>
+            <p>If you can see this blue box, the section is rendering but might be hidden by CSS.</p>
+          </div>
           <Section title="Exchange Rates" subtitle="Current rates" spacing="lg">
             <ExchangeRatesWidget
               rates={rates}
@@ -801,11 +844,13 @@ const Dashboard = memo(() => {
             />
           </Section>
 
-
-
           {/* Top Performers */}
-          {topPerformersData && (
-            <Section title="Top Performers" subtitle="Best performers" spacing="lg">
+          <div style={{backgroundColor: 'green', color: 'white', padding: '20px', margin: '20px 0'}}>
+            <h2>🏆 TOP PERFORMERS SECTION - SHOULD BE VISIBLE</h2>
+            <p>If you can see this green box, the section is rendering but might be hidden by CSS.</p>
+          </div>
+          <Section title="Top Performers" subtitle="Best performers" spacing="lg">
+            {topPerformersData ? (
               <CardGrid cols={2} gap="lg">
                 <TopPerformersCard
                   {...topPerformersData.volumeLeaders}
@@ -816,14 +861,24 @@ const Dashboard = memo(() => {
                   formatCurrency={formatCurrency}
                 />
               </CardGrid>
-            </Section>
-          )}
+            ) : (
+              <div className="text-center py-12 text-gray-500">
+                <BarChart3 className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                <p className="text-lg font-medium">Loading top performers...</p>
+                <p className="text-sm text-gray-400 mt-2">Please wait while we fetch the latest data</p>
+              </div>
+            )}
+          </Section>
 
           {/* PSP Rollover Cards */}
+          <div style={{backgroundColor: 'orange', color: 'white', padding: '20px', margin: '20px 0'}}>
+            <h2>🔄 PSP ROLLOVER STATUS SECTION - SHOULD BE VISIBLE</h2>
+            <p>If you can see this orange box, the section is rendering but might be hidden by CSS.</p>
+          </div>
           <Section title="PSP Rollover Status" subtitle="Individual PSP rollover amounts and status" spacing="lg">
             <div className='flex items-center justify-between mb-6'>
               <div className="flex items-center gap-2">
-                <Button
+                <UnifiedButton
                   variant="outline"
                   size="sm"
                   onClick={fetchPspRolloverData}
@@ -832,7 +887,7 @@ const Dashboard = memo(() => {
                 >
                   <RefreshCw className={`h-4 w-4 ${pspRolloverLoading ? 'animate-spin' : ''}`} />
                   Refresh
-                </Button>
+                </UnifiedButton>
                 {pspRolloverData?.psps?.length > 0 && (
                   <span className="text-xs text-green-600 font-medium">
                     ✓ {pspRolloverData.psps.length} PSPs loaded
@@ -992,7 +1047,7 @@ const Dashboard = memo(() => {
                 <p className='text-lg font-medium'>No PSP rollover data available</p>
                 <p className='text-sm text-gray-400 mt-2'>Loading PSP data or no transactions found</p>
                 <div className='mt-4'>
-                  <Button
+                  <UnifiedButton
                     variant="outline"
                     size="sm"
                     onClick={fetchPspRolloverData}
@@ -1001,7 +1056,7 @@ const Dashboard = memo(() => {
                   >
                     <RefreshCw className={`h-4 w-4 ${pspRolloverLoading ? 'animate-spin' : ''}`} />
                     {pspRolloverLoading ? 'Loading...' : 'Retry'}
-                  </Button>
+                  </UnifiedButton>
                 </div>
               </div>
             )}
@@ -1022,7 +1077,7 @@ const Dashboard = memo(() => {
                     <p className='business-chart-subtitle'>Revenue performance over time</p>
                   </div>
                   <div className='business-chart-actions'>
-                    <Button 
+                    <UnifiedButton 
                       variant="outline" 
                       size="sm"
                       onClick={() => handleRefresh()}
@@ -1031,15 +1086,15 @@ const Dashboard = memo(() => {
                     >
                       <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
                       {refreshing ? 'Refreshing...' : 'Refresh'}
-                    </Button>
-                    <Button 
+                    </UnifiedButton>
+                    <UnifiedButton 
                       variant="outline" 
                       size="sm"
                       onClick={handleViewRevenueDetails}
                     >
                       <Eye className='w-4 h-4 mr-2' />
                       View Details
-                    </Button>
+                    </UnifiedButton>
                   </div>
                 </div>
                 <div className='h-80'>
@@ -1296,7 +1351,7 @@ const Dashboard = memo(() => {
                     <p className='business-chart-subtitle'>Daily transaction volume trends</p>
                   </div>
                   <div className='business-chart-actions'>
-                    <Button 
+                    <UnifiedButton 
                       variant="outline" 
                       size="sm"
                       onClick={() => handleRefresh()}
@@ -1305,15 +1360,15 @@ const Dashboard = memo(() => {
                     >
                       <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
                       {refreshing ? 'Refreshing...' : 'Refresh'}
-                    </Button>
-                    <Button 
+                    </UnifiedButton>
+                    <UnifiedButton 
                       variant="outline" 
                       size="sm"
                       onClick={handleViewVolumeDetails}
                     >
                       <Eye className='w-4 h-4 mr-2' />
                       View Details
-                    </Button>
+                    </UnifiedButton>
                   </div>
                 </div>
                 <div className='h-80'>
@@ -1573,7 +1628,7 @@ const Dashboard = memo(() => {
               <div className='bg-white rounded-2xl shadow-sm border border-gray-200 p-6'>
                 <div className='flex items-center justify-between mb-4'>
                   <h3 className='text-lg font-semibold text-gray-900'>PSP Volume Distribution</h3>
-                  <Button 
+                  <UnifiedButton 
                     variant="outline" 
                     size="sm"
                     onClick={() => handleRefresh()}
@@ -1582,7 +1637,7 @@ const Dashboard = memo(() => {
                   >
                     <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
                     {refreshing ? 'Refreshing...' : 'Refresh'}
-                  </Button>
+                  </UnifiedButton>
                 </div>
                 <div className='h-80'>
                   <ResponsiveContainer width="100%" height="100%">
@@ -1630,14 +1685,14 @@ const Dashboard = memo(() => {
                   <p className='text-sm text-gray-600'>View and manage all currency exchange rates</p>
                 </div>
               </div>
-              <Button
+              <UnifiedButton
                 onClick={handleCloseRatesModal}
                 variant="ghost"
                 size="sm"
                 className='p-2 text-gray-400 hover:text-gray-600'
               >
                 <X className='h-6 w-6' />
-              </Button>
+              </UnifiedButton>
             </div>
             <div className='p-6 overflow-y-auto max-h-[calc(90vh-120px)]'>
               <ExchangeRatesDisplay 
