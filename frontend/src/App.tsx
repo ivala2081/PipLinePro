@@ -37,6 +37,8 @@ const Transactions = lazy(() => import('./pages/transactions'));
 const AddTransaction = lazy(() => import('./pages/AddTransaction'));
 const Accounting = lazy(() => import('./pages/Accounting'));
 const RevenueAnalytics = lazy(() => import('./pages/RevenueAnalytics'));
+const Future = lazy(() => import('./pages/Future'));
+const TabShowcase = lazy(() => import('./components/TabShowcase'));
 
 function App() {
   // Preload critical components and setup performance optimization
@@ -91,6 +93,8 @@ function App() {
                           
                           <Route path='analytics' element={<Analytics />} />
                           <Route path='revenue-analytics' element={<RevenueAnalytics />} />
+                          <Route path='future' element={<Future />} />
+                          <Route path='tab-showcase' element={<TabShowcase />} />
                           <Route path='settings' element={<Settings />} />
                           <Route path='reports' element={<Reports />} />
                           <Route
