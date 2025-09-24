@@ -66,7 +66,8 @@ import {
   Unlock,
   Server,
   Network,
-  Award
+  Award,
+  Sparkles
 } from 'lucide-react';
 
 interface ModernDashboardProps {
@@ -91,6 +92,7 @@ const ModernDashboard: React.FC<ModernDashboardProps> = ({ user }) => {
   const [exchangeRates, setExchangeRates] = useState<any>(null);
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const [chartPeriod, setChartPeriod] = useState<'daily' | 'monthly' | 'annual'>('daily');
+  const [selectedMetric, setSelectedMetric] = useState<string | null>(null);
 
   // Generate quick stats from real data
   const getQuickStats = () => {
@@ -393,15 +395,41 @@ const ModernDashboard: React.FC<ModernDashboardProps> = ({ user }) => {
     
     setIsGeneratingReport(true);
     try {
-      const excelService = new ExcelExportService();
-      // await excelService.exportReport(dashboardData, timeRange);
-      console.log('Export functionality temporarily disabled');
+      await ExcelExportService.generateComprehensiveReport(timeRange);
       console.log('✅ Report generated successfully');
     } catch (error) {
       console.error('❌ Error generating report:', error);
     } finally {
       setIsGeneratingReport(false);
     }
+  };
+
+  const handleMetricClick = (metric: string, period: string) => {
+    setSelectedMetric(`${metric}-${period}`);
+    console.log(`📊 Metric clicked: ${metric} (${period})`);
+    
+    // Navigate to detailed view based on metric type
+    switch (metric.toLowerCase()) {
+      case 'revenue':
+        navigate('/analytics/revenue');
+        break;
+      case 'transactions':
+        navigate('/transactions');
+        break;
+      case 'commission':
+        navigate('/analytics/commission');
+        break;
+      case 'clients':
+        navigate('/clients');
+        break;
+      default:
+        navigate('/analytics');
+    }
+  };
+
+  const handlePeriodHeaderClick = (period: string) => {
+    console.log(`📅 Period header clicked: ${period}`);
+    setChartPeriod(period as 'daily' | 'monthly' | 'annual');
   };
 
   if (loading) {
@@ -601,21 +629,33 @@ const ModernDashboard: React.FC<ModernDashboardProps> = ({ user }) => {
                   {/* Daily Metrics */}
                   <div>
                     <div className="flex items-center gap-2 mb-4">
-                      <Calendar className="w-4 h-4 text-slate-600 hover:text-blue-600 transition-colors duration-200 cursor-pointer" />
-                      <h3 className="text-sm font-medium text-slate-900 uppercase tracking-wide hover:text-blue-600 transition-colors duration-200 cursor-pointer">Daily</h3>
+                      <Calendar 
+                        className="w-4 h-4 text-slate-600 hover:text-blue-600 transition-colors duration-200 cursor-pointer" 
+                        onClick={() => handlePeriodHeaderClick('daily')}
+                      />
+                      <h3 
+                        className="text-sm font-medium text-slate-900 uppercase tracking-wide hover:text-blue-600 transition-colors duration-200 cursor-pointer"
+                        onClick={() => handlePeriodHeaderClick('daily')}
+                      >
+                        Daily
+                      </h3>
                     </div>
                     
                     <div className="space-y-3">
                       {getRevenueBreakdown().filter(item => item.timePeriod === 'Daily').map((breakdown, index) => (
-                        <div key={index} className="flex items-center justify-between py-3 px-4 bg-slate-50 rounded border hover:bg-slate-100 hover:border-slate-300 hover:shadow-sm transition-all duration-200 cursor-pointer group">
+                        <div 
+                          key={index} 
+                          className="flex items-center justify-between py-3 px-4 bg-slate-50 rounded border hover:bg-slate-100 hover:border-slate-300 hover:shadow-sm transition-all duration-200 cursor-pointer group"
+                          onClick={() => handleMetricClick(breakdown.metric, 'daily')}
+                        >
                           <div className="flex items-center gap-3">
                             <breakdown.icon className={`w-4 h-4 ${breakdown.iconColor} group-hover:scale-110 transition-transform duration-200`} />
                             <span className="text-sm font-medium text-slate-700 group-hover:text-slate-900 transition-colors duration-200">{breakdown.metric}</span>
-                  </div>
+                          </div>
                           <span className="text-sm font-semibold text-slate-900 group-hover:text-blue-600 transition-colors duration-200">
                             ₺{breakdown.amount.toLocaleString('tr-TR')}
                           </span>
-                </div>
+                        </div>
                       ))}
                   </div>
                   </div>
@@ -623,17 +663,29 @@ const ModernDashboard: React.FC<ModernDashboardProps> = ({ user }) => {
                   {/* Monthly Metrics */}
                   <div>
                     <div className="flex items-center gap-2 mb-4">
-                      <BarChart3 className="w-4 h-4 text-slate-600 hover:text-green-600 transition-colors duration-200 cursor-pointer" />
-                      <h3 className="text-sm font-medium text-slate-900 uppercase tracking-wide hover:text-green-600 transition-colors duration-200 cursor-pointer">Monthly</h3>
+                      <BarChart3 
+                        className="w-4 h-4 text-slate-600 hover:text-green-600 transition-colors duration-200 cursor-pointer" 
+                        onClick={() => handlePeriodHeaderClick('monthly')}
+                      />
+                      <h3 
+                        className="text-sm font-medium text-slate-900 uppercase tracking-wide hover:text-green-600 transition-colors duration-200 cursor-pointer"
+                        onClick={() => handlePeriodHeaderClick('monthly')}
+                      >
+                        Monthly
+                      </h3>
                     </div>
 
                     <div className="space-y-3">
                       {getRevenueBreakdown().filter(item => item.timePeriod === 'Monthly').map((breakdown, index) => (
-                        <div key={index} className="flex items-center justify-between py-3 px-4 bg-slate-50 rounded border hover:bg-slate-100 hover:border-slate-300 hover:shadow-sm transition-all duration-200 cursor-pointer group">
+                        <div 
+                          key={index} 
+                          className="flex items-center justify-between py-3 px-4 bg-slate-50 rounded border hover:bg-slate-100 hover:border-slate-300 hover:shadow-sm transition-all duration-200 cursor-pointer group"
+                          onClick={() => handleMetricClick(breakdown.metric, 'monthly')}
+                        >
                           <div className="flex items-center gap-3">
                             <breakdown.icon className={`w-4 h-4 ${breakdown.iconColor} group-hover:scale-110 transition-transform duration-200`} />
                             <span className="text-sm font-medium text-slate-700 group-hover:text-slate-900 transition-colors duration-200">{breakdown.metric}</span>
-                    </div>
+                          </div>
                           <span className="text-sm font-semibold text-slate-900 group-hover:text-green-600 transition-colors duration-200">
                             ₺{breakdown.amount.toLocaleString('tr-TR')}
                           </span>
@@ -645,17 +697,29 @@ const ModernDashboard: React.FC<ModernDashboardProps> = ({ user }) => {
                   {/* Annual Metrics */}
                   <div>
                     <div className="flex items-center gap-2 mb-4">
-                      <TrendingUp className="w-4 h-4 text-slate-600 hover:text-purple-600 transition-colors duration-200 cursor-pointer" />
-                      <h3 className="text-sm font-medium text-slate-900 uppercase tracking-wide hover:text-purple-600 transition-colors duration-200 cursor-pointer">Annual</h3>
-              </div>
+                      <TrendingUp 
+                        className="w-4 h-4 text-slate-600 hover:text-purple-600 transition-colors duration-200 cursor-pointer" 
+                        onClick={() => handlePeriodHeaderClick('annual')}
+                      />
+                      <h3 
+                        className="text-sm font-medium text-slate-900 uppercase tracking-wide hover:text-purple-600 transition-colors duration-200 cursor-pointer"
+                        onClick={() => handlePeriodHeaderClick('annual')}
+                      >
+                        Annual
+                      </h3>
+                    </div>
                     
                     <div className="space-y-3">
                       {getRevenueBreakdown().filter(item => item.timePeriod === 'Annual').map((breakdown, index) => (
-                        <div key={index} className="flex items-center justify-between py-3 px-4 bg-slate-50 rounded border hover:bg-slate-100 hover:border-slate-300 hover:shadow-sm transition-all duration-200 cursor-pointer group">
+                        <div 
+                          key={index} 
+                          className="flex items-center justify-between py-3 px-4 bg-slate-50 rounded border hover:bg-slate-100 hover:border-slate-300 hover:shadow-sm transition-all duration-200 cursor-pointer group"
+                          onClick={() => handleMetricClick(breakdown.metric, 'annual')}
+                        >
                           <div className="flex items-center gap-3">
                             <breakdown.icon className={`w-4 h-4 ${breakdown.iconColor} group-hover:scale-110 transition-transform duration-200`} />
                             <span className="text-sm font-medium text-slate-700 group-hover:text-slate-900 transition-colors duration-200">{breakdown.metric}</span>
-                        </div>
+                          </div>
                           <span className="text-sm font-semibold text-slate-900 group-hover:text-purple-600 transition-colors duration-200">
                             ₺{breakdown.amount.toLocaleString('tr-TR')}
                           </span>
@@ -667,6 +731,7 @@ const ModernDashboard: React.FC<ModernDashboardProps> = ({ user }) => {
                 </div>
                 </CardContent>
               </Card>
+
 
           </div>
 
